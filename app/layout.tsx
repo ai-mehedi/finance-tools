@@ -76,13 +76,14 @@ export default function RootLayout({
             </noscript>
           </>
         )}
-        {ADSENSE_CLIENT && (
-          <Script
-            id="adsense"
+        {/* Plain script (not next/script) so AdSense doesn't see a data-nscript attribute.
+            Only load in production — AdSense never fills on localhost and shows an empty/broken slot. */}
+        {ADSENSE_CLIENT && process.env.NODE_ENV === "production" && (
+          // eslint-disable-next-line @next/next/no-sync-scripts
+          <script
             async
-            strategy="afterInteractive"
-            crossOrigin="anonymous"
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+            crossOrigin="anonymous"
           />
         )}
         <JsonLd data={[organizationSchema(), websiteSchema()]} />
