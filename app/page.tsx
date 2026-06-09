@@ -8,6 +8,7 @@ import WhyChoose from "./components/WhyChoose";
 import Articles from "./components/Articles";
 import Newsletter from "./components/Newsletter";
 import Footer from "./components/Footer";
+import { AdSlot } from "./components/AdSlot";
 import { getToolCategories, getTools, getArticles } from "@/lib/queries";
 
 export const revalidate = 3600; // ISR: refresh hourly
@@ -26,9 +27,11 @@ export default async function Home() {
         <Hero />
         <StatsBar />
         <FinancialTools tools={popularTools.data} />
+        <div className="mx-auto container px-6"><AdSlot className="my-4" /></div>
         <Categories categories={categories} />
         <CtaBanner />
         <WhyChoose />
+        <div className="mx-auto container px-6"><AdSlot className="my-4" /></div>
         <Articles articles={latestArticles.data} popularTools={popularTools.data.slice(0, 6)} />
         <Newsletter />
       </main>

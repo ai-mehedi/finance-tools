@@ -2,6 +2,7 @@ import Link from "next/link";
 import SiteHeader from "../components/SiteHeader";
 import Newsletter from "../components/Newsletter";
 import Footer from "../components/Footer";
+import { AdSlot } from "../components/AdSlot";
 import { getTools } from "@/lib/queries";
 
 export const revalidate = 3600;
@@ -73,6 +74,7 @@ export default async function ToolsPage({
               {page < pages && <Link href={buildHref(page + 1)} className="rounded-lg border border-zinc-200 bg-white px-3 py-2 font-semibold text-zinc-700 hover:bg-zinc-50">Next</Link>}
             </div>
           )}
+          <AdSlot className="mt-10" />
         </div>
         <Newsletter />
       </main>

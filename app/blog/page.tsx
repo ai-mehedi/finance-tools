@@ -2,6 +2,7 @@ import Link from "next/link";
 import SiteHeader from "../components/SiteHeader";
 import Newsletter from "../components/Newsletter";
 import Footer from "../components/Footer";
+import { AdSlot } from "../components/AdSlot";
 import { getArticles, getBlogCategories, getCategoryBySlug } from "@/lib/queries";
 
 export const revalidate = 1800;
@@ -92,6 +93,7 @@ export default async function BlogPage({
                 {page < pages && <Link href={href(page + 1)} className="rounded-lg border border-zinc-200 bg-white px-3 py-2 font-semibold text-zinc-700 hover:bg-zinc-50">Next</Link>}
               </div>
             )}
+            <AdSlot className="mt-10" />
           </div>
 
           <aside className="lg:col-span-1">

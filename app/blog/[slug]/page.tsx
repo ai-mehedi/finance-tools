@@ -5,6 +5,7 @@ import SiteHeader from "../../components/SiteHeader";
 import Newsletter from "../../components/Newsletter";
 import Footer from "../../components/Footer";
 import JsonLd from "../../components/JsonLd";
+import { AdSlot } from "../../components/AdSlot";
 import { getArticleBySlug, getArticles } from "@/lib/queries";
 import { articleSchema, breadcrumbSchema } from "@/lib/seo";
 
@@ -103,6 +104,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               Full article coming soon.
             </p>
           )}
+
+          {/* In-article ad (after the content) */}
+          <AdSlot className="mt-10" />
         </article>
 
         {related.length > 0 && (

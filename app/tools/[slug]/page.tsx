@@ -5,6 +5,7 @@ import SiteHeader from "../../components/SiteHeader";
 import Newsletter from "../../components/Newsletter";
 import Footer from "../../components/Footer";
 import JsonLd from "../../components/JsonLd";
+import { AdSlot } from "../../components/AdSlot";
 import { getToolBySlug } from "@/lib/queries";
 import { webAppSchema, faqSchema, breadcrumbSchema } from "@/lib/seo";
 
@@ -119,6 +120,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
               <p className="mt-2 text-sm text-zinc-600">200+ free calculators in one place.</p>
               <Link href="/tools" className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-600">Browse Tools</Link>
             </div>
+            <AdSlot minHeight={250} />
           </aside>
         </div>
         <Newsletter />
