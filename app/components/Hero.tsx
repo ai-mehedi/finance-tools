@@ -1,5 +1,3 @@
-"use client";
-
 const TRUST = [
   { title: "100% Free", sub: "No Sign Up Required", icon: "check" },
   { title: "Accurate Results", sub: "Trusted Calculations", icon: "target" },
@@ -181,7 +179,7 @@ export default function Hero() {
       <img
         src="/hero.webp"
         alt=""
-        aria-hidden="true"
+        aria-hidden="true" loading="lazy" decoding="async"
         className="pointer-events-none absolute -right-16 bottom-0 hidden w-[560px] opacity-10 lg:block"
       />
       <div className="relative mx-auto grid container items-center gap-12 px-6 py-14 lg:grid-cols-2 lg:py-20">

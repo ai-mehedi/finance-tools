@@ -68,7 +68,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
               <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-orange-50 text-3xl">
                 {tool.thumbnail ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={tool.thumbnail} alt="" referrerPolicy="no-referrer" className="h-full w-full object-contain" />
+                  <img src={tool.thumbnail} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-full w-full object-contain" />
                 ) : ("🧮")}
               </span>
               <div>

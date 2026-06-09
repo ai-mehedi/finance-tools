@@ -134,7 +134,7 @@ export default function CategoriesPage() {
                     <div className="flex items-center gap-3">
                       {c.thumbnail ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={c.thumbnail} alt="" referrerPolicy="no-referrer" className="size-8 rounded-md object-cover" />
+                        <img src={c.thumbnail} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="size-8 rounded-md object-cover" />
                       ) : (
                         <span className="flex size-8 items-center justify-center rounded-md bg-zinc-100 text-xs">📁</span>
                       )}

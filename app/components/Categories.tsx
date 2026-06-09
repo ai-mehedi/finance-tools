@@ -20,7 +20,7 @@ export default function Categories({ categories }: { categories: CategoryLite[] 
               <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-orange-50 text-3xl">
                 {cat.thumbnail ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={cat.thumbnail} alt="" referrerPolicy="no-referrer" className="h-full w-full object-contain" />
+                  <img src={cat.thumbnail} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-full w-full object-contain" />
                 ) : (
                   "📁"
                 )}

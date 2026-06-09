@@ -73,7 +73,7 @@ export default function ArticlesPage() {
                     <div className="flex items-center gap-3">
                       {a.featuredImage ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={a.featuredImage} alt="" referrerPolicy="no-referrer" className="h-8 w-12 rounded-md object-cover" />
+                        <img src={a.featuredImage} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-8 w-12 rounded-md object-cover" />
                       ) : (
                         <span className="flex h-8 w-12 items-center justify-center rounded-md bg-zinc-100 text-xs">📰</span>
                       )}

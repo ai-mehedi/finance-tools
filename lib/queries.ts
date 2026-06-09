@@ -3,6 +3,9 @@ import { CategoryModel } from "@/models/Category";
 import { ToolModel } from "@/models/Tool";
 import { ArticleModel } from "@/models/Article";
 import { NavMenuModel } from "@/models/NavMenu";
+// Register the User schema so `.populate("author")` works during prerender/build.
+import { UserModel } from "@/models/User";
+void UserModel;
 
 // Fully serialize lean docs (ObjectId -> string, Date -> ISO) for client components.
 function ser<T>(v: T): T {

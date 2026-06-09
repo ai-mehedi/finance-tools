@@ -60,7 +60,7 @@ export default async function BlogPage({
                       {a.categories?.[0] && <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-orange-600 shadow-sm backdrop-blur">{a.categories[0].name}</span>}
                       {a.featuredImage ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={a.featuredImage} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <img src={a.featuredImage} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       ) : (<span className="flex h-full w-full items-center justify-center text-5xl">📰</span>)}
                     </div>
                     <div className="flex flex-1 flex-col p-5">

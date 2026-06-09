@@ -41,7 +41,7 @@ export default function Articles({ articles, popularTools }: { articles: Article
                     )}
                     {a.featuredImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.featuredImage} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <img src={a.featuredImage} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     ) : (
                       <span className="flex h-full w-full items-center justify-center text-4xl">📰</span>
                     )}

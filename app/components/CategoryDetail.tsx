@@ -45,7 +45,7 @@ export default function CategoryDetail({
           <div className="flex items-center gap-4">
             {category.thumbnail && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={category.thumbnail} alt="" referrerPolicy="no-referrer" className="h-16 w-16 object-contain" />
+              <img src={category.thumbnail} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-16 w-16 object-contain" />
             )}
             <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900 sm:text-5xl">{category.name} Tools</h1>
           </div>
@@ -81,7 +81,7 @@ export default function CategoryDetail({
                     <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-orange-50/70 text-2xl">
                       {tool.thumbnail ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={tool.thumbnail} alt="" referrerPolicy="no-referrer" className="h-full w-full object-contain p-1" />
+                        <img src={tool.thumbnail} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-full w-full object-contain p-1" />
                       ) : ("🧮")}
                     </span>
                     <h3 className="mt-4 text-sm font-bold text-zinc-900 group-hover:text-orange-600">{tool.title}</h3>

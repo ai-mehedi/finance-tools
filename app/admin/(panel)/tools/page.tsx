@@ -79,7 +79,7 @@ export default function ToolsPage() {
                     <div className="flex items-center gap-3">
                       {t.thumbnail ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={t.thumbnail} alt="" referrerPolicy="no-referrer" className="size-8 rounded-md object-cover" />
+                        <img src={t.thumbnail} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="size-8 rounded-md object-cover" />
                       ) : (
                         <span className="flex size-8 items-center justify-center rounded-md bg-zinc-100 text-xs">🧮</span>
                       )}

@@ -92,7 +92,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           {article.featuredImage && (
             <div className="mt-6 overflow-hidden rounded-2xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={article.featuredImage} alt={article.title} referrerPolicy="no-referrer" className="w-full object-cover" />
+              <img src={article.featuredImage} alt={article.title} referrerPolicy="no-referrer" loading="lazy" decoding="async" className="w-full object-cover" />
             </div>
           )}
 

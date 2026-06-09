@@ -72,7 +72,7 @@ export default function UploadPage() {
         <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-4">
           <p className="text-sm font-semibold text-emerald-600">✓ Uploaded</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={media.url} alt={media.filename} referrerPolicy="no-referrer" className="mt-3 max-h-64 rounded-lg" />
+          <img src={media.url} alt={media.filename} referrerPolicy="no-referrer" loading="lazy" decoding="async" className="mt-3 max-h-64 rounded-lg" />
           <p className="mt-3 break-all text-xs text-zinc-500">{media.url}</p>
         </div>
       )}
