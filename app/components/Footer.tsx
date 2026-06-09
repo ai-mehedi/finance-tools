@@ -11,23 +11,19 @@ export default async function Footer() {
   const columns = await getFooterNav();
 
   return (
-    <footer className="w-full border-t border-zinc-200 bg-zinc-100">
+    <footer className="w-full border-t border-zinc-800 bg-zinc-950">
       <div className="mx-auto container px-6 py-12">
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6">
           <div className="col-span-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xl">📊</span>
-              <span className="text-lg font-extrabold tracking-tight text-zinc-900">
-                Topic<span className="text-orange-500">Drill</span>
-              </span>
-            </div>
-            <p className="mt-3 max-w-xs text-sm leading-relaxed text-zinc-500">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-white.svg" alt="TopicDrill" className="h-8 w-auto" />
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-zinc-400">
               Your all-in-one platform for financial tools, calculators, guides
               and expert tips. Plan smart, save more and achieve financial freedom.
             </p>
             <div className="mt-4 flex gap-3">
               {SOCIAL.map((s) => (
-                <a key={s.name} href="#" aria-label={s.name} className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-zinc-600 shadow-sm transition-colors hover:bg-orange-500 hover:text-white">
+                <a key={s.name} href="#" aria-label={s.name} className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-zinc-300 transition-colors hover:bg-orange-500 hover:text-white">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={s.path} /></svg>
                 </a>
               ))}
@@ -36,11 +32,11 @@ export default async function Footer() {
 
           {columns.map((col) => (
             <div key={col._id}>
-              <h3 className="text-sm font-bold text-zinc-900">{col.title}</h3>
+              <h3 className="text-sm font-bold text-white">{col.title}</h3>
               <ul className="mt-3 space-y-2">
                 {col.children.map((link) => (
                   <li key={link._id}>
-                    <Link href={link.url || "#"} className="text-sm text-zinc-500 transition-colors hover:text-orange-500">
+                    <Link href={link.url || "#"} className="text-sm text-zinc-400 transition-colors hover:text-orange-400">
                       {link.title}
                     </Link>
                   </li>
@@ -50,12 +46,12 @@ export default async function Footer() {
           ))}
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-zinc-200 pt-6 text-sm text-zinc-500 sm:flex-row">
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-zinc-800 pt-6 text-sm text-zinc-400 sm:flex-row">
           <p>© {new Date().getFullYear()} TopicDrill. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <Link href="/privacy-policy" className="transition-colors hover:text-orange-500">Privacy Policy</Link>
-            <Link href="/terms" className="transition-colors hover:text-orange-500">Terms of Use</Link>
-            <Link href="/disclaimer" className="transition-colors hover:text-orange-500">Disclaimer</Link>
+            <Link href="/privacy-policy" className="transition-colors hover:text-orange-400">Privacy Policy</Link>
+            <Link href="/terms" className="transition-colors hover:text-orange-400">Terms of Use</Link>
+            <Link href="/disclaimer" className="transition-colors hover:text-orange-400">Disclaimer</Link>
           </div>
         </div>
       </div>

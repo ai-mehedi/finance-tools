@@ -10,7 +10,7 @@ export const revalidate = 3600;
 export const metadata = {
   title: "All Categories",
   alternates: { canonical: "/categories" },
-  description: "Browse all financial tool categories — budgeting, investing, loans, taxes, savings and more.",
+  description: "Browse all financial tool categories for budgeting, investing, loans, taxes, savings and more.",
 };
 
 export default async function CategoriesPage() {

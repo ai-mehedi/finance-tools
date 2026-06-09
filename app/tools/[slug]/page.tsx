@@ -6,8 +6,9 @@ import Newsletter from "../../components/Newsletter";
 import Footer from "../../components/Footer";
 import JsonLd from "../../components/JsonLd";
 import { AdSlot } from "../../components/AdSlot";
+import ShareButtons from "../../components/ShareButtons";
 import { getToolBySlug } from "@/lib/queries";
-import { webAppSchema, faqSchema, breadcrumbSchema } from "@/lib/seo";
+import { webAppSchema, faqSchema, breadcrumbSchema, abs } from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -76,6 +77,10 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
                 <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900 sm:text-3xl">{tool.title}</h1>
                 {tool.description && <p className="mt-1 text-sm text-zinc-500">{tool.description}</p>}
               </div>
+            </div>
+
+            <div className="mt-5">
+              <ShareButtons url={abs(`/tools/${tool.slug}`)} title={tool.title} />
             </div>
 
             {/* Calculator placeholder (engine built separately) */}

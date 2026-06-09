@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
@@ -52,9 +52,45 @@ export function ToolForm({ tool }: { tool?: ToolValue }) {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  // One-click AI: generate long-form content, FAQ and SEO fields from the title.
+  async function generate() {
+    if (!form.title.trim()) {
+      setError("Add a title first, then generate.");
+      return;
+    }
+    setGenerating(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/generate-tool-content", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          title: form.title,
+          type: form.type,
+          description: form.description,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Generation failed");
+      setForm((f) => ({
+        ...f,
+        content: data.content ?? f.content,
+        metaTitle: data.metaTitle || f.metaTitle,
+        metaDescription: data.metaDescription || f.metaDescription,
+        keywords: Array.isArray(data.keywords) && data.keywords.length ? data.keywords.join(", ") : f.keywords,
+      }));
+      if (Array.isArray(data.faq) && data.faq.length) setFaq(data.faq);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Generation failed");
+    } finally {
+      setGenerating(false);
+    }
   }
 
   async function save(e: React.FormEvent) {
@@ -93,6 +129,15 @@ export function ToolForm({ tool }: { tool?: ToolValue }) {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={generate}
+            disabled={generating || !form.title.trim()}
+            title="Generate content, FAQ and SEO from the title using AI"
+          >
+            <Sparkles className="size-4" /> {generating ? "Generating…" : "Generate with AI"}
+          </Button>
           <Link href="/admin/tools"><Button type="button" variant="outline">Cancel</Button></Link>
           <Button type="submit" variant="primary" disabled={saving}>{saving ? "Saving…" : "Save Tool"}</Button>
         </div>

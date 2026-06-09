@@ -10,11 +10,9 @@ export default function HeaderClient({ items, active }: { items: NavItem[]; acti
   return (
     <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white">
       <div className="mx-auto flex h-16 container items-center gap-6 px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-1.5">
-          <span className="text-xl">📊</span>
-          <span className="text-lg font-extrabold tracking-tight text-zinc-900">
-            Topic<span className="text-orange-500">Drill</span>
-          </span>
+        <Link href="/" className="flex shrink-0 items-center" aria-label="TopicDrill home">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="TopicDrill" className="h-8 w-auto" />
         </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">

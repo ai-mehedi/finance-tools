@@ -8,6 +8,7 @@ export default function StaticPage({
   updated,
   active,
   wide = false,
+  icon,
   children,
 }: {
   title: string;
@@ -15,6 +16,7 @@ export default function StaticPage({
   updated?: string;
   active?: string;
   wide?: boolean;
+  icon?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -28,7 +30,14 @@ export default function StaticPage({
               <span>/</span>
               <span className="font-medium text-zinc-600">{title}</span>
             </nav>
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-zinc-900 sm:text-4xl">{title}</h1>
+            <div className="mt-4 flex items-center gap-4">
+              {icon && (
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-orange-50 text-3xl">
+                  {icon}
+                </span>
+              )}
+              <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 sm:text-4xl">{title}</h1>
+            </div>
             {intro && <p className="mt-3 max-w-2xl text-lg leading-relaxed text-zinc-500">{intro}</p>}
             {updated && (
               <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-500">

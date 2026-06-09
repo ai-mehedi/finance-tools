@@ -1,0 +1,275 @@
+slug,title,type,url,done
+"401k-calculator","401k Calculator","calculator","/calculators/401k-calculator",yes
+"401k-match-calculator","401k Match Calculator","calculator","",no
+"50-30-20-budget-calculator","50 30 20 Budget Calculator","calculator","",no
+"52-week-savings-calculator","52 Week Savings Calculator","calculator","",no
+"529-plan-calculator","529 Plan Calculator","calculator","",no
+"apr-calculator","APR Calculator","calculator","",no
+"allowance-calculator","Allowance Calculator","calculator","",no
+"amortization-calculator","Amortization Schedule Calculator","calculator","",no
+"annual-fee-calculator","Annual Fee Worth It Calculator","calculator","",no
+"annual-income-calculator","Annual Income Calculator","calculator","",no
+"annualized-return-calculator","Annualized Return Calculator","calculator","",no
+"annuity-calculator","Annuity Calculator","calculator","",no
+"annuity-payout-calculator","Annuity Payout Calculator","calculator","",no
+"auto-loan-payoff-calculator","Auto Loan Payoff Calculator","calculator","/calculators/auto-loan-payoff-calculator",yes
+"baby-cost-calculator","Baby Cost Calculator","calculator","",no
+"balance-transfer-calculator","Balance Transfer Calculator","calculator","",no
+"balloon-loan-calculator","Balloon Loan Calculator","calculator","",no
+"bill-split-calculator","Bill Split Calculator","calculator","",no
+"bitcoin-halving-countdown","Bitcoin Halving Countdown","tool","",no
+"bitcoin-profit-calculator","Bitcoin Profit Calculator","calculator","",no
+"biweekly-mortgage-calculator","Biweekly Mortgage Calculator","calculator","/calculators/biweekly-mortgage-calculator",yes
+"bond-price-calculator","Bond Price Calculator","calculator","",no
+"bond-yield-calculator","Bond Yield Calculator","calculator","",no
+"bonus-calculator","Bonus Calculator","calculator","",no
+"break-even-calculator","Break Even Calculator","calculator","",no
+"bridge-loan-calculator","Bridge Loan Calculator","calculator","",no
+"brokerage-calculator","Brokerage Calculator","calculator","",no
+"budget-calculator","Budget Calculator","calculator","/calculators/budget-calculator",yes
+"business-loan-calculator","Business Loan Calculator","calculator","/calculators/business-loan-calculator",yes
+"cagr-calculator","CAGR Calculator","calculator","/calculators/cagr-calculator",yes
+"cpi-calculator","CPI Calculator","calculator","",no
+"ctc-calculator","CTC Calculator","calculator","",no
+"capital-gains-calculator","Capital Gains Calculator","calculator","",no
+"capital-gains-tax-calculator","Capital Gains Tax Calculator","calculator","",no
+"car-affordability-calculator","Car Affordability Calculator","calculator","",no
+"car-depreciation-calculator","Car Depreciation Calculator","calculator","",no
+"car-insurance-calculator","Car Insurance Calculator","calculator","",no
+"car-lease-calculator","Car Lease Calculator","calculator","",no
+"car-loan-calculator","Car Loan Calculator","calculator","/calculators/car-loan-calculator",yes
+"car-loan-refinance-calculator","Car Loan Refinance Calculator","calculator","",no
+"cash-advance-calculator","Cash Advance Fee Calculator","calculator","",no
+"burn-rate-calculator","Cash Burn Rate Calculator","calculator","",no
+"cash-flow-calculator","Cash Flow Calculator","calculator","",no
+"cashback-calculator","Cashback Rewards Calculator","calculator","",no
+"cd-calculator","Certificate of Deposit Calculator","calculator","",no
+"closing-cost-calculator","Closing Cost Calculator","calculator","",no
+"coast-fire-calculator","Coast FIRE Calculator","calculator","",no
+"college-cost-calculator","College Cost Calculator","calculator","",no
+"college-savings-calculator","College Savings Calculator","calculator","",no
+"commission-calculator","Commission Calculator","calculator","",no
+"compound-interest-calculator","Compound Interest Calculator","calculator","/calculators/compound-interest-calculator",yes
+"compound-savings-calculator","Compound Savings Calculator","calculator","",no
+"cost-per-mile-calculator","Cost Per Mile Calculator","calculator","",no
+"cost-per-use-calculator","Cost Per Use Calculator","calculator","",no
+"cost-of-living-calculator","Cost of Living Calculator","calculator","",no
+"col-comparison-calculator","Cost of Living Comparison Calculator","calculator","",no
+"credit-builder-loan-calculator","Credit Builder Loan Calculator","calculator","",no
+"credit-card-comparison-calculator","Credit Card Comparison Calculator","calculator","",no
+"credit-card-interest-calculator","Credit Card Interest Calculator","calculator","",no
+"credit-card-payoff-calculator","Credit Card Payoff Calculator","calculator","",no
+"credit-limit-calculator","Credit Limit Increase Calculator","calculator","",no
+"credit-score-simulator","Credit Score Simulator","calculator","",no
+"credit-utilization-calculator","Credit Utilization Calculator","calculator","",no
+"critical-illness-calculator","Critical Illness Cover Calculator","calculator","",no
+"crypto-average-calculator","Crypto Average Buy Calculator","calculator","",no
+"crypto-converter","Crypto Converter","tool","",no
+"crypto-dca-calculator","Crypto DCA Calculator","calculator","",no
+"crypto-portfolio-calculator","Crypto Portfolio Calculator","calculator","",no
+"crypto-profit-calculator","Crypto Profit Calculator","calculator","",no
+"crypto-roi-calculator","Crypto ROI Calculator","calculator","",no
+"crypto-tax-calculator","Crypto Tax Calculator","calculator","",no
+"currency-converter","Currency Converter","tool","",no
+"cac-calculator","Customer Acquisition Cost Calculator","calculator","",no
+"clv-calculator","Customer Lifetime Value Calculator","calculator","",no
+"daily-interest-calculator","Daily Interest Calculator","calculator","",no
+"daily-savings-calculator","Daily Savings Calculator","calculator","",no
+"debt-avalanche-calculator","Debt Avalanche Calculator","calculator","",no
+"debt-consolidation-calculator","Debt Consolidation Calculator","calculator","",no
+"debt-snowball-calculator","Debt Snowball Calculator","calculator","",no
+"debt-to-income-calculator","Debt to Income Ratio Calculator","calculator","",no
+"depreciation-calculator","Depreciation Calculator","calculator","",no
+"disability-insurance-calculator","Disability Insurance Calculator","calculator","",no
+"discount-calculator","Discount Calculator","calculator","",no
+"discretionary-income-calculator","Discretionary Income Calculator","calculator","",no
+"dividend-calculator","Dividend Calculator","calculator","",no
+"drip-calculator","Dividend Reinvestment Calculator","calculator","",no
+"dividend-tax-calculator","Dividend Tax Calculator","calculator","",no
+"dividend-yield-calculator","Dividend Yield Calculator","calculator","",no
+"down-payment-calculator","Down Payment Calculator","calculator","",no
+"down-payment-savings-calculator","Down Payment Savings Calculator","calculator","",no
+"ebitda-calculator","EBITDA Calculator","calculator","",no
+"epf-calculator","EPF Calculator","calculator","",no
+"ev-vs-gas-calculator","EV vs Gas Savings Calculator","calculator","",no
+"education-loan-calculator","Education Loan EMI Calculator","calculator","",no
+"effective-tax-rate-calculator","Effective Tax Rate Calculator","calculator","",no
+"emergency-fund-calculator","Emergency Fund Calculator","calculator","",no
+"envelope-budget-calculator","Envelope Budget Calculator","calculator","",no
+"estate-tax-calculator","Estate Tax Calculator","calculator","",no
+"exchange-rate-calculator","Exchange Rate Calculator","calculator","",no
+"expense-ratio-calculator","Expense Ratio Calculator","calculator","",no
+"expense-tracker","Expense Tracker","tool","",no
+"extra-payment-calculator","Extra Payment Savings Calculator","calculator","",no
+"fire-calculator","FIRE Calculator","calculator","",no
+"fd-calculator","Fixed Deposit Calculator","calculator","",no
+"flat-vs-reducing-rate-calculator","Flat vs Reducing Rate Calculator","calculator","",no
+"forex-compounding-calculator","Forex Compounding Calculator","calculator","",no
+"forex-margin-calculator","Forex Margin Calculator","calculator","",no
+"position-size-calculator","Forex Position Size Calculator","calculator","",no
+"forex-profit-calculator","Forex Profit Calculator","calculator","",no
+"freelance-rate-calculator","Freelance Rate Calculator","calculator","",no
+"fuel-cost-calculator","Fuel Cost Calculator","calculator","",no
+"future-cost-calculator","Future Cost Calculator","calculator","",no
+"future-value-calculator","Future Value Calculator","calculator","",no
+"gst-calculator","GST Calculator","calculator","",no
+"gas-fee-calculator","Gas Fee Calculator","calculator","",no
+"gift-tax-calculator","Gift Tax Calculator","calculator","",no
+"goal-savings-calculator","Goal Based Savings Calculator","calculator","",no
+"gold-loan-calculator","Gold Loan Calculator","calculator","",no
+"gross-profit-calculator","Gross Profit Calculator","calculator","",no
+"gross-to-net-calculator","Gross to Net Salary Calculator","calculator","",no
+"hra-exemption-calculator","HRA Exemption Calculator","calculator","",no
+"health-insurance-calculator","Health Insurance Premium Calculator","calculator","",no
+"high-yield-savings-calculator","High Yield Savings Calculator","calculator","",no
+"home-affordability-calculator","Home Affordability Calculator","calculator","",no
+"heloc-calculator","Home Equity HELOC Calculator","calculator","",no
+"home-insurance-calculator","Home Insurance Calculator","calculator","",no
+"home-loan-emi-calculator","Home Loan EMI Calculator","calculator","/calculators/home-loan-emi-calculator",yes
+"billing-rate-calculator","Hourly Billing Rate Calculator","calculator","",no
+"hourly-rate-calculator","Hourly Rate Calculator","calculator","/calculators/hourly-rate-calculator",yes
+"hourly-to-salary-calculator","Hourly to Salary Calculator","calculator","",no
+"human-life-value-calculator","Human Life Value Calculator","calculator","",no
+"irr-calculator","IRR Calculator","calculator","",no
+"impermanent-loss-calculator","Impermanent Loss Calculator","calculator","",no
+"income-protection-calculator","Income Protection Calculator","calculator","",no
+"income-tax-calculator","Income Tax Calculator","calculator","",no
+"income-vs-expense-calculator","Income vs Expense Calculator","calculator","",no
+"inflation-calculator","Inflation Calculator","calculator","",no
+"insurance-needs-calculator","Insurance Needs Calculator","calculator","",no
+"interest-only-loan-calculator","Interest Only Loan Calculator","calculator","",no
+"inventory-turnover-calculator","Inventory Turnover Calculator","calculator","",no
+"investment-goal-calculator","Investment Goal Calculator","calculator","",no
+"invoice-calculator","Invoice Total Calculator","calculator","",no
+"latte-factor-calculator","Latte Factor Calculator","calculator","",no
+"lease-vs-buy-calculator","Lease vs Buy Calculator","calculator","",no
+"life-insurance-calculator","Life Insurance Calculator","calculator","",no
+"line-of-credit-calculator","Line of Credit Calculator","calculator","",no
+"loan-affordability-calculator","Loan Affordability Calculator","calculator","",no
+"loan-comparison-calculator","Loan Comparison Calculator","calculator","",no
+"loan-emi-calculator","Loan EMI Calculator","calculator","/calculators/loan-emi-calculator",yes
+"loan-eligibility-calculator","Loan Eligibility Calculator","calculator","",no
+"loan-interest-calculator","Loan Interest Calculator","calculator","",no
+"loan-late-payment-calculator","Loan Late Payment Calculator","calculator","",no
+"loan-payoff-calculator","Loan Payoff Calculator","calculator","",no
+"loan-prepayment-calculator","Loan Prepayment Calculator","calculator","",no
+"loan-refinance-calculator","Loan Refinance Calculator","calculator","",no
+"loan-tenure-calculator","Loan Tenure Calculator","calculator","",no
+"loan-to-value-calculator","Loan to Value Calculator","calculator","",no
+"lot-size-calculator","Lot Size Calculator","calculator","",no
+"lumpsum-calculator","Lumpsum Investment Calculator","calculator","",no
+"margin-calculator","Margin Calculator","calculator","",no
+"marginal-tax-rate-calculator","Marginal Tax Rate Calculator","calculator","",no
+"markup-calculator","Markup Calculator","calculator","",no
+"mileage-reimbursement-calculator","Mileage Reimbursement Calculator","calculator","",no
+"millionaire-calculator","Millionaire Savings Calculator","calculator","",no
+"minimum-payment-calculator","Minimum Payment Calculator","calculator","",no
+"minimum-wage-calculator","Minimum Wage Calculator","calculator","",no
+"mining-calculator","Mining Profitability Calculator","calculator","",no
+"money-doubling-calculator","Money Doubling Time Calculator","calculator","",no
+"money-market-calculator","Money Market Calculator","calculator","",no
+"monthly-expense-calculator","Monthly Expense Calculator","calculator","",no
+"mortgage-affordability-calculator","Mortgage Affordability Calculator","calculator","",no
+"mortgage-amortization-calculator","Mortgage Amortization Calculator","calculator","",no
+"mortgage-calculator","Mortgage Calculator","calculator","/calculators/mortgage-calculator",yes
+"mortgage-comparison-calculator","Mortgage Comparison Calculator","calculator","",no
+"mortgage-overpayment-calculator","Mortgage Overpayment Calculator","calculator","",no
+"mortgage-payoff-calculator","Mortgage Payoff Calculator","calculator","",no
+"mortgage-points-calculator","Mortgage Points Calculator","calculator","",no
+"mortgage-protection-calculator","Mortgage Protection Calculator","calculator","",no
+"mortgage-refinance-calculator","Mortgage Refinance Calculator","calculator","",no
+"mutual-fund-calculator","Mutual Fund Returns Calculator","calculator","",no
+"nps-calculator","NPS Calculator","calculator","",no
+"npv-calculator","NPV Calculator","calculator","",no
+"net-profit-calculator","Net Profit Calculator","calculator","",no
+"net-worth-calculator","Net Worth Calculator","calculator","",no
+"options-profit-calculator","Options Profit Calculator","calculator","",no
+"overtime-calculator","Overtime Pay Calculator","calculator","",no
+"pmi-calculator","PMI Calculator","calculator","",no
+"ppf-calculator","PPF Calculator","calculator","",no
+"pay-raise-calculator","Pay Raise Calculator","calculator","",no
+"payback-period-calculator","Payback Period Calculator","calculator","",no
+"paycheck-calculator","Paycheck Calculator","calculator","",no
+"payroll-tax-calculator","Payroll Tax Calculator","calculator","",no
+"pension-calculator","Pension Calculator","calculator","",no
+"percentage-calculator","Percentage Calculator","calculator","",no
+"percentage-change-calculator","Percentage Change Calculator","calculator","",no
+"personal-loan-calculator","Personal Loan Calculator","calculator","",no
+"pip-calculator","Pip Calculator","calculator","",no
+"portfolio-return-calculator","Portfolio Return Calculator","calculator","",no
+"present-value-calculator","Present Value Calculator","calculator","",no
+"pro-rata-salary-calculator","Pro Rata Salary Calculator","calculator","",no
+"profit-margin-calculator","Profit Margin Calculator","calculator","",no
+"profit-margin-tax-calculator","Profit Margin With Tax Calculator","calculator","",no
+"property-tax-calculator","Property Tax Calculator","calculator","",no
+"property-tax-estimator","Property Tax Estimator","calculator","",no
+"purchasing-power-calculator","Purchasing Power Calculator","calculator","",no
+"rmd-calculator","RMD Calculator","calculator","",no
+"roi-calculator","ROI Calculator","calculator","",no
+"real-interest-rate-calculator","Real Interest Rate Calculator","calculator","",no
+"real-vs-nominal-calculator","Real vs Nominal Return Calculator","calculator","",no
+"rd-calculator","Recurring Deposit Calculator","calculator","",no
+"rent-affordability-calculator","Rent Affordability Calculator","calculator","",no
+"rent-increase-calculator","Rent Increase Calculator","calculator","",no
+"rent-split-calculator","Rent Split Calculator","calculator","",no
+"rent-vs-buy-calculator","Rent vs Buy Calculator","calculator","",no
+"retirement-calculator","Retirement Calculator","calculator","",no
+"retirement-corpus-calculator","Retirement Corpus Calculator","calculator","",no
+"retirement-savings-calculator","Retirement Savings Calculator","calculator","",no
+"retirement-withdrawal-calculator","Retirement Withdrawal Calculator","calculator","",no
+"reverse-mortgage-calculator","Reverse Mortgage Calculator","calculator","",no
+"risk-reward-calculator","Risk Reward Ratio Calculator","calculator","",no
+"roth-ira-calculator","Roth IRA Calculator","calculator","",no
+"rule-of-72-calculator","Rule of 72 Calculator","calculator","",no
+"sip-calculator","SIP Calculator","calculator","/calculators/sip-calculator",yes
+"stp-calculator","STP Calculator","calculator","",no
+"swp-calculator","SWP Calculator","calculator","",no
+"salary-calculator","Salary Calculator","calculator","",no
+"salary-increment-calculator","Salary Increment Calculator","calculator","",no
+"salary-inflation-calculator","Salary Inflation Calculator","calculator","",no
+"salary-to-hourly-calculator","Salary to Hourly Calculator","calculator","",no
+"sales-revenue-calculator","Sales Revenue Calculator","calculator","",no
+"sales-tax-calculator","Sales Tax Calculator","calculator","",no
+"savings-calculator","Savings Calculator","calculator","",no
+"savings-goal-calculator","Savings Goal Calculator","calculator","",no
+"savings-rate-calculator","Savings Rate Calculator","calculator","",no
+"scholarship-savings-calculator","Scholarship Savings Calculator","calculator","",no
+"second-mortgage-calculator","Second Mortgage Calculator","calculator","",no
+"self-employment-tax-calculator","Self Employment Tax Calculator","calculator","",no
+"severance-pay-calculator","Severance Pay Calculator","calculator","",no
+"simple-interest-calculator","Simple Interest Calculator","calculator","/calculators/simple-interest-calculator",yes
+"sinking-fund-calculator","Sinking Fund Calculator","calculator","",no
+"social-security-calculator","Social Security Calculator","calculator","",no
+"split-bill-calculator","Split Bill Calculator","calculator","",no
+"staking-calculator","Staking Rewards Calculator","calculator","",no
+"stamp-duty-calculator","Stamp Duty Calculator","calculator","",no
+"stock-average-calculator","Stock Average Calculator","calculator","",no
+"stock-profit-calculator","Stock Profit Calculator","calculator","",no
+"stock-return-calculator","Stock Return Calculator","calculator","",no
+"student-budget-calculator","Student Budget Calculator","calculator","",no
+"student-loan-calculator","Student Loan Calculator","calculator","",no
+"loan-forgiveness-calculator","Student Loan Forgiveness Calculator","calculator","",no
+"student-loan-payoff-calculator","Student Loan Payoff Calculator","calculator","",no
+"student-loan-refinance-calculator","Student Loan Refinance Calculator","calculator","",no
+"subscription-cost-calculator","Subscription Cost Calculator","calculator","",no
+"take-home-pay-calculator","Take Home Pay Calculator","calculator","",no
+"tax-bracket-calculator","Tax Bracket Calculator","calculator","",no
+"tax-deduction-calculator","Tax Deduction Calculator","calculator","",no
+"tax-refund-calculator","Tax Refund Calculator","calculator","",no
+"term-insurance-calculator","Term Insurance Calculator","calculator","",no
+"term-vs-whole-life-calculator","Term vs Whole Life Calculator","calculator","",no
+"time-value-of-money-calculator","Time Value of Money Calculator","calculator","",no
+"tip-calculator","Tip Calculator","calculator","",no
+"car-ownership-cost-calculator","Total Cost of Ownership Calculator","calculator","",no
+"traditional-ira-calculator","Traditional IRA Calculator","calculator","",no
+"travel-insurance-calculator","Travel Insurance Calculator","calculator","",no
+"tuition-inflation-calculator","Tuition Inflation Calculator","calculator","",no
+"two-card-payoff-calculator","Two Card Payoff Calculator","calculator","",no
+"vat-calculator","VAT Calculator","calculator","",no
+"vacation-savings-calculator","Vacation Savings Calculator","calculator","",no
+"wedding-budget-calculator","Wedding Budget Calculator","calculator","",no
+"whole-life-insurance-calculator","Whole Life Insurance Calculator","calculator","",no
+"withholding-tax-calculator","Withholding Tax Calculator","calculator","",no
+"working-capital-calculator","Working Capital Calculator","calculator","",no
+"xirr-calculator","XIRR Calculator","calculator","",no
+"zero-based-budget-calculator","Zero Based Budget Calculator","calculator","",no

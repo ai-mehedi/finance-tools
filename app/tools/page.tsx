@@ -10,7 +10,7 @@ export const revalidate = 3600;
 export const metadata = {
   title: "All Tools & Calculators",
   alternates: { canonical: "/tools" },
-  description: "Browse 200+ free financial calculators and tools — loans, mortgage, investing, taxes, savings and more.",
+  description: "Browse 200+ free financial calculators and tools for loans, mortgage, investing, taxes, savings and more.",
 };
 
 const PER_PAGE = 24;

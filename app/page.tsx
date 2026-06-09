@@ -24,8 +24,10 @@ export default async function Home() {
     <div className="flex min-h-screen flex-col bg-zinc-50">
       <SiteHeader />
       <main className="flex-1">
+        <div className="mx-auto container px-6"><AdSlot className="my-4" /></div>
         <Hero />
         <StatsBar />
+        <div className="mx-auto container px-6"><AdSlot className="my-4" /></div>
         <FinancialTools tools={popularTools.data} />
         <div className="mx-auto container px-6"><AdSlot className="my-4" /></div>
         <Categories categories={categories} />

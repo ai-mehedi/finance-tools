@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://topicdrill.com"),
   title: {
-    default: "TopicDrill — Free Financial Tools & Calculators",
+    default: "Free Financial Tools & Calculators | TopicDrill",
     template: "%s | TopicDrill",
   },
   description:
@@ -32,13 +32,13 @@ export const metadata: Metadata = {
     siteName: "TopicDrill",
     type: "website",
     url: SITE_URL,
-    title: "TopicDrill — Free Financial Tools & Calculators",
+    title: "Free Financial Tools & Calculators | TopicDrill",
     description: "200+ free financial calculators and clear money guides. No sign-ups, no clutter.",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "TopicDrill — Free Financial Tools & Calculators" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Free Financial Tools & Calculators | TopicDrill" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "TopicDrill — Free Financial Tools & Calculators",
+    title: "Free Financial Tools & Calculators | TopicDrill",
     description: "200+ free financial calculators and clear money guides.",
     images: ["/og.png"],
   },

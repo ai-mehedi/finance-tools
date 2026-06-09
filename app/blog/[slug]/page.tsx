@@ -6,8 +6,9 @@ import Newsletter from "../../components/Newsletter";
 import Footer from "../../components/Footer";
 import JsonLd from "../../components/JsonLd";
 import { AdSlot } from "../../components/AdSlot";
+import ShareButtons from "../../components/ShareButtons";
 import { getArticleBySlug, getArticles } from "@/lib/queries";
-import { articleSchema, breadcrumbSchema } from "@/lib/seo";
+import { articleSchema, breadcrumbSchema, abs } from "@/lib/seo";
 
 export const revalidate = 1800;
 
@@ -87,6 +88,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <div>
               {article.author && <p className="font-bold text-zinc-900">{article.author.firstname} {article.author.lastname}</p>}
               <p className="text-xs text-zinc-500">{fmt(article.createdAt)}</p>
+            </div>
+            <div className="ml-auto">
+              <ShareButtons url={abs(`/blog/${article.slug}`)} title={article.title} />
             </div>
           </div>
 

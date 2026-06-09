@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -137,6 +137,16 @@ export function RichEditor({
       },
     },
   });
+
+  // Sync external value changes (e.g. AI-generated content) into the editor.
+  // Only runs when `value` differs from the current HTML, so typing isn't disrupted.
+  // `emitUpdate: false` avoids an onChange feedback loop.
+  useEffect(() => {
+    if (!editor) return;
+    if (value && value !== editor.getHTML()) {
+      editor.commands.setContent(value, { emitUpdate: false });
+    }
+  }, [value, editor]);
 
   if (!editor) {
     return <div className="min-h-[320px] rounded-lg border border-zinc-200 bg-zinc-50" />;
