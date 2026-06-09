@@ -123,6 +123,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
+        <div className="mx-auto max-w-3xl px-6 pb-10">
+          <AdSlot slot="6708312646" format="autorelaxed" responsive={false} minHeight={400} />
+        </div>
+
         <Newsletter />
       </main>
       <Footer />
