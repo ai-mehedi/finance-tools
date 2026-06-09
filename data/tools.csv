@@ -1,0 +1,275 @@
+title,slug,category,type,search_demand,description
+Loan EMI Calculator,loan-emi-calculator,loans-debt,calculator,High,Calculate monthly EMI for any loan amount rate and tenure
+Personal Loan Calculator,personal-loan-calculator,loans-debt,calculator,High,Estimate personal loan EMI and total interest payable
+Loan Payoff Calculator,loan-payoff-calculator,loans-debt,calculator,High,See how fast you can pay off a loan with extra payments
+Loan Comparison Calculator,loan-comparison-calculator,loans-debt,calculator,Medium,Compare two loan offers side by side
+Loan Affordability Calculator,loan-affordability-calculator,loans-debt,calculator,Medium,Find out how big a loan you can afford
+Amortization Schedule Calculator,amortization-calculator,loans-debt,calculator,High,Generate a full loan amortization schedule
+Debt Snowball Calculator,debt-snowball-calculator,loans-debt,calculator,High,Pay off debts smallest balance first and track progress
+Debt Avalanche Calculator,debt-avalanche-calculator,loans-debt,calculator,Medium,Pay off debts highest interest first to save the most
+Debt Consolidation Calculator,debt-consolidation-calculator,loans-debt,calculator,Medium,Check savings from consolidating multiple debts
+Debt to Income Ratio Calculator,debt-to-income-calculator,loans-debt,calculator,High,Calculate your DTI ratio for loan eligibility
+Loan Interest Calculator,loan-interest-calculator,loans-debt,calculator,Medium,Work out total interest paid over a loan term
+Loan Prepayment Calculator,loan-prepayment-calculator,loans-debt,calculator,Medium,See interest saved by prepaying your loan
+Balloon Loan Calculator,balloon-loan-calculator,loans-debt,calculator,Low,Calculate payments for a balloon payment loan
+Flat vs Reducing Rate Calculator,flat-vs-reducing-rate-calculator,loans-debt,calculator,Medium,Compare flat and reducing balance interest rates
+Loan Tenure Calculator,loan-tenure-calculator,loans-debt,calculator,Medium,Find the loan tenure for a target EMI
+Loan Eligibility Calculator,loan-eligibility-calculator,loans-debt,calculator,High,Estimate the maximum loan you qualify for
+Loan Refinance Calculator,loan-refinance-calculator,loans-debt,calculator,Medium,Compare your current loan with a refinance offer
+Interest Only Loan Calculator,interest-only-loan-calculator,loans-debt,calculator,Low,Calculate payments on an interest only loan
+Line of Credit Calculator,line-of-credit-calculator,loans-debt,calculator,Low,Estimate payments and interest on a line of credit
+Gold Loan Calculator,gold-loan-calculator,loans-debt,calculator,Medium,Calculate loan amount and EMI against gold value
+Daily Interest Calculator,daily-interest-calculator,loans-debt,calculator,Medium,Compute interest accrued per day on a balance
+Credit Builder Loan Calculator,credit-builder-loan-calculator,loans-debt,calculator,Low,Plan payments for a credit builder loan
+Loan Late Payment Calculator,loan-late-payment-calculator,loans-debt,calculator,Low,Estimate penalties for late loan payments
+Bridge Loan Calculator,bridge-loan-calculator,loans-debt,calculator,Low,Calculate cost of a short term bridge loan
+Mortgage Calculator,mortgage-calculator,mortgage-home,calculator,High,Calculate monthly mortgage payments with taxes and insurance
+Mortgage Affordability Calculator,mortgage-affordability-calculator,mortgage-home,calculator,High,Find out how much home you can afford
+Mortgage Refinance Calculator,mortgage-refinance-calculator,mortgage-home,calculator,High,Compare refinancing against your current mortgage
+Mortgage Payoff Calculator,mortgage-payoff-calculator,mortgage-home,calculator,Medium,See how extra payments shorten your mortgage
+Home Loan EMI Calculator,home-loan-emi-calculator,mortgage-home,calculator,High,Calculate home loan EMI principal and interest
+Down Payment Calculator,down-payment-calculator,mortgage-home,calculator,High,Work out the down payment needed for a home
+Mortgage Amortization Calculator,mortgage-amortization-calculator,mortgage-home,calculator,High,View a full mortgage amortization schedule
+PMI Calculator,pmi-calculator,mortgage-home,calculator,Medium,Estimate private mortgage insurance costs
+Mortgage Points Calculator,mortgage-points-calculator,mortgage-home,calculator,Medium,See if buying mortgage points saves money
+Rent vs Buy Calculator,rent-vs-buy-calculator,mortgage-home,calculator,High,Compare the cost of renting versus buying a home
+Home Equity HELOC Calculator,heloc-calculator,mortgage-home,calculator,Medium,Estimate how much you can borrow against home equity
+Reverse Mortgage Calculator,reverse-mortgage-calculator,mortgage-home,calculator,Medium,Estimate proceeds from a reverse mortgage
+Closing Cost Calculator,closing-cost-calculator,mortgage-home,calculator,Medium,Estimate closing costs when buying a home
+Biweekly Mortgage Calculator,biweekly-mortgage-calculator,mortgage-home,calculator,Medium,See savings from biweekly mortgage payments
+Mortgage Comparison Calculator,mortgage-comparison-calculator,mortgage-home,calculator,Medium,Compare multiple mortgage offers
+Stamp Duty Calculator,stamp-duty-calculator,mortgage-home,calculator,Medium,Estimate stamp duty on a property purchase
+Mortgage Overpayment Calculator,mortgage-overpayment-calculator,mortgage-home,calculator,Medium,Calculate interest saved by overpaying your mortgage
+Second Mortgage Calculator,second-mortgage-calculator,mortgage-home,calculator,Low,Estimate payments on a second mortgage
+Loan to Value Calculator,loan-to-value-calculator,mortgage-home,calculator,Medium,Calculate your LTV ratio for a property
+Home Affordability Calculator,home-affordability-calculator,mortgage-home,calculator,High,Determine the home price you can afford by income
+Property Tax Calculator,property-tax-calculator,mortgage-home,calculator,Medium,Estimate annual property tax on a home
+Rent Increase Calculator,rent-increase-calculator,mortgage-home,calculator,Medium,Calculate new rent after a percentage increase
+SIP Calculator,sip-calculator,investing,calculator,High,Calculate returns on monthly SIP investments
+Lumpsum Investment Calculator,lumpsum-calculator,investing,calculator,High,Estimate future value of a one time investment
+Compound Interest Calculator,compound-interest-calculator,investing,calculator,High,Calculate compound interest growth over time
+Simple Interest Calculator,simple-interest-calculator,investing,calculator,High,Calculate simple interest on principal
+ROI Calculator,roi-calculator,investing,calculator,High,Calculate return on investment percentage
+CAGR Calculator,cagr-calculator,investing,calculator,High,Compute compound annual growth rate
+Future Value Calculator,future-value-calculator,investing,calculator,Medium,Find the future value of an investment
+Present Value Calculator,present-value-calculator,investing,calculator,Medium,Find the present value of future cash flows
+Mutual Fund Returns Calculator,mutual-fund-calculator,investing,calculator,High,Estimate returns on mutual fund investments
+Stock Return Calculator,stock-return-calculator,investing,calculator,Medium,Calculate profit and return on a stock trade
+Dividend Calculator,dividend-calculator,investing,calculator,High,Calculate dividend income from your holdings
+Dividend Reinvestment Calculator,drip-calculator,investing,calculator,Medium,Project growth with reinvested dividends
+Dividend Yield Calculator,dividend-yield-calculator,investing,calculator,Medium,Calculate dividend yield of a stock
+XIRR Calculator,xirr-calculator,investing,calculator,Medium,Compute annualized return for irregular cash flows
+Stock Average Calculator,stock-average-calculator,investing,calculator,High,Calculate the average buy price of a stock
+Stock Profit Calculator,stock-profit-calculator,investing,calculator,Medium,Calculate profit after buying and selling shares
+Capital Gains Calculator,capital-gains-calculator,investing,calculator,Medium,Estimate capital gains on investments
+Bond Yield Calculator,bond-yield-calculator,investing,calculator,Low,Calculate current and yield to maturity of a bond
+Bond Price Calculator,bond-price-calculator,investing,calculator,Low,Calculate the fair price of a bond
+Rule of 72 Calculator,rule-of-72-calculator,investing,calculator,Medium,Estimate years to double your money
+Investment Goal Calculator,investment-goal-calculator,investing,calculator,Medium,Find how much to invest to reach a goal
+SWP Calculator,swp-calculator,investing,calculator,Medium,Plan systematic withdrawals from investments
+STP Calculator,stp-calculator,investing,calculator,Low,Plan systematic transfers between funds
+Portfolio Return Calculator,portfolio-return-calculator,investing,calculator,Medium,Calculate weighted return of a portfolio
+Expense Ratio Calculator,expense-ratio-calculator,investing,calculator,Low,See the impact of fund fees on returns
+Margin Calculator,margin-calculator,investing,calculator,Medium,Calculate margin required for trades
+Options Profit Calculator,options-profit-calculator,investing,calculator,Medium,Estimate profit and loss on options trades
+Brokerage Calculator,brokerage-calculator,investing,calculator,Medium,Calculate brokerage and charges on trades
+IRR Calculator,irr-calculator,investing,calculator,Low,Compute internal rate of return for cash flows
+NPV Calculator,npv-calculator,investing,calculator,Low,Calculate net present value of an investment
+Annualized Return Calculator,annualized-return-calculator,investing,calculator,Medium,Convert total return into annualized return
+Risk Reward Ratio Calculator,risk-reward-calculator,investing,calculator,Low,Calculate the risk to reward ratio of a trade
+Retirement Calculator,retirement-calculator,retirement,calculator,High,Plan how much you need to retire comfortably
+Retirement Savings Calculator,retirement-savings-calculator,retirement,calculator,High,Project your retirement savings growth
+401k Calculator,401k-calculator,retirement,calculator,High,Estimate your 401k balance at retirement
+401k Match Calculator,401k-match-calculator,retirement,calculator,Medium,Calculate employer match contributions
+Roth IRA Calculator,roth-ira-calculator,retirement,calculator,High,Project tax free growth of a Roth IRA
+Traditional IRA Calculator,traditional-ira-calculator,retirement,calculator,Medium,Estimate growth of a traditional IRA
+Pension Calculator,pension-calculator,retirement,calculator,Medium,Estimate pension income at retirement
+Annuity Calculator,annuity-calculator,retirement,calculator,Medium,Calculate annuity payouts and value
+Social Security Calculator,social-security-calculator,retirement,calculator,Medium,Estimate your social security benefits
+FIRE Calculator,fire-calculator,retirement,calculator,High,Find your financial independence retire early number
+Coast FIRE Calculator,coast-fire-calculator,retirement,calculator,Medium,Calculate your coast FIRE target
+Retirement Withdrawal Calculator,retirement-withdrawal-calculator,retirement,calculator,Medium,Plan sustainable withdrawals in retirement
+RMD Calculator,rmd-calculator,retirement,calculator,Medium,Calculate required minimum distributions
+NPS Calculator,nps-calculator,retirement,calculator,Medium,Estimate national pension scheme corpus
+PPF Calculator,ppf-calculator,retirement,calculator,High,Calculate public provident fund maturity value
+EPF Calculator,epf-calculator,retirement,calculator,High,Estimate employee provident fund balance
+Retirement Corpus Calculator,retirement-corpus-calculator,retirement,calculator,Medium,Calculate the corpus needed for retirement
+Annuity Payout Calculator,annuity-payout-calculator,retirement,calculator,Low,Calculate monthly income from an annuity
+Savings Calculator,savings-calculator,savings-deposits,calculator,High,Project savings growth with regular deposits
+Savings Goal Calculator,savings-goal-calculator,savings-deposits,calculator,High,Find how much to save monthly for a goal
+Emergency Fund Calculator,emergency-fund-calculator,savings-deposits,calculator,High,Calculate your ideal emergency fund size
+Fixed Deposit Calculator,fd-calculator,savings-deposits,calculator,High,Calculate FD maturity amount and interest
+Recurring Deposit Calculator,rd-calculator,savings-deposits,calculator,High,Calculate RD maturity value and interest
+Certificate of Deposit Calculator,cd-calculator,savings-deposits,calculator,Medium,Estimate CD interest and maturity value
+High Yield Savings Calculator,high-yield-savings-calculator,savings-deposits,calculator,Medium,Project earnings in a high yield savings account
+Compound Savings Calculator,compound-savings-calculator,savings-deposits,calculator,Medium,See compound growth of regular savings
+Money Market Calculator,money-market-calculator,savings-deposits,calculator,Low,Estimate returns from a money market account
+Sinking Fund Calculator,sinking-fund-calculator,savings-deposits,calculator,Medium,Plan savings for a planned future expense
+52 Week Savings Calculator,52-week-savings-calculator,savings-deposits,calculator,Medium,Track the 52 week money saving challenge
+College Savings Calculator,college-savings-calculator,savings-deposits,calculator,Medium,Plan savings for future college costs
+Down Payment Savings Calculator,down-payment-savings-calculator,savings-deposits,calculator,Medium,Plan how to save for a home down payment
+Millionaire Savings Calculator,millionaire-calculator,savings-deposits,calculator,Medium,Find out how to save your first million
+Daily Savings Calculator,daily-savings-calculator,savings-deposits,calculator,Low,See how daily savings add up over time
+Goal Based Savings Calculator,goal-savings-calculator,savings-deposits,calculator,Medium,Plan savings for multiple financial goals
+Income Tax Calculator,income-tax-calculator,taxes,calculator,High,Estimate income tax owed for the year
+Sales Tax Calculator,sales-tax-calculator,taxes,calculator,High,Add or remove sales tax from a price
+VAT Calculator,vat-calculator,taxes,calculator,High,Calculate VAT inclusive and exclusive amounts
+GST Calculator,gst-calculator,taxes,calculator,High,Add or remove GST from an amount
+Capital Gains Tax Calculator,capital-gains-tax-calculator,taxes,calculator,Medium,Estimate tax owed on capital gains
+Self Employment Tax Calculator,self-employment-tax-calculator,taxes,calculator,Medium,Calculate self employment tax owed
+Payroll Tax Calculator,payroll-tax-calculator,taxes,calculator,Medium,Estimate payroll taxes for employees
+Tax Refund Calculator,tax-refund-calculator,taxes,calculator,High,Estimate your expected tax refund
+Take Home Pay Calculator,take-home-pay-calculator,taxes,calculator,High,Calculate net pay after taxes and deductions
+Marginal Tax Rate Calculator,marginal-tax-rate-calculator,taxes,calculator,Medium,Find your marginal tax rate
+Effective Tax Rate Calculator,effective-tax-rate-calculator,taxes,calculator,Medium,Calculate your effective tax rate
+Tax Bracket Calculator,tax-bracket-calculator,taxes,calculator,Medium,See which tax bracket your income falls in
+Withholding Tax Calculator,withholding-tax-calculator,taxes,calculator,Medium,Estimate tax withheld from your paycheck
+Crypto Tax Calculator,crypto-tax-calculator,taxes,calculator,Medium,Estimate tax owed on crypto gains
+Estate Tax Calculator,estate-tax-calculator,taxes,calculator,Low,Estimate estate tax liability
+Gift Tax Calculator,gift-tax-calculator,taxes,calculator,Low,Estimate tax on gifts given
+Tax Deduction Calculator,tax-deduction-calculator,taxes,calculator,Medium,Calculate the value of tax deductions
+HRA Exemption Calculator,hra-exemption-calculator,taxes,calculator,Medium,Calculate house rent allowance exemption
+Dividend Tax Calculator,dividend-tax-calculator,taxes,calculator,Low,Estimate tax owed on dividend income
+Property Tax Estimator,property-tax-estimator,taxes,calculator,Medium,Estimate property tax based on home value
+Budget Calculator,budget-calculator,budgeting,calculator,High,Build a monthly budget for income and expenses
+50 30 20 Budget Calculator,50-30-20-budget-calculator,budgeting,calculator,High,Split income into needs wants and savings
+Zero Based Budget Calculator,zero-based-budget-calculator,budgeting,calculator,Medium,Assign every dollar a job in your budget
+Monthly Expense Calculator,monthly-expense-calculator,budgeting,calculator,Medium,Total and categorize your monthly expenses
+Income vs Expense Calculator,income-vs-expense-calculator,budgeting,calculator,Medium,Compare income against expenses for cash flow
+Cost of Living Calculator,cost-of-living-calculator,budgeting,calculator,High,Estimate the cost of living in a location
+Cash Flow Calculator,cash-flow-calculator,budgeting,calculator,Medium,Track monthly cash inflows and outflows
+Discretionary Income Calculator,discretionary-income-calculator,budgeting,calculator,Low,Calculate income left after essentials
+Net Worth Calculator,net-worth-calculator,budgeting,calculator,High,Calculate your total net worth
+Savings Rate Calculator,savings-rate-calculator,budgeting,calculator,Medium,Calculate the percentage of income you save
+Bill Split Calculator,bill-split-calculator,budgeting,calculator,Medium,Split shared bills fairly between people
+Subscription Cost Calculator,subscription-cost-calculator,budgeting,calculator,Medium,Total your recurring subscription spending
+Envelope Budget Calculator,envelope-budget-calculator,budgeting,calculator,Low,Plan a cash envelope budget system
+Expense Tracker,expense-tracker,budgeting,tool,Medium,Track daily expenses across categories
+Salary Calculator,salary-calculator,salary-income,calculator,High,Convert and calculate salary across pay periods
+Hourly to Salary Calculator,hourly-to-salary-calculator,salary-income,calculator,High,Convert an hourly wage to annual salary
+Salary to Hourly Calculator,salary-to-hourly-calculator,salary-income,calculator,High,Convert an annual salary to hourly wage
+Gross to Net Salary Calculator,gross-to-net-calculator,salary-income,calculator,Medium,Calculate net pay from gross salary
+Overtime Pay Calculator,overtime-calculator,salary-income,calculator,Medium,Calculate overtime pay and total earnings
+Paycheck Calculator,paycheck-calculator,salary-income,calculator,High,Estimate paycheck after taxes and deductions
+Annual Income Calculator,annual-income-calculator,salary-income,calculator,Medium,Calculate yearly income from any pay rate
+Pay Raise Calculator,pay-raise-calculator,salary-income,calculator,Medium,Calculate new salary after a raise
+CTC Calculator,ctc-calculator,salary-income,calculator,Medium,Break down cost to company into take home pay
+Pro Rata Salary Calculator,pro-rata-salary-calculator,salary-income,calculator,Medium,Calculate pro rata pay for part time work
+Bonus Calculator,bonus-calculator,salary-income,calculator,Medium,Calculate bonus amount and after tax value
+Commission Calculator,commission-calculator,salary-income,calculator,Medium,Calculate sales commission earnings
+Salary Increment Calculator,salary-increment-calculator,salary-income,calculator,Medium,Calculate salary after percentage increment
+Severance Pay Calculator,severance-pay-calculator,salary-income,calculator,Low,Estimate severance pay on job exit
+Minimum Wage Calculator,minimum-wage-calculator,salary-income,calculator,Low,Calculate earnings at minimum wage
+Freelance Rate Calculator,freelance-rate-calculator,salary-income,calculator,Medium,Find the hourly rate to hit income goals
+Credit Card Payoff Calculator,credit-card-payoff-calculator,credit-cards,calculator,High,See how long to pay off credit card debt
+Credit Card Interest Calculator,credit-card-interest-calculator,credit-cards,calculator,High,Calculate interest charged on card balances
+Minimum Payment Calculator,minimum-payment-calculator,credit-cards,calculator,Medium,See the cost of paying only the minimum
+Balance Transfer Calculator,balance-transfer-calculator,credit-cards,calculator,Medium,Estimate savings from a balance transfer
+Credit Utilization Calculator,credit-utilization-calculator,credit-cards,calculator,Medium,Calculate your credit utilization ratio
+Credit Score Simulator,credit-score-simulator,credit-cards,calculator,Medium,See how actions may affect your credit score
+Cashback Rewards Calculator,cashback-calculator,credit-cards,calculator,Medium,Calculate cashback earned on spending
+APR Calculator,apr-calculator,credit-cards,calculator,Medium,Convert interest rate and fees into APR
+Credit Card Comparison Calculator,credit-card-comparison-calculator,credit-cards,calculator,Low,Compare two credit cards by cost and rewards
+Cash Advance Fee Calculator,cash-advance-calculator,credit-cards,calculator,Low,Calculate fees and interest on a cash advance
+Two Card Payoff Calculator,two-card-payoff-calculator,credit-cards,calculator,Low,Plan payoff across two credit cards
+Extra Payment Savings Calculator,extra-payment-calculator,credit-cards,calculator,Medium,See interest saved with extra payments
+Annual Fee Worth It Calculator,annual-fee-calculator,credit-cards,calculator,Low,Decide if a card annual fee pays off
+Credit Limit Increase Calculator,credit-limit-calculator,credit-cards,calculator,Low,See how a limit increase affects utilization
+Life Insurance Calculator,life-insurance-calculator,insurance,calculator,High,Estimate how much life insurance you need
+Term Insurance Calculator,term-insurance-calculator,insurance,calculator,High,Calculate term insurance cover and premium
+Human Life Value Calculator,human-life-value-calculator,insurance,calculator,Medium,Calculate your economic life value for cover
+Health Insurance Premium Calculator,health-insurance-calculator,insurance,calculator,Medium,Estimate health insurance premium costs
+Car Insurance Calculator,car-insurance-calculator,insurance,calculator,Medium,Estimate car insurance premium
+Home Insurance Calculator,home-insurance-calculator,insurance,calculator,Medium,Estimate home insurance coverage and cost
+Disability Insurance Calculator,disability-insurance-calculator,insurance,calculator,Low,Estimate disability insurance needs
+Insurance Needs Calculator,insurance-needs-calculator,insurance,calculator,Medium,Calculate total insurance coverage needed
+Critical Illness Cover Calculator,critical-illness-calculator,insurance,calculator,Low,Estimate critical illness cover required
+Income Protection Calculator,income-protection-calculator,insurance,calculator,Low,Calculate income protection cover needed
+Whole Life Insurance Calculator,whole-life-insurance-calculator,insurance,calculator,Low,Estimate whole life insurance cost and value
+Travel Insurance Calculator,travel-insurance-calculator,insurance,calculator,Low,Estimate travel insurance premium
+Mortgage Protection Calculator,mortgage-protection-calculator,insurance,calculator,Low,Calculate mortgage protection cover
+Term vs Whole Life Calculator,term-vs-whole-life-calculator,insurance,calculator,Medium,Compare term and whole life insurance cost
+Break Even Calculator,break-even-calculator,business-freelance,calculator,High,Find the units needed to break even
+Profit Margin Calculator,profit-margin-calculator,business-freelance,calculator,High,Calculate gross and net profit margins
+Markup Calculator,markup-calculator,business-freelance,calculator,High,Calculate selling price from cost and markup
+Net Profit Calculator,net-profit-calculator,business-freelance,calculator,Medium,Calculate net profit after all expenses
+Gross Profit Calculator,gross-profit-calculator,business-freelance,calculator,Medium,Calculate gross profit and margin
+Sales Revenue Calculator,sales-revenue-calculator,business-freelance,calculator,Medium,Calculate total sales revenue
+Inventory Turnover Calculator,inventory-turnover-calculator,business-freelance,calculator,Low,Calculate inventory turnover ratio
+Cash Burn Rate Calculator,burn-rate-calculator,business-freelance,calculator,Medium,Calculate startup cash burn and runway
+Customer Lifetime Value Calculator,clv-calculator,business-freelance,calculator,Medium,Calculate customer lifetime value
+Customer Acquisition Cost Calculator,cac-calculator,business-freelance,calculator,Medium,Calculate cost to acquire a customer
+Working Capital Calculator,working-capital-calculator,business-freelance,calculator,Low,Calculate working capital position
+Depreciation Calculator,depreciation-calculator,business-freelance,calculator,Medium,Calculate asset depreciation over time
+EBITDA Calculator,ebitda-calculator,business-freelance,calculator,Low,Calculate earnings before interest taxes and depreciation
+Invoice Total Calculator,invoice-calculator,business-freelance,calculator,Medium,Calculate invoice totals with tax and discount
+Payback Period Calculator,payback-period-calculator,business-freelance,calculator,Low,Calculate investment payback period
+Business Loan Calculator,business-loan-calculator,business-freelance,calculator,Medium,Calculate business loan EMI and interest
+Profit Margin With Tax Calculator,profit-margin-tax-calculator,business-freelance,calculator,Low,Calculate margins including tax
+Hourly Billing Rate Calculator,billing-rate-calculator,business-freelance,calculator,Medium,Set a billing rate from costs and target profit
+Crypto Profit Calculator,crypto-profit-calculator,crypto,calculator,High,Calculate profit and loss on crypto trades
+Bitcoin Profit Calculator,bitcoin-profit-calculator,crypto,calculator,High,Calculate profit from buying and selling bitcoin
+Crypto DCA Calculator,crypto-dca-calculator,crypto,calculator,Medium,Backtest dollar cost averaging into crypto
+Staking Rewards Calculator,staking-calculator,crypto,calculator,Medium,Estimate staking rewards earned
+Mining Profitability Calculator,mining-calculator,crypto,calculator,Medium,Estimate crypto mining profitability
+Crypto Average Buy Calculator,crypto-average-calculator,crypto,calculator,Medium,Calculate average crypto purchase price
+Crypto Converter,crypto-converter,crypto,tool,High,Convert between crypto and fiat currencies
+Gas Fee Calculator,gas-fee-calculator,crypto,calculator,Low,Estimate blockchain gas fees
+Impermanent Loss Calculator,impermanent-loss-calculator,crypto,calculator,Low,Calculate impermanent loss for liquidity pools
+Crypto Portfolio Calculator,crypto-portfolio-calculator,crypto,calculator,Medium,Track value and allocation of crypto holdings
+Crypto ROI Calculator,crypto-roi-calculator,crypto,calculator,Medium,Calculate return on a crypto investment
+Bitcoin Halving Countdown,bitcoin-halving-countdown,crypto,tool,Medium,Countdown to the next bitcoin halving
+Currency Converter,currency-converter,currency-forex,tool,High,Convert between world currencies at live rates
+Forex Profit Calculator,forex-profit-calculator,currency-forex,calculator,Medium,Calculate profit and loss on forex trades
+Pip Calculator,pip-calculator,currency-forex,calculator,Medium,Calculate pip value for a currency pair
+Forex Position Size Calculator,position-size-calculator,currency-forex,calculator,Medium,Calculate position size from risk percentage
+Forex Margin Calculator,forex-margin-calculator,currency-forex,calculator,Low,Calculate margin required for a forex trade
+Lot Size Calculator,lot-size-calculator,currency-forex,calculator,Medium,Calculate trade lot size from risk
+Exchange Rate Calculator,exchange-rate-calculator,currency-forex,calculator,Medium,Convert amounts between two currencies
+Forex Compounding Calculator,forex-compounding-calculator,currency-forex,calculator,Low,Project compounded forex account growth
+Student Loan Calculator,student-loan-calculator,education-student,calculator,High,Calculate student loan payments and interest
+Student Loan Payoff Calculator,student-loan-payoff-calculator,education-student,calculator,Medium,See how fast you can pay off student loans
+Student Loan Refinance Calculator,student-loan-refinance-calculator,education-student,calculator,Medium,Compare student loan refinance offers
+College Cost Calculator,college-cost-calculator,education-student,calculator,Medium,Estimate the total cost of college
+529 Plan Calculator,529-plan-calculator,education-student,calculator,Medium,Project growth of a 529 college savings plan
+Education Loan EMI Calculator,education-loan-calculator,education-student,calculator,Medium,Calculate education loan EMI and interest
+Tuition Inflation Calculator,tuition-inflation-calculator,education-student,calculator,Low,Project future tuition costs with inflation
+Student Budget Calculator,student-budget-calculator,education-student,calculator,Low,Build a budget for student life
+Scholarship Savings Calculator,scholarship-savings-calculator,education-student,calculator,Low,See how scholarships reduce college costs
+Student Loan Forgiveness Calculator,loan-forgiveness-calculator,education-student,calculator,Medium,Estimate remaining balance under forgiveness plans
+Inflation Calculator,inflation-calculator,inflation-economy,calculator,High,See how inflation changes money value over time
+Purchasing Power Calculator,purchasing-power-calculator,inflation-economy,calculator,Medium,Calculate purchasing power across years
+Real Interest Rate Calculator,real-interest-rate-calculator,inflation-economy,calculator,Low,Calculate interest rate adjusted for inflation
+Future Cost Calculator,future-cost-calculator,inflation-economy,calculator,Medium,Estimate the future cost of an item
+Salary Inflation Calculator,salary-inflation-calculator,inflation-economy,calculator,Low,See if your salary keeps up with inflation
+CPI Calculator,cpi-calculator,inflation-economy,calculator,Low,Calculate inflation using consumer price index
+Time Value of Money Calculator,time-value-of-money-calculator,inflation-economy,calculator,Medium,Calculate present and future value of money
+Real vs Nominal Return Calculator,real-vs-nominal-calculator,inflation-economy,calculator,Low,Convert nominal returns to real returns
+Cost of Living Comparison Calculator,col-comparison-calculator,inflation-economy,calculator,Medium,Compare cost of living between two cities
+Money Doubling Time Calculator,money-doubling-calculator,inflation-economy,calculator,Medium,Find how long money takes to double
+Car Loan Calculator,car-loan-calculator,auto-vehicle,calculator,High,Calculate car loan EMI and total cost
+Auto Loan Payoff Calculator,auto-loan-payoff-calculator,auto-vehicle,calculator,Medium,See how extra payments pay off a car loan faster
+Car Affordability Calculator,car-affordability-calculator,auto-vehicle,calculator,High,Find out how much car you can afford
+Car Lease Calculator,car-lease-calculator,auto-vehicle,calculator,Medium,Estimate monthly car lease payments
+Lease vs Buy Calculator,lease-vs-buy-calculator,auto-vehicle,calculator,Medium,Compare leasing versus buying a car
+Car Depreciation Calculator,car-depreciation-calculator,auto-vehicle,calculator,Medium,Estimate how fast a car loses value
+Fuel Cost Calculator,fuel-cost-calculator,auto-vehicle,calculator,High,Calculate fuel cost for a trip or month
+Cost Per Mile Calculator,cost-per-mile-calculator,auto-vehicle,calculator,Low,Calculate driving cost per mile
+EV vs Gas Savings Calculator,ev-vs-gas-calculator,auto-vehicle,calculator,Medium,Compare electric and gas car running costs
+Car Loan Refinance Calculator,car-loan-refinance-calculator,auto-vehicle,calculator,Medium,Compare a car loan refinance offer
+Total Cost of Ownership Calculator,car-ownership-cost-calculator,auto-vehicle,calculator,Medium,Estimate the true cost of owning a car
+Mileage Reimbursement Calculator,mileage-reimbursement-calculator,auto-vehicle,calculator,Medium,Calculate mileage reimbursement owed
+Tip Calculator,tip-calculator,everyday-finance,calculator,High,Calculate tip and split the bill
+Discount Calculator,discount-calculator,everyday-finance,calculator,High,Calculate sale price after a discount
+Percentage Calculator,percentage-calculator,everyday-finance,calculator,High,Calculate percentages of any number
+Percentage Change Calculator,percentage-change-calculator,everyday-finance,calculator,High,Calculate percentage increase or decrease
+Split Bill Calculator,split-bill-calculator,everyday-finance,calculator,Medium,Split a bill evenly or by share
+Rent Affordability Calculator,rent-affordability-calculator,everyday-finance,calculator,High,Find out how much rent you can afford
+Rent Split Calculator,rent-split-calculator,everyday-finance,calculator,Medium,Split rent fairly between roommates
+Cost Per Use Calculator,cost-per-use-calculator,everyday-finance,calculator,Low,Calculate cost per use of a purchase
+Latte Factor Calculator,latte-factor-calculator,everyday-finance,calculator,Low,See how small daily spends add up
+Wedding Budget Calculator,wedding-budget-calculator,everyday-finance,calculator,Medium,Plan and split a wedding budget
+Vacation Savings Calculator,vacation-savings-calculator,everyday-finance,calculator,Medium,Plan savings for a vacation goal
+Baby Cost Calculator,baby-cost-calculator,everyday-finance,calculator,Medium,Estimate the first year cost of a baby
+Allowance Calculator,allowance-calculator,everyday-finance,calculator,Low,Plan a kids allowance and savings
+Hourly Rate Calculator,hourly-rate-calculator,everyday-finance,calculator,Medium,Calculate hourly rate from income and hours
