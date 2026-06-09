@@ -3,6 +3,7 @@ import StaticPage, { H2, P } from "../components/StaticPage";
 
 export const metadata = {
   title: "Privacy Policy",
+  alternates: { canonical: "/privacy-policy" },
   description: "What TopicDrill collects, what it does not, and how we handle your information.",
 };
 

@@ -1,6 +1,6 @@
 import StaticPage from "../components/StaticPage";
 
-export const metadata = { title: "FAQs", description: "Frequently asked questions about TopicDrill's free financial tools." };
+export const metadata = { title: "FAQs", description: "Frequently asked questions about TopicDrill's free financial tools.", alternates: { canonical: "/faqs" } };
 
 const FAQS = [
   { q: "Are the tools really free?", a: "Yes. Every calculator and tool on TopicDrill is 100% free with no sign-up required." },

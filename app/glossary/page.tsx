@@ -2,6 +2,7 @@ import StaticPage from "../components/StaticPage";
 
 export const metadata = {
   title: "Financial Glossary",
+  alternates: { canonical: "/glossary" },
   description: "Common money and finance terms explained in plain English, without the jargon.",
 };
 

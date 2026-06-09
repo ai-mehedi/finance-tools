@@ -3,6 +3,7 @@ import StaticPage, { H2, P } from "../components/StaticPage";
 
 export const metadata = {
   title: "Terms of Use",
+  alternates: { canonical: "/terms" },
   description: "The simple rules for using TopicDrill's calculators and content.",
 };
 

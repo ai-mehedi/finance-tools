@@ -3,7 +3,7 @@ import StaticPage from "../components/StaticPage";
 import { getTools } from "@/lib/queries";
 
 export const revalidate = 3600;
-export const metadata = { title: "Calculators", description: "Free online financial calculators for loans, savings, investing, taxes and more." };
+export const metadata = { title: "Calculators", description: "Free online financial calculators for loans, savings, investing, taxes and more.", alternates: { canonical: "/calculators" } };
 
 const PER_PAGE = 24;
 

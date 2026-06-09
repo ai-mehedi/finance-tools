@@ -2,6 +2,7 @@ import StaticPage, { H2, P } from "../components/StaticPage";
 
 export const metadata = {
   title: "Disclaimer",
+  alternates: { canonical: "/disclaimer" },
   description: "How to read the results from TopicDrill's calculators and guides.",
 };
 

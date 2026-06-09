@@ -3,6 +3,7 @@ import StaticPage, { H2, P } from "../components/StaticPage";
 
 export const metadata = {
   title: "About Us",
+  alternates: { canonical: "/about" },
   description: "Who builds TopicDrill and why. Free, fast financial calculators with no sign-ups and no clutter.",
 };
 
