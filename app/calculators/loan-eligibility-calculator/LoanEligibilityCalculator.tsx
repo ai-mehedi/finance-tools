@@ -79,77 +79,135 @@ export default function LoanEligibilityCalculator() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
-      {/* Inputs */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
-        <h2 className="text-base font-extrabold text-zinc-900">Your finances</h2>
-        <p className="mt-0.5 text-sm text-zinc-500">Fill in the details, then press Calculate.</p>
+    <div className="space-y-6">
+      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+        {/* Inputs */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
+          <h2 className="text-base font-extrabold text-zinc-900">Your finances</h2>
+          <p className="mt-0.5 text-sm text-zinc-500">Fill in the details, then press Calculate.</p>
 
-        <div className="mt-5 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <Money id="income" label="Gross monthly income" value={form.monthlyIncome} onChange={(v) => set("monthlyIncome", v)} />
-            <Money id="debt" label="Existing monthly debt" value={form.existingDebt} onChange={(v) => set("existingDebt", v)} />
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <Label htmlFor="dti">Max DTI (%)</Label>
-              <Input id="dti" type="number" min={0} step="any" inputMode="decimal" className="h-11" value={form.maxDtiPct} onChange={(e) => set("maxDtiPct", e.target.value)} />
+          <div className="mt-5 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <Money id="income" label="Gross monthly income" value={form.monthlyIncome} onChange={(v) => set("monthlyIncome", v)} />
+              <Money id="debt" label="Existing monthly debt" value={form.existingDebt} onChange={(v) => set("existingDebt", v)} />
             </div>
-            <div>
-              <Label htmlFor="rate">Rate (% / yr)</Label>
-              <Input id="rate" type="number" min={0} step="any" inputMode="decimal" className="h-11" value={form.annualRatePct} onChange={(e) => set("annualRatePct", e.target.value)} />
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label htmlFor="dti">Max DTI (%)</Label>
+                <Input id="dti" type="number" min={0} step="any" inputMode="decimal" className="h-11" value={form.maxDtiPct} onChange={(e) => set("maxDtiPct", e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="rate">Rate (% / yr)</Label>
+                <Input id="rate" type="number" min={0} step="any" inputMode="decimal" className="h-11" value={form.annualRatePct} onChange={(e) => set("annualRatePct", e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="term">Term (years)</Label>
+                <Input id="term" type="number" min={0} step="any" inputMode="decimal" className="h-11" value={form.termYears} onChange={(e) => set("termYears", e.target.value)} />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="term">Term (years)</Label>
-              <Input id="term" type="number" min={0} step="any" inputMode="decimal" className="h-11" value={form.termYears} onChange={(e) => set("termYears", e.target.value)} />
-            </div>
-          </div>
 
-          {error && <p className="text-xs font-medium text-rose-500">{error}</p>}
+            {error && <p className="text-xs font-medium text-rose-500">{error}</p>}
 
-          <div className="flex gap-3 pt-1">
-            <Button type="submit" variant="primary" size="lg" className="flex-1">
-              <Calculator /> Calculate
-            </Button>
-            <Button type="button" variant="outline" size="lg" onClick={reset}>
-              <RotateCcw /> Reset
-            </Button>
+            <div className="flex gap-3 pt-1">
+              <Button type="submit" variant="primary" size="lg" className="flex-1">
+                <Calculator /> Calculate
+              </Button>
+              <Button type="button" variant="outline" size="lg" onClick={reset}>
+                <RotateCcw /> Reset
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Results */}
-      <div className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-orange-50 to-amber-50 p-6 shadow-sm lg:col-span-2">
-        <p className="text-xs font-bold uppercase tracking-wide text-orange-500">Eligible loan amount</p>
-        <p className="mt-1 text-4xl font-extrabold tracking-tight text-zinc-900 tabular-nums">
-          {result ? formatUSD(result.eligibleAmount) : "—"}
-        </p>
-        <div className="mt-5 space-y-2">
-          {result ? (
-            <>
-              <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2.5">
-                <span className="text-sm font-medium text-zinc-500">Affordable payment / mo</span>
-                <span className="text-sm font-bold tabular-nums text-zinc-900">{formatUSD2(result.affordablePayment)}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2.5">
-                <span className="text-sm font-medium text-zinc-500">Total interest</span>
-                <span className="text-sm font-bold tabular-nums text-zinc-900">{formatUSD(result.totalInterest)}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2.5">
-                <span className="text-sm font-medium text-zinc-500">Total repayable</span>
-                <span className="text-sm font-bold tabular-nums text-zinc-900">{formatUSD(result.totalPayable)}</span>
-              </div>
-            </>
-          ) : (
-            <p className="rounded-lg bg-white/70 px-3 py-2.5 text-sm text-zinc-400">Enter valid values to see results.</p>
+        {/* Results */}
+        <div className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-orange-50 to-amber-50 p-6 shadow-sm lg:col-span-2">
+          <p className="text-xs font-bold uppercase tracking-wide text-orange-500">Eligible loan amount</p>
+          <p className="mt-1 text-4xl font-extrabold tracking-tight text-zinc-900 tabular-nums">
+            {result ? formatUSD(result.eligibleAmount) : "—"}
+          </p>
+          <div className="mt-5 space-y-2">
+            {result ? (
+              <>
+                <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2.5">
+                  <span className="text-sm font-medium text-zinc-500">Affordable payment / mo</span>
+                  <span className="text-sm font-bold tabular-nums text-zinc-900">{formatUSD2(result.affordablePayment)}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2.5">
+                  <span className="text-sm font-medium text-zinc-500">Total interest</span>
+                  <span className="text-sm font-bold tabular-nums text-zinc-900">{formatUSD(result.totalInterest)}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2.5">
+                  <span className="text-sm font-medium text-zinc-500">Total repayable</span>
+                  <span className="text-sm font-bold tabular-nums text-zinc-900">{formatUSD(result.totalPayable)}</span>
+                </div>
+              </>
+            ) : (
+              <p className="rounded-lg bg-white/70 px-3 py-2.5 text-sm text-zinc-400">Enter valid values to see results.</p>
+            )}
+          </div>
+          {result && (
+            <p className="mt-4 text-xs leading-relaxed text-zinc-500">
+              This is an estimate based on your debt-to-income ratio. Lenders also weigh credit score, employment and assets.
+            </p>
           )}
         </div>
-        {result && (
-          <p className="mt-4 text-xs leading-relaxed text-zinc-500">
-            This is an estimate based on your debt-to-income ratio. Lenders also weigh credit score, employment and assets.
-          </p>
-        )}
+      </form>
+
+      {/* Income allocation donut */}
+      {result && result.affordablePayment > 0 && <IncomeDonut result={result} />}
+    </div>
+  );
+}
+
+function IncomeDonut({ result }: { result: LoanEligibilityResult }) {
+  const size = 200;
+  const cx = size / 2;
+  const cy = size / 2;
+  const rOuter = 84;
+  const rInner = 54;
+
+  const total = result.slices.reduce((s, sl) => s + Math.max(0, sl.value), 0) || 1;
+
+  let acc = 0;
+  const arcs = result.slices
+    .filter((sl) => sl.value > 0)
+    .map((sl) => {
+      const frac = sl.value / total;
+      const start = acc * 2 * Math.PI - Math.PI / 2;
+      acc += frac;
+      const end = acc * 2 * Math.PI - Math.PI / 2;
+      const large = frac > 0.5 ? 1 : 0;
+      const x1 = cx + rOuter * Math.cos(start);
+      const y1 = cy + rOuter * Math.sin(start);
+      const x2 = cx + rOuter * Math.cos(end);
+      const y2 = cy + rOuter * Math.sin(end);
+      const xi2 = cx + rInner * Math.cos(end);
+      const yi2 = cy + rInner * Math.sin(end);
+      const xi1 = cx + rInner * Math.cos(start);
+      const yi1 = cy + rInner * Math.sin(start);
+      const d = `M${x1.toFixed(2)},${y1.toFixed(2)} A${rOuter},${rOuter} 0 ${large} 1 ${x2.toFixed(2)},${y2.toFixed(2)} L${xi2.toFixed(2)},${yi2.toFixed(2)} A${rInner},${rInner} 0 ${large} 0 ${xi1.toFixed(2)},${yi1.toFixed(2)} Z`;
+      return { d, color: sl.color, label: sl.label, value: sl.value, pct: frac * 100 };
+    });
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <h3 className="mb-3 text-sm font-bold text-zinc-900">How your monthly income is allocated</h3>
+      <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-around">
+        <svg viewBox={`0 0 ${size} ${size}`} className="h-44 w-44" role="img" aria-label="Income allocation donut chart">
+          {arcs.map((a, i) => (
+            <path key={i} d={a.d} fill={a.color} stroke="#fff" strokeWidth={1.5} />
+          ))}
+        </svg>
+        <ul className="space-y-2">
+          {result.slices.map((sl) => (
+            <li key={sl.label} className="flex items-center gap-2.5 text-sm">
+              <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: sl.color }} />
+              <span className="font-medium text-zinc-600">{sl.label}</span>
+              <span className="ml-auto font-bold tabular-nums text-zinc-900">{formatUSD(sl.value)}</span>
+            </li>
+          ))}
+        </ul>
       </div>
-    </form>
+    </div>
   );
 }

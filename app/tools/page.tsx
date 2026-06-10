@@ -3,6 +3,7 @@ import SiteHeader from "../components/SiteHeader";
 import Newsletter from "../components/Newsletter";
 import Footer from "../components/Footer";
 import { AdSlot } from "../components/AdSlot";
+import ToolCard from "../components/ToolCard";
 import { getTools } from "@/lib/queries";
 
 export const revalidate = 3600;
@@ -51,16 +52,7 @@ export default async function ToolsPage({
           {data.length ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {data.map((tool) => (
-                <Link key={tool._id} href={`/tools/${tool.slug}`} className="group flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-md">
-                  <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-orange-50/70 text-2xl">
-                    {tool.thumbnail ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={tool.thumbnail} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-full w-full object-contain p-1" />
-                    ) : ("🧮")}
-                  </span>
-                  <h3 className="mt-4 text-sm font-bold text-zinc-900 group-hover:text-orange-600">{tool.title}</h3>
-                  <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-zinc-500">{tool.description}</p>
-                </Link>
+                <ToolCard key={tool._id} tool={tool} />
               ))}
             </div>
           ) : (

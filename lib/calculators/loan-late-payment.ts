@@ -49,3 +49,11 @@ const usd2 = new Intl.NumberFormat("en-US", {
 });
 
 export const formatUSD = (n: number) => usd2.format(Number.isFinite(n) ? n : 0);
+
+export function formatCompact(n: number): string {
+  if (!Number.isFinite(n)) return "$0";
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `$${(n / 1_000).toFixed(1)}k`;
+  return `$${Math.round(n)}`;
+}

@@ -3,6 +3,7 @@ import SiteHeader from "../components/SiteHeader";
 import Newsletter from "../components/Newsletter";
 import Footer from "../components/Footer";
 import { AdSlot } from "../components/AdSlot";
+import BlogCard from "../components/BlogCard";
 import { getArticles, getBlogCategories, getCategoryBySlug } from "@/lib/queries";
 
 export const revalidate = 1800;
@@ -14,10 +15,6 @@ export const metadata = {
 };
 
 const PER_PAGE = 9;
-
-function fmt(d?: string) {
-  return d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
-}
 
 export default async function BlogPage({
   searchParams,
@@ -56,30 +53,7 @@ export default async function BlogPage({
             {articles.length ? (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {articles.map((a) => (
-                  <Link key={a._id} href={`/blog/${a.slug}`} className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-all hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg">
-                    <div className="relative h-44 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-200">
-                      {a.categories?.[0] && <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-orange-600 shadow-sm backdrop-blur">{a.categories[0].name}</span>}
-                      {a.featuredImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={a.featuredImage} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      ) : (<span className="flex h-full w-full items-center justify-center text-5xl">📰</span>)}
-                    </div>
-                    <div className="flex flex-1 flex-col p-5">
-                      <h3 className="line-clamp-2 text-base font-bold leading-snug text-zinc-900 group-hover:text-orange-600">{a.title}</h3>
-                      <p className="mt-2 line-clamp-2 flex-1 text-sm text-zinc-500">{a.excerpt}</p>
-                      <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3">
-                        <div className="flex items-center gap-2 text-xs text-zinc-500">
-                          {a.author && (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-[10px] font-bold text-orange-600">
-                              {(a.author.firstname?.[0] ?? "") + (a.author.lastname?.[0] ?? "")}
-                            </span>
-                          )}
-                          <span>{fmt(a.createdAt)}</span>
-                        </div>
-                        <span className="text-xs font-bold text-orange-500 opacity-0 transition-opacity group-hover:opacity-100">Read →</span>
-                      </div>
-                    </div>
-                  </Link>
+                  <BlogCard key={a._id} article={a} />
                 ))}
               </div>
             ) : (

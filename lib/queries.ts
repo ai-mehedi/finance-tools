@@ -83,6 +83,7 @@ export type ToolLite = {
   type: string;
   description?: string;
   thumbnail?: string;
+  url?: string;
   categories?: CategoryLite[];
 };
 
@@ -160,13 +161,13 @@ export async function getArticleBySlug(slug: string) {
 export async function getAllSlugs() {
   await connectToDatabase();
   const [tools, toolCats, blogCats, articles] = await Promise.all([
-    ToolModel.find({ status: "active" }).select("slug updatedAt").lean(),
+    ToolModel.find({ status: "active" }).select("slug url updatedAt").lean(),
     CategoryModel.find({ type: "tool", status: "active" }).select("slug updatedAt").lean(),
     CategoryModel.find({ type: "blog", status: "active" }).select("slug updatedAt").lean(),
     ArticleModel.find({ status: "published" }).select("slug updatedAt").lean(),
   ]);
   return ser({ tools, toolCats, blogCats, articles }) as unknown as {
-    tools: { slug: string; updatedAt: string }[];
+    tools: { slug: string; url?: string; updatedAt: string }[];
     toolCats: { slug: string; updatedAt: string }[];
     blogCats: { slug: string; updatedAt: string }[];
     articles: { slug: string; updatedAt: string }[];

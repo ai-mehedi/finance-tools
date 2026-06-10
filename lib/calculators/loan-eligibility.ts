@@ -2,7 +2,8 @@
 // Estimates the maximum loan amount you may qualify for based on your monthly
 // income, existing debt payments, the lender's allowed debt-to-income ratio,
 // the interest rate and the loan term. It inverts the standard EMI formula to
-// solve for the largest principal that fits the affordable monthly payment.
+// solve for the largest principal that fits the affordable monthly payment, and
+// exposes a small breakdown for charting.
 
 export interface LoanEligibilityInput {
   monthlyIncome: number;
@@ -12,11 +13,19 @@ export interface LoanEligibilityInput {
   termYears: number;
 }
 
+export interface LoanEligibilitySlice {
+  label: string;
+  value: number;
+  color: string;
+}
+
 export interface LoanEligibilityResult {
+  maxTotalPayment: number; // total monthly debt the lender allows
   affordablePayment: number; // monthly payment available for this new loan
   eligibleAmount: number; // max principal that fits the affordable payment
   totalPayable: number; // principal + interest over the term
   totalInterest: number;
+  slices: LoanEligibilitySlice[]; // for the income allocation donut
 }
 
 export function computeLoanEligibility(
@@ -44,7 +53,21 @@ export function computeLoanEligibility(
   const totalPayable = affordablePayment * n;
   const totalInterest = Math.max(0, totalPayable - eligibleAmount);
 
-  return { affordablePayment, eligibleAmount, totalPayable, totalInterest };
+  const freeIncome = Math.max(0, monthlyIncome - existingDebt - affordablePayment);
+  const slices: LoanEligibilitySlice[] = [
+    { label: "Existing debt", value: existingDebt, color: "#a1a1aa" },
+    { label: "New loan payment", value: affordablePayment, color: "#f97316" },
+    { label: "Free income", value: freeIncome, color: "#fcd34d" },
+  ];
+
+  return {
+    maxTotalPayment,
+    affordablePayment,
+    eligibleAmount,
+    totalPayable,
+    totalInterest,
+    slices,
+  };
 }
 
 const usd = new Intl.NumberFormat("en-US", {
@@ -61,3 +84,11 @@ const usd2 = new Intl.NumberFormat("en-US", {
 
 export const formatUSD = (n: number) => usd.format(Number.isFinite(n) ? n : 0);
 export const formatUSD2 = (n: number) => usd2.format(Number.isFinite(n) ? n : 0);
+
+export function formatCompact(n: number): string {
+  if (!Number.isFinite(n)) return "$0";
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `$${(n / 1_000).toFixed(1)}k`;
+  return `$${Math.round(n)}`;
+}

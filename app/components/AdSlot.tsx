@@ -92,8 +92,8 @@ export function AdSlot({
           className="adsbygoogle"
           style={
             isFixed
-              ? { display: "inline-block", width, height }
-              : { display: "block", width: "100%", minHeight }
+              ? { display: "inline-block", width, height, textAlign: "center", marginInline: "auto" }
+              : { display: "block", width: "100%", minHeight, textAlign: "center", marginInline: "auto" }
           }
           data-ad-client={CLIENT}
           data-ad-slot={slot}

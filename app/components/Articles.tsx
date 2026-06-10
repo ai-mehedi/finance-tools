@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ArticleLite, ToolLite } from "@/lib/queries";
+import BlogCard from "./BlogCard";
 
 function Arrow({ className = "" }: { className?: string }) {
   return (
@@ -7,11 +8,6 @@ function Arrow({ className = "" }: { className?: string }) {
       <path d="M5 12h14M13 6l6 6-6 6" />
     </svg>
   );
-}
-
-function fmtDate(d?: string) {
-  if (!d) return "";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 export default function Articles({ articles, popularTools }: { articles: ArticleLite[]; popularTools: ToolLite[] }) {
@@ -32,33 +28,7 @@ export default function Articles({ articles, popularTools }: { articles: Article
           {articles.length ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
               {articles.map((a) => (
-                <Link key={a._id} href={`/blog/${a.slug}`} className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-all hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg">
-                  <div className="relative h-36 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-200">
-                    {a.categories?.[0] && (
-                      <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-bold text-orange-600 shadow-sm backdrop-blur">
-                        {a.categories[0].name}
-                      </span>
-                    )}
-                    {a.featuredImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.featuredImage} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center text-4xl">📰</span>
-                    )}
-                  </div>
-                  <div className="flex flex-1 flex-col p-4">
-                    <h3 className="line-clamp-2 text-sm font-bold leading-snug text-zinc-900 group-hover:text-orange-600">{a.title}</h3>
-                    <p className="mt-2 line-clamp-2 flex-1 text-xs leading-relaxed text-zinc-500">{a.excerpt}</p>
-                    <div className="mt-3 flex items-center gap-2 border-t border-zinc-100 pt-3 text-[11px] text-zinc-400">
-                      {a.author && (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-100 text-[9px] font-bold text-orange-600">
-                          {(a.author.firstname?.[0] ?? "") + (a.author.lastname?.[0] ?? "")}
-                        </span>
-                      )}
-                      <span>{fmtDate(a.createdAt)}</span>
-                    </div>
-                  </div>
-                </Link>
+                <BlogCard key={a._id} article={a} size="sm" />
               ))}
             </div>
           ) : (
@@ -74,7 +44,7 @@ export default function Articles({ articles, popularTools }: { articles: Article
             <ul className="space-y-1">
               {popularTools.map((t, i) => (
                 <li key={t._id}>
-                  <Link href={`/tools/${t.slug}`} className="group flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-orange-50">
+                  <Link href={t.url || `/tools/${t.slug}`} className="group flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-orange-50">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">{i + 1}</span>
                     <span className="flex-1 text-sm font-medium text-zinc-700 group-hover:text-orange-600">{t.title}</span>
                     <Arrow className="text-zinc-300 group-hover:text-orange-500" />

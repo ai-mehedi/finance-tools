@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import SiteHeader from "../../components/SiteHeader";
 import Newsletter from "../../components/Newsletter";
 import Footer from "../../components/Footer";
@@ -36,6 +36,10 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const tool = await getToolBySlug(slug);
   if (!tool) notFound();
+
+  // If this tool has a dedicated calculator page, send visitors (and crawlers)
+  // straight there instead of showing the generic DB placeholder.
+  if (tool.url && tool.url.startsWith("/calculators/")) redirect(tool.url);
 
   const cat = tool.categories?.[0];
 

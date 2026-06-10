@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ToolLite } from "@/lib/queries";
+import ToolCard from "./ToolCard";
 
 function Arrow({ className = "" }: { className?: string }) {
   return (
@@ -24,21 +25,7 @@ export default function FinancialTools({ tools }: { tools: ToolLite[] }) {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {tools.map((tool) => (
-            <Link key={tool._id} href={`/tools/${tool.slug}`} className="group flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md">
-              <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-orange-50/70 text-3xl">
-                {tool.thumbnail ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={tool.thumbnail} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-full w-full object-contain p-1" />
-                ) : (
-                  "🧮"
-                )}
-              </span>
-              <h3 className="mt-4 text-base font-bold text-zinc-900">{tool.title}</h3>
-              <p className="mt-1.5 line-clamp-2 flex-1 text-sm leading-relaxed text-zinc-500">{tool.description}</p>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-orange-500">
-                Use Tool <Arrow className="transition-transform group-hover:translate-x-0.5" />
-              </span>
-            </Link>
+            <ToolCard key={tool._id} tool={tool} />
           ))}
         </div>
       </div>
