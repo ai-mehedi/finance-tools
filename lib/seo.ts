@@ -6,6 +6,37 @@ export const PUBLISHER_LOGO = `${SITE_URL}/hero.webp`;
 
 export const abs = (path = "/") => `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
+// Real brand/social profiles for the Organization entity. YMYL E-E-A-T: an
+// entity Google can verify ranks better. TODO: add your REAL profile URLs only
+// (an empty array is better than links that 404).
+export const SOCIAL_PROFILES: string[] = [
+  // "https://twitter.com/topicdrill",
+  // "https://www.linkedin.com/company/topicdrill",
+  // "https://www.facebook.com/topicdrill",
+];
+
+// Site-wide "last reviewed" label shown on calculator pages when a page does not
+// pass its own `updated`. Bump after a content review pass.
+export const LAST_REVIEWED = "June 2026";
+
+// The human accountable for money content. Finance is YMYL: Google wants a real,
+// named, credentialed person. TODO: replace with a real editor/reviewer — do not
+// invent a person. Leave `reviewer.name` empty until you have a genuine one.
+export const EDITORIAL = {
+  author: { name: "TopicDrill Editorial Team", url: `${SITE_URL}/about` },
+  reviewer: { name: "", url: `${SITE_URL}/editorial-policy` },
+};
+
+/** Person schema fragment (author / reviewer) for E-E-A-T. */
+export function personSchema(p: { name: string; url?: string; sameAs?: string[] }) {
+  return {
+    "@type": "Person",
+    name: p.name,
+    ...(p.url ? { url: p.url } : {}),
+    ...(p.sameAs?.length ? { sameAs: p.sameAs } : {}),
+  };
+}
+
 /** Organization schema — establishes the brand entity (E-E-A-T). */
 export function organizationSchema() {
   return {
@@ -16,7 +47,7 @@ export function organizationSchema() {
     url: SITE_URL,
     logo: PUBLISHER_LOGO,
     description: SITE_DESC,
-    sameAs: [] as string[],
+    sameAs: SOCIAL_PROFILES,
   };
 }
 
@@ -69,17 +100,24 @@ export function webAppSchema(tool: {
   slug: string;
   description?: string;
   thumbnail?: string;
+  url?: string; // canonical path, e.g. "/calculators/loan-payoff-calculator"
+  dateModified?: string; // ISO date — trust signal for YMYL
+  author?: { name: string; url?: string; sameAs?: string[] };
+  reviewer?: { name: string; url?: string; sameAs?: string[] };
 }) {
   return {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     name: tool.title,
-    url: abs(`/tools/${tool.slug}`),
+    url: abs(tool.url || `/tools/${tool.slug}`),
     description: tool.description,
     applicationCategory: "FinanceApplication",
     operatingSystem: "Any",
     browserRequirements: "Requires JavaScript",
     ...(tool.thumbnail ? { image: tool.thumbnail } : {}),
+    ...(tool.dateModified ? { dateModified: tool.dateModified } : {}),
+    ...(tool.author ? { author: personSchema(tool.author) } : {}),
+    ...(tool.reviewer?.name ? { reviewer: personSchema(tool.reviewer) } : {}),
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     publisher: { "@id": `${SITE_URL}/#organization` },
   };

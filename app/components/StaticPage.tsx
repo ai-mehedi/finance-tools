@@ -1,6 +1,8 @@
 import Link from "next/link";
 import SiteHeader from "./SiteHeader";
 import Footer from "./Footer";
+import CalcActions from "./CalcActions";
+import { EDITORIAL, LAST_REVIEWED } from "@/lib/seo";
 
 export default function StaticPage({
   title,
@@ -19,6 +21,10 @@ export default function StaticPage({
   icon?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  // Calculator pages get an automatic E-E-A-T byline (YMYL trust signal): who is
+  // accountable and when it was reviewed. Legal/info pages keep the plain pill.
+  const isCalc = active === "Calculators";
+  const reviewedOn = updated || LAST_REVIEWED;
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <SiteHeader active={active} />
@@ -39,12 +45,40 @@ export default function StaticPage({
               <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 sm:text-4xl">{title}</h1>
             </div>
             {intro && <p className="mt-3 max-w-2xl text-lg leading-relaxed text-zinc-500">{intro}</p>}
-            {updated && (
-              <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-500">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                Last updated {updated}
+            {isCalc ? (
+              <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
+                <span>
+                  Written by{" "}
+                  <Link href={EDITORIAL.author.url} className="font-semibold text-zinc-700 hover:text-orange-600">
+                    {EDITORIAL.author.name}
+                  </Link>
+                </span>
+                {EDITORIAL.reviewer.name && (
+                  <>
+                    <span className="text-zinc-300">·</span>
+                    <span>
+                      Reviewed by{" "}
+                      <Link href={EDITORIAL.reviewer.url} className="font-semibold text-zinc-700 hover:text-orange-600">
+                        {EDITORIAL.reviewer.name}
+                      </Link>
+                    </span>
+                  </>
+                )}
+                <span className="text-zinc-300">·</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Updated {reviewedOn}
+                </span>
               </p>
+            ) : (
+              updated && (
+                <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-500">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Last updated {updated}
+                </p>
+              )
             )}
+            {isCalc && <CalcActions title={title} />}
           </div>
         </div>
         <div className="mx-auto container px-6 py-12">

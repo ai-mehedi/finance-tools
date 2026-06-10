@@ -1,0 +1,390 @@
+{
+  "_note": "Keyword map for the Loans & Debt cluster. Volumes/KD are DOMAIN-KNOWLEDGE ESTIMATES (Ahrefs API access is not on the current plan) — validate each in the Ahrefs web app before committing. Markets prioritised US > UK > Global. Feed each row's primaryKeyword/secondaryKeywords/paaQuestions/uniqueAngle/market into POST /api/generate-tool-content to regenerate non-generic content. estKd <= 25 = build now; head terms KD 35+ = win later via authority.",
+  "cluster": "loans-debt",
+  "keywords": [
+    {
+      "slug": "loan-payoff-calculator",
+      "market": "US",
+      "primaryKeyword": "loan payoff calculator",
+      "estVolume": 10000,
+      "estKd": 22,
+      "intent": "transactional",
+      "secondaryKeywords": ["debt payoff calculator", "extra payment calculator", "early loan payoff calculator", "loan interest savings calculator"],
+      "paaQuestions": [
+        "How can I pay off my loan faster?",
+        "How much do I save by paying extra on my loan?",
+        "Is it better to pay off a loan early or invest?",
+        "Does paying extra reduce principal or interest?"
+      ],
+      "uniqueAngle": "Show the side-by-side payoff date and total interest for minimum vs minimum-plus-extra, with a scenario table for +$50/$100/$200 a month."
+    },
+    {
+      "slug": "debt-snowball-calculator",
+      "market": "US",
+      "primaryKeyword": "debt snowball calculator",
+      "estVolume": 9000,
+      "estKd": 16,
+      "intent": "transactional",
+      "secondaryKeywords": ["debt snowball method calculator", "snowball debt payoff", "debt snowball spreadsheet", "snowball vs avalanche"],
+      "paaQuestions": [
+        "How does the debt snowball method work?",
+        "Is the debt snowball or avalanche better?",
+        "What debt do you pay off first with the snowball?",
+        "How long will the debt snowball take?"
+      ],
+      "uniqueAngle": "Order multiple debts smallest-balance-first and show the rolling payment and debt-free date, with a direct comparison to the avalanche total."
+    },
+    {
+      "slug": "debt-avalanche-calculator",
+      "market": "US",
+      "primaryKeyword": "debt avalanche calculator",
+      "estVolume": 4000,
+      "estKd": 14,
+      "intent": "transactional",
+      "secondaryKeywords": ["debt avalanche method calculator", "highest interest debt first", "avalanche vs snowball calculator"],
+      "paaQuestions": [
+        "How does the debt avalanche method work?",
+        "How much does the avalanche save versus the snowball?",
+        "Which debt do you pay first with the avalanche method?",
+        "Is the avalanche method always cheaper?"
+      ],
+      "uniqueAngle": "Order debts by highest interest rate and quantify the interest saved versus the snowball for the same monthly budget."
+    },
+    {
+      "slug": "debt-to-income-calculator",
+      "market": "US",
+      "primaryKeyword": "debt to income ratio calculator",
+      "estVolume": 12000,
+      "estKd": 20,
+      "intent": "transactional",
+      "secondaryKeywords": ["dti calculator", "debt to income calculator for mortgage", "front end back end dti"],
+      "paaQuestions": [
+        "What is a good debt-to-income ratio?",
+        "How do I calculate my debt-to-income ratio?",
+        "What DTI do lenders want for a mortgage?",
+        "Does rent count in debt-to-income ratio?"
+      ],
+      "uniqueAngle": "Show both front-end and back-end DTI against lender thresholds (e.g. 28/36, 43% mortgage cap) and flag which bracket the user falls in."
+    },
+    {
+      "slug": "debt-consolidation-calculator",
+      "market": "US",
+      "primaryKeyword": "debt consolidation calculator",
+      "estVolume": 8000,
+      "estKd": 28,
+      "intent": "commercial",
+      "secondaryKeywords": ["debt consolidation loan calculator", "consolidate credit card debt calculator", "debt consolidation savings"],
+      "paaQuestions": [
+        "Is debt consolidation a good idea?",
+        "How much can I save by consolidating debt?",
+        "Does debt consolidation hurt your credit?",
+        "What credit score do you need to consolidate debt?"
+      ],
+      "uniqueAngle": "Compare the blended cost of several existing debts against a single consolidation loan, including any fee, and show the monthly and total-interest difference."
+    },
+    {
+      "slug": "loan-emi-calculator",
+      "market": "Global",
+      "primaryKeyword": "loan emi calculator",
+      "estVolume": 60000,
+      "estKd": 35,
+      "intent": "transactional",
+      "secondaryKeywords": ["emi calculator", "monthly emi calculator", "loan installment calculator"],
+      "paaQuestions": [
+        "How is loan EMI calculated?",
+        "What is the formula for EMI?",
+        "Does EMI change if interest rate changes?",
+        "How can I reduce my EMI?"
+      ],
+      "uniqueAngle": "State the EMI formula plainly, then show the principal-vs-interest split over the term so users see how early EMIs are mostly interest."
+    },
+    {
+      "slug": "personal-loan-calculator",
+      "market": "US",
+      "primaryKeyword": "personal loan calculator",
+      "estVolume": 25000,
+      "estKd": 38,
+      "intent": "transactional",
+      "secondaryKeywords": ["personal loan emi calculator", "personal loan payment calculator", "personal loan interest calculator"],
+      "paaQuestions": [
+        "How are personal loan payments calculated?",
+        "What is a typical personal loan interest rate?",
+        "How much would a $10,000 personal loan cost per month?",
+        "Does a personal loan affect credit score?"
+      ],
+      "uniqueAngle": "Include a quick reference table of monthly cost for common amounts and rates so users can sanity-check an offer at a glance."
+    },
+    {
+      "slug": "amortization-calculator",
+      "market": "US",
+      "primaryKeyword": "amortization calculator",
+      "estVolume": 70000,
+      "estKd": 40,
+      "intent": "transactional",
+      "secondaryKeywords": ["amortization schedule calculator", "loan amortization calculator", "amortization table"],
+      "paaQuestions": [
+        "What is an amortization schedule?",
+        "How is amortization calculated?",
+        "Why is most of my early payment interest?",
+        "How does an extra payment change amortization?"
+      ],
+      "uniqueAngle": "Render the full month-by-month schedule and highlight the crossover month where payments shift from mostly-interest to mostly-principal."
+    },
+    {
+      "slug": "loan-comparison-calculator",
+      "market": "US",
+      "primaryKeyword": "loan comparison calculator",
+      "estVolume": 5000,
+      "estKd": 18,
+      "intent": "commercial",
+      "secondaryKeywords": ["compare loan offers", "loan comparison tool", "compare two loans calculator"],
+      "paaQuestions": [
+        "How do I compare two loan offers?",
+        "Is a lower rate always the cheaper loan?",
+        "What is APR and why does it matter when comparing loans?",
+        "Should I compare monthly payment or total cost?"
+      ],
+      "uniqueAngle": "Put two offers side by side and rank them on total cost over the full term, not just the headline rate or monthly payment."
+    },
+    {
+      "slug": "loan-prepayment-calculator",
+      "market": "Global",
+      "primaryKeyword": "loan prepayment calculator",
+      "estVolume": 9000,
+      "estKd": 20,
+      "intent": "transactional",
+      "secondaryKeywords": ["part payment calculator", "loan prepayment interest saved", "prepay loan calculator"],
+      "paaQuestions": [
+        "How much interest can I save by prepaying a loan?",
+        "Is it better to prepay a loan or reduce the tenure?",
+        "Are there penalties for prepaying a loan?",
+        "Should I prepay my loan or invest the money?"
+      ],
+      "uniqueAngle": "Model a one-off lump-sum prepayment and let the user choose to reduce either the EMI or the tenure, showing interest saved for each."
+    },
+    {
+      "slug": "loan-refinance-calculator",
+      "market": "US",
+      "primaryKeyword": "loan refinance calculator",
+      "estVolume": 6000,
+      "estKd": 24,
+      "intent": "commercial",
+      "secondaryKeywords": ["refinance savings calculator", "should i refinance calculator", "refinance break even calculator"],
+      "paaQuestions": [
+        "When is it worth refinancing a loan?",
+        "How do I calculate refinance savings?",
+        "What is the break-even point on a refinance?",
+        "Does refinancing hurt your credit?"
+      ],
+      "uniqueAngle": "Compare current loan vs new offer including fees and show the break-even month after which refinancing actually pays off."
+    },
+    {
+      "slug": "loan-affordability-calculator",
+      "market": "US",
+      "primaryKeyword": "loan affordability calculator",
+      "estVolume": 4000,
+      "estKd": 18,
+      "intent": "transactional",
+      "secondaryKeywords": ["how much loan can i afford", "loan budget calculator", "affordable loan amount"],
+      "paaQuestions": [
+        "How much loan can I afford?",
+        "What percentage of income should go to loan payments?",
+        "How do lenders decide how much to lend me?",
+        "How does my other debt affect what I can borrow?"
+      ],
+      "uniqueAngle": "Work backwards from a comfortable monthly payment and DTI limit to the maximum loan amount, not the other way around."
+    },
+    {
+      "slug": "loan-eligibility-calculator",
+      "market": "Global",
+      "primaryKeyword": "loan eligibility calculator",
+      "estVolume": 20000,
+      "estKd": 26,
+      "intent": "transactional",
+      "secondaryKeywords": ["loan eligibility check", "how much loan am i eligible for", "eligible loan amount calculator"],
+      "paaQuestions": [
+        "How is loan eligibility calculated?",
+        "What income do I need to qualify for a loan?",
+        "How does credit score affect loan eligibility?",
+        "Can I increase my loan eligibility?"
+      ],
+      "uniqueAngle": "Estimate the maximum eligible amount from income, existing obligations and a target DTI, and list concrete levers to raise it."
+    },
+    {
+      "slug": "loan-interest-calculator",
+      "market": "US",
+      "primaryKeyword": "loan interest calculator",
+      "estVolume": 12000,
+      "estKd": 24,
+      "intent": "transactional",
+      "secondaryKeywords": ["total interest calculator", "interest on loan calculator", "how much interest will i pay"],
+      "paaQuestions": [
+        "How do I calculate total interest on a loan?",
+        "What is the difference between simple and compound loan interest?",
+        "Why do I pay more interest at the start of a loan?",
+        "How can I pay less interest overall?"
+      ],
+      "uniqueAngle": "Show total interest over the life of the loan and how it falls sharply with a shorter term or small overpayment."
+    },
+    {
+      "slug": "loan-tenure-calculator",
+      "market": "Global",
+      "primaryKeyword": "loan tenure calculator",
+      "estVolume": 4000,
+      "estKd": 16,
+      "intent": "transactional",
+      "secondaryKeywords": ["loan term calculator", "emi to tenure calculator", "how long to pay off loan"],
+      "paaQuestions": [
+        "How do I find the right loan tenure?",
+        "Does a longer tenure mean more interest?",
+        "How does my EMI change with tenure?",
+        "Is a shorter loan term always better?"
+      ],
+      "uniqueAngle": "Solve for the tenure that hits a target EMI, and show the interest trade-off of each tenure choice."
+    },
+    {
+      "slug": "flat-vs-reducing-rate-calculator",
+      "market": "Global",
+      "primaryKeyword": "flat vs reducing rate calculator",
+      "estVolume": 6000,
+      "estKd": 14,
+      "intent": "commercial",
+      "secondaryKeywords": ["flat rate vs reducing rate", "reducing balance interest calculator", "flat interest rate calculator"],
+      "paaQuestions": [
+        "What is the difference between flat and reducing interest rates?",
+        "Why is a flat rate more expensive than it looks?",
+        "How do I convert a flat rate to a reducing rate?",
+        "Which is better, flat or reducing balance?"
+      ],
+      "uniqueAngle": "Expose how a low-sounding flat rate equals a much higher effective reducing rate, with both shown for the same loan."
+    },
+    {
+      "slug": "interest-only-loan-calculator",
+      "market": "US",
+      "primaryKeyword": "interest only loan calculator",
+      "estVolume": 8000,
+      "estKd": 22,
+      "intent": "transactional",
+      "secondaryKeywords": ["interest only payment calculator", "interest only mortgage calculator", "io loan calculator"],
+      "paaQuestions": [
+        "How does an interest-only loan work?",
+        "What happens when the interest-only period ends?",
+        "Is an interest-only loan a good idea?",
+        "How much lower is an interest-only payment?"
+      ],
+      "uniqueAngle": "Show the low interest-only payment alongside the jump to full repayment once the IO period ends, so the future cost is clear."
+    },
+    {
+      "slug": "line-of-credit-calculator",
+      "market": "US",
+      "primaryKeyword": "line of credit calculator",
+      "estVolume": 5000,
+      "estKd": 20,
+      "intent": "transactional",
+      "secondaryKeywords": ["line of credit payment calculator", "loc interest calculator", "revolving credit calculator"],
+      "paaQuestions": [
+        "How are line of credit payments calculated?",
+        "How is interest charged on a line of credit?",
+        "What is the difference between a line of credit and a loan?",
+        "How do I pay off a line of credit faster?"
+      ],
+      "uniqueAngle": "Model interest on the drawn balance only, and show how payoff time changes with how much of the limit is used."
+    },
+    {
+      "slug": "daily-interest-calculator",
+      "market": "US",
+      "primaryKeyword": "daily interest calculator",
+      "estVolume": 9000,
+      "estKd": 18,
+      "intent": "transactional",
+      "secondaryKeywords": ["per day interest calculator", "daily interest rate calculator", "interest per day on loan"],
+      "paaQuestions": [
+        "How do I calculate daily interest?",
+        "What is a daily periodic rate?",
+        "How much interest accrues per day on my balance?",
+        "Do loans charge interest every day?"
+      ],
+      "uniqueAngle": "Compute the daily periodic rate from an annual rate and show the interest that accrues each day on the current balance."
+    },
+    {
+      "slug": "balloon-loan-calculator",
+      "market": "US",
+      "primaryKeyword": "balloon loan calculator",
+      "estVolume": 3000,
+      "estKd": 16,
+      "intent": "transactional",
+      "secondaryKeywords": ["balloon payment calculator", "balloon mortgage calculator", "balloon loan payment"],
+      "paaQuestions": [
+        "How does a balloon loan work?",
+        "How is a balloon payment calculated?",
+        "What happens at the end of a balloon loan?",
+        "Are balloon loans risky?"
+      ],
+      "uniqueAngle": "Show the lower regular payment and the large final balloon side by side so the lump sum due at the end is never a surprise."
+    },
+    {
+      "slug": "gold-loan-calculator",
+      "market": "India",
+      "primaryKeyword": "gold loan calculator",
+      "estVolume": 40000,
+      "estKd": 22,
+      "intent": "transactional",
+      "secondaryKeywords": ["gold loan emi calculator", "gold loan per gram", "loan against gold calculator"],
+      "paaQuestions": [
+        "How is a gold loan amount calculated?",
+        "What is the loan-to-value for a gold loan?",
+        "How is gold loan interest charged?",
+        "How much loan can I get per gram of gold?"
+      ],
+      "uniqueAngle": "Estimate the loan from gold weight, purity and current rate at the lender LTV cap (lower RPM market, keep effort proportional)."
+    },
+    {
+      "slug": "credit-builder-loan-calculator",
+      "market": "US",
+      "primaryKeyword": "credit builder loan calculator",
+      "estVolume": 2000,
+      "estKd": 12,
+      "intent": "transactional",
+      "secondaryKeywords": ["credit builder loan payment", "credit builder loan cost", "build credit loan calculator"],
+      "paaQuestions": [
+        "How does a credit builder loan work?",
+        "How much does a credit builder loan cost?",
+        "Do credit builder loans actually raise your score?",
+        "How much will I get back at the end?"
+      ],
+      "uniqueAngle": "Show the monthly payment, the total fees/interest cost, and the lump sum released at the end so the true price of building credit is clear."
+    },
+    {
+      "slug": "loan-late-payment-calculator",
+      "market": "US",
+      "primaryKeyword": "loan late payment calculator",
+      "estVolume": 2000,
+      "estKd": 14,
+      "intent": "transactional",
+      "secondaryKeywords": ["late payment fee calculator", "loan penalty calculator", "late payment interest calculator"],
+      "paaQuestions": [
+        "How is a late payment penalty calculated?",
+        "How much is a late loan payment fee?",
+        "Does one late payment hurt your credit?",
+        "How long do I have before a payment is late?"
+      ],
+      "uniqueAngle": "Estimate the penalty interest and late fee for days overdue, and note the credit-report impact of a payment 30+ days late."
+    },
+    {
+      "slug": "bridge-loan-calculator",
+      "market": "US",
+      "primaryKeyword": "bridge loan calculator",
+      "estVolume": 3000,
+      "estKd": 20,
+      "intent": "transactional",
+      "secondaryKeywords": ["bridge loan cost calculator", "bridging loan calculator", "short term bridge loan"],
+      "paaQuestions": [
+        "How does a bridge loan work?",
+        "How much does a bridge loan cost?",
+        "How is bridge loan interest calculated?",
+        "When should you use a bridge loan?"
+      ],
+      "uniqueAngle": "Total the real short-term cost (interest plus fees) over the bridge period so the convenience can be weighed against the price."
+    }
+  ]
+}

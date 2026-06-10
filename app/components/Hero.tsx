@@ -1,3 +1,5 @@
+import SearchAutocomplete from "./SearchAutocomplete";
+
 const TRUST = [
   { title: "100% Free", sub: "No Sign Up Required", icon: "check" },
   { title: "Accurate Results", sub: "Trusted Calculations", icon: "target" },
@@ -203,24 +205,10 @@ export default function Hero() {
             tools, calculators and expert guides. Simple, fast and accurate.
           </p>
 
-          {/* Search */}
-          <form action="/tools" className="mt-7 flex max-w-xl items-center gap-2 rounded-2xl border border-zinc-200 p-1.5 shadow-sm focus-within:border-orange-400">
-            <div className="flex flex-1 items-center gap-2 pl-3">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-              <input
-                name="q"
-                type="search"
-                placeholder="Search any calculator or tool..."
-                className="w-full bg-transparent py-2.5 text-sm text-zinc-800 outline-none placeholder:text-zinc-400"
-              />
-            </div>
-            <button type="submit" className="rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-orange-600">
-              Search
-            </button>
-          </form>
+          {/* Search with live autocomplete */}
+          <div className="mt-7">
+            <SearchAutocomplete />
+          </div>
 
           {/* Trust badges */}
           <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">

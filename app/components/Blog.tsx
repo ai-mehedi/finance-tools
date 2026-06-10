@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const BADGE_COLORS: Record<string, string> = {
   BUDGETING: "bg-orange-500",
   SAVING: "bg-emerald-500",
@@ -90,7 +92,7 @@ export default function Blog() {
           <div className="grid items-center gap-8 lg:grid-cols-2">
             <div>
               <nav className="mb-4 flex items-center gap-2 text-sm text-zinc-500">
-                <a href="/" className="hover:text-orange-600">Home</a>
+                <Link href="/" className="hover:text-orange-600">Home</Link>
                 <span>›</span>
                 <span className="font-medium text-zinc-800">Blog</span>
               </nav>
@@ -235,9 +237,9 @@ export default function Blog() {
                   </li>
                 ))}
               </ul>
-              <a href="/categories" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-orange-500 hover:text-orange-600">
+              <Link href="/categories" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-orange-500 hover:text-orange-600">
                 View All Categories <ArrowRight />
-              </a>
+              </Link>
             </div>
 
             {/* Popular Articles */}

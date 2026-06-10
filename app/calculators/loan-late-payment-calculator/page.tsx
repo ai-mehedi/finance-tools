@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import StaticPage, { H2, P } from "../../components/StaticPage";
+import BlogCard from "../../components/BlogCard";
 import JsonLd from "../../components/JsonLd";
 import { AdSlot } from "../../components/AdSlot";
 import ShareButtons from "../../components/ShareButtons";
 import LoanLatePaymentCalculator from "./LoanLatePaymentCalculator";
-import { getTools, getArticles, getToolBySlug } from "@/lib/queries";
-import { abs, breadcrumbSchema, faqSchema, SITE_URL } from "@/lib/seo";
+import { getRelatedTools, getArticles, getToolBySlug } from "@/lib/queries";
+import { abs, breadcrumbSchema, faqSchema, EDITORIAL, personSchema, SITE_URL } from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -57,8 +58,8 @@ const FAQ = [
 
 export default async function LoanLatePaymentCalculatorPage() {
   const [{ data: tools }, { data: articles }, self] = await Promise.all([
-    getTools({ type: "calculator", limit: 7 }),
-    getArticles({ limit: 4 }),
+    getRelatedTools(SELF_SLUG, 7),
+    getArticles({ limit: 3 }),
     getToolBySlug(SELF_SLUG),
   ]);
   const relatedTools = tools.filter((t) => t.slug !== SELF_SLUG).slice(0, 6);
@@ -80,6 +81,9 @@ export default async function LoanLatePaymentCalculatorPage() {
     operatingSystem: "Any",
     browserRequirements: "Requires JavaScript",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    dateModified: "2026-06-01",
+    author: personSchema(EDITORIAL.author),
+    ...(EDITORIAL.reviewer.name ? { reviewer: personSchema(EDITORIAL.reviewer) } : {}),
     publisher: { "@id": `${SITE_URL}/#organization` },
   };
 
@@ -168,22 +172,9 @@ export default async function LoanLatePaymentCalculatorPage() {
                 <H2>Related guides</H2>
                 <Link href="/blog" className="shrink-0 text-sm font-semibold text-orange-600 hover:text-orange-700">View all →</Link>
               </div>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {articles.map((a) => (
-                  <Link key={a._id} href={`/blog/${a.slug}`} className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-all hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md">
-                    <div className="relative h-36 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-200">
-                      {a.featuredImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={a.featuredImage} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center text-4xl">📰</span>
-                      )}
-                    </div>
-                    <div className="flex flex-1 flex-col p-4">
-                      <h3 className="line-clamp-2 text-sm font-bold leading-snug text-zinc-900 group-hover:text-orange-600">{a.title}</h3>
-                      {a.excerpt && <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-zinc-500">{a.excerpt}</p>}
-                    </div>
-                  </Link>
+                  <BlogCard key={a._id} article={a} size="sm" />
                 ))}
               </div>
             </div>
@@ -201,7 +192,7 @@ export default async function LoanLatePaymentCalculatorPage() {
               <ul className="mt-3 space-y-1">
                 {relatedTools.map((t) => (
                   <li key={t._id}>
-                    <Link href={`/tools/${t.slug}`} className="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-orange-50">
+                    <Link href={t.url || `/tools/${t.slug}`} className="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-orange-50">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-orange-50 text-base">
                         {t.thumbnail ? (
                           // eslint-disable-next-line @next/next/no-img-element

@@ -10,7 +10,10 @@ export const revalidate = 3600;
 
 export const metadata = {
   title: "All Tools & Calculators",
-  alternates: { canonical: "/tools" },
+  // /tools and /calculators list almost the same set (nearly everything is a
+  // calculator), so consolidate ranking signals onto the keyword-rich
+  // /calculators URL instead of competing with ourselves.
+  alternates: { canonical: "/calculators" },
   description: "Browse 200+ free financial calculators and tools for loans, mortgage, investing, taxes, savings and more.",
 };
 
@@ -49,6 +52,7 @@ export default async function ToolsPage({
         </div>
 
         <div className="mx-auto container px-6 py-10">
+          <AdSlot className="mb-8" />
           {data.length ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {data.map((tool) => (

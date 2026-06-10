@@ -8,7 +8,7 @@ export default function HeaderClient({ items, active }: { items: NavItem[]; acti
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white">
+    <header data-embed-hide className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white">
       <div className="mx-auto flex h-16 container items-center gap-6 px-6">
         <Link href="/" className="flex shrink-0 items-center" aria-label="TopicDrill home">
           {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -2,17 +2,21 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import StaticPage, { H2, P } from "../../components/StaticPage";
+import BlogCard from "../../components/BlogCard";
 import JsonLd from "../../components/JsonLd";
 import { AdSlot } from "../../components/AdSlot";
 import ShareButtons from "../../components/ShareButtons";
+import CalcTrust from "../../components/CalcTrust";
 import LoanPayoffCalculator from "./LoanPayoffCalculator";
-import { getTools, getArticles, getToolBySlug } from "@/lib/queries";
-import { abs, breadcrumbSchema, faqSchema, SITE_URL } from "@/lib/seo";
+import { getRelatedTools, getArticles, getToolBySlug } from "@/lib/queries";
+import { abs, breadcrumbSchema, faqSchema, EDITORIAL, personSchema, SITE_URL } from "@/lib/seo";
 
 export const revalidate = 3600;
 
 const PATH = "/calculators/loan-payoff-calculator";
 const SELF_SLUG = "loan-payoff-calculator";
+// Bump this when you materially update the page (content, formula, rates).
+const UPDATED = "June 2026";
 
 const DESC =
   "Free loan payoff calculator. See how fast you can clear a loan, how much interest you will pay, and how much an extra monthly payment shaves off your debt-free date.";
@@ -57,8 +61,8 @@ const FAQ = [
 
 export default async function LoanPayoffCalculatorPage() {
   const [{ data: tools }, { data: articles }, self] = await Promise.all([
-    getTools({ type: "calculator", limit: 7 }),
-    getArticles({ limit: 4 }),
+    getRelatedTools(SELF_SLUG, 7),
+    getArticles({ limit: 3 }),
     getToolBySlug(SELF_SLUG),
   ]);
   const relatedTools = tools.filter((t) => t.slug !== SELF_SLUG).slice(0, 6);
@@ -79,6 +83,9 @@ export default async function LoanPayoffCalculatorPage() {
     applicationCategory: "FinanceApplication",
     operatingSystem: "Any",
     browserRequirements: "Requires JavaScript",
+    dateModified: "2026-06-01",
+    author: personSchema(EDITORIAL.author),
+    ...(EDITORIAL.reviewer.name ? { reviewer: personSchema(EDITORIAL.reviewer) } : {}),
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     publisher: { "@id": `${SITE_URL}/#organization` },
   };
@@ -89,6 +96,7 @@ export default async function LoanPayoffCalculatorPage() {
       intro="Find out when you will be debt-free. Enter your balance, rate and monthly payment, add any extra you can put toward it, then press Calculate to see your payoff date and interest saved."
       active="Calculators"
       icon={icon}
+      updated={UPDATED}
       wide
     >
       <JsonLd
@@ -107,6 +115,27 @@ export default async function LoanPayoffCalculatorPage() {
         <p className="text-sm font-semibold text-zinc-600">Share this calculator</p>
         <ShareButtons url={abs(PATH)} title="Loan Payoff Calculator" />
       </div>
+
+      <CalcTrust
+        methodology={
+          <>
+            <p>
+              We run a standard amortization: each month interest is charged on the remaining
+              balance at your rate divided by 12, your payment is subtracted, and the smaller
+              balance carries to the next month. We run it twice, once with your scheduled payment
+              and once with the scheduled payment plus any extra, then compare the two payoff dates
+              and total interest. A 100-year cap guards against payments too small to ever clear the
+              loan.
+            </p>
+            <p>
+              Assumptions: a fixed interest rate, payments applied entirely to this loan, and no
+              fees or prepayment penalties. Figures are estimates for planning, not a loan offer.
+              Method based on standard amortization as described by the{" "}
+              <a href="https://www.consumerfinance.gov" target="_blank" rel="nofollow noopener" className="text-orange-600 underline">CFPB</a>.
+            </p>
+          </>
+        }
+      />
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -170,22 +199,9 @@ export default async function LoanPayoffCalculatorPage() {
                 <H2>Related guides</H2>
                 <Link href="/blog" className="shrink-0 text-sm font-semibold text-orange-600 hover:text-orange-700">View all →</Link>
               </div>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {articles.map((a) => (
-                  <Link key={a._id} href={`/blog/${a.slug}`} className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-all hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md">
-                    <div className="relative h-36 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-200">
-                      {a.featuredImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={a.featuredImage} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center text-4xl">📰</span>
-                      )}
-                    </div>
-                    <div className="flex flex-1 flex-col p-4">
-                      <h3 className="line-clamp-2 text-sm font-bold leading-snug text-zinc-900 group-hover:text-orange-600">{a.title}</h3>
-                      {a.excerpt && <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-zinc-500">{a.excerpt}</p>}
-                    </div>
-                  </Link>
+                  <BlogCard key={a._id} article={a} size="sm" />
                 ))}
               </div>
             </div>
@@ -203,7 +219,7 @@ export default async function LoanPayoffCalculatorPage() {
               <ul className="mt-3 space-y-1">
                 {relatedTools.map((t) => (
                   <li key={t._id}>
-                    <Link href={`/tools/${t.slug}`} className="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-orange-50">
+                    <Link href={t.url || `/tools/${t.slug}`} className="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-orange-50">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-orange-50 text-base">
                         {t.thumbnail ? (
                           // eslint-disable-next-line @next/next/no-img-element

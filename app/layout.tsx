@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import JsonLd from "./components/JsonLd";
+import EmbedMode from "./components/EmbedMode";
 import { organizationSchema, websiteSchema, SITE_URL } from "@/lib/seo";
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
@@ -87,6 +88,7 @@ export default function RootLayout({
           />
         )}
         <JsonLd data={[organizationSchema(), websiteSchema()]} />
+        <EmbedMode />
         {children}
       </body>
     </html>

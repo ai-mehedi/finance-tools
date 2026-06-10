@@ -15,7 +15,7 @@ export default function Newsletter({
   const soft = variant === "soft";
 
   return (
-    <section className={`w-full ${soft ? "bg-white" : "bg-gradient-to-r from-orange-400 to-orange-600"}`}>
+    <section data-embed-hide className={`w-full ${soft ? "bg-white" : "bg-gradient-to-r from-orange-400 to-orange-600"}`}>
       <div className={`mx-auto container px-6 ${soft ? "py-6" : "py-8"}`}>
         <div
           className={`flex flex-col items-center gap-6 lg:flex-row lg:justify-between ${

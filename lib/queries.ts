@@ -106,6 +106,34 @@ export async function getTools(opts: { categoryId?: string; q?: string; type?: s
   return { data: ser(data) as unknown as ToolLite[], total, pages: Math.max(1, Math.ceil(total / limit)) };
 }
 
+// Cluster-aware "related calculators": returns other active calculators in the
+// SAME category as `slug` (the topical-authority signal), topped up with other
+// calculators if the category is small. Same `{ data }` shape as getTools so the
+// calculator pages can drop it in. This is the internal-linking moat — siblings,
+// not random tools.
+export async function getRelatedTools(slug: string, limit = 7): Promise<{ data: ToolLite[] }> {
+  await connectToDatabase();
+  const self = (await ToolModel.findOne({ slug, status: "active" }).select("categories").lean()) as
+    | { categories?: unknown[] }
+    | null;
+  const catId = self?.categories?.[0];
+  const base: Record<string, unknown> = { type: "calculator", status: "active", slug: { $ne: slug } };
+
+  let items: unknown[] = [];
+  if (catId) {
+    items = await ToolModel.find({ ...base, categories: catId }).sort({ title: 1 }).limit(limit).lean();
+  }
+  if (items.length < limit) {
+    const haveIds = items.map((i) => (i as { _id: unknown })._id);
+    const extra = await ToolModel.find({ ...base, _id: { $nin: haveIds } })
+      .sort({ title: 1 })
+      .limit(limit - items.length)
+      .lean();
+    items = [...items, ...extra];
+  }
+  return { data: ser(items) as unknown as ToolLite[] };
+}
+
 export async function getToolBySlug(slug: string) {
   await connectToDatabase();
   const tool = await ToolModel.findOne({ slug, status: "active" }).populate("categories", "name slug").lean();

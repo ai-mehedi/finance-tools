@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Force a light UI everywhere (form controls, scrollbars) even when the
+     device is set to dark mode. */
+  color-scheme: light;
 }
 
 @theme inline {
@@ -12,12 +15,19 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Unified corner radius: collapse the whole rounded-lg/xl/2xl/3xl scale onto a
+   single consistent value (= rounded-md) so corners stop looking random across
+   the site. rounded-full (circles, pills, dots) and rounded-sm are left alone.
+   Change the one value below to re-tune every card/button/input at once. */
+@theme {
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.375rem;
+  --radius-2xl: 0.375rem;
+  --radius-3xl: 0.375rem;
 }
+
+/* Light theme is enforced site-wide: the previous prefers-color-scheme: dark
+   override has been removed so dark-mode devices still get the light design. */
 
 body {
   background: var(--background);
@@ -82,3 +92,8 @@ body {
   height: 0;
   pointer-events: none;
 }
+
+/* Embed mode: when a calculator is loaded in an iframe (?embed=1), hide all
+   site chrome so only the tool shows. Toggled by EmbedMode on <html>. */
+html[data-embed="1"] [data-embed-hide] { display: none !important; }
+html[data-embed="1"] body { background: #fff; }

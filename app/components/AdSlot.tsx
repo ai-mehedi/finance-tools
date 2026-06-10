@@ -71,6 +71,7 @@ export function AdSlot({
     if (IS_PROD) return null;
     return (
       <div
+        data-embed-hide
         className={`flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 text-xs font-medium uppercase tracking-wide text-zinc-400 ${className}`}
         style={{ minHeight: reserved, ...(isFixed ? { width, height } : {}) }}
       >
@@ -81,6 +82,7 @@ export function AdSlot({
 
   return (
     <div
+      data-embed-hide
       className={`flex flex-col items-center justify-center ${className}`}
       style={{ minHeight: reserved }}
       suppressHydrationWarning

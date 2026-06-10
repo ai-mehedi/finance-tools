@@ -3,6 +3,7 @@ import AllCategories from "../components/AllCategories";
 import Newsletter from "../components/Newsletter";
 import TrustBadges from "../components/TrustBadges";
 import Footer from "../components/Footer";
+import { AdSlot } from "../components/AdSlot";
 import { getToolCategoriesWithCounts } from "@/lib/queries";
 
 export const revalidate = 3600;
@@ -19,7 +20,9 @@ export default async function CategoriesPage() {
     <div className="flex min-h-screen flex-col bg-zinc-50">
       <SiteHeader active="Categories" />
       <main className="flex-1">
+        <div className="mx-auto container px-6 pt-8"><AdSlot /></div>
         <AllCategories categories={categories} />
+        <div className="mx-auto container px-6 pb-10"><AdSlot /></div>
         <Newsletter />
         <TrustBadges />
       </main>

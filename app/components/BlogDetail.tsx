@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export type Post = {
   slug: string;
   badge: string;
@@ -61,9 +63,9 @@ export default function BlogDetail({ post }: { post: Post }) {
       {/* Breadcrumb */}
       <div className="border-b border-zinc-100 bg-white">
         <nav className="mx-auto container flex flex-wrap items-center gap-2 px-6 py-3 text-sm text-zinc-500">
-          <a href="/" className="hover:text-orange-600">Home</a>
+          <Link href="/" className="hover:text-orange-600">Home</Link>
           <span>›</span>
-          <a href="/blog" className="hover:text-orange-600">Blog</a>
+          <Link href="/blog" className="hover:text-orange-600">Blog</Link>
           <span>›</span>
           <a href={`/categories/${post.category.toLowerCase()}`} className="hover:text-orange-600">{post.category}</a>
           <span>›</span>
