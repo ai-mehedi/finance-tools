@@ -18,7 +18,7 @@ const SELF_SLUG = "hra-exemption-calculator";
 const DESC =
   "Free HRA exemption calculator for India. Find your tax-exempt house rent allowance as the least of actual HRA, rent minus 10 percent of salary, and 50 or 40 percent of salary, with a clear chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "HRA Exemption Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function HraExemptionCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "disability-insurance-calculator";
 const DESC =
   "Free disability insurance calculator. Estimate the monthly benefit and total coverage you need to protect your income if you cannot work due to illness or injury.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Disability Insurance Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function DisabilityInsuranceCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

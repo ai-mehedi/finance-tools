@@ -18,7 +18,7 @@ const SELF_SLUG = "break-even-calculator";
 const DESC =
   "Free break even calculator. Find the number of units and the sales revenue your business needs to cover fixed and variable costs, with a break-even chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Break Even Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function BreakEvenCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

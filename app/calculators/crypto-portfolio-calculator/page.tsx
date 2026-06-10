@@ -18,7 +18,7 @@ const SELF_SLUG = "crypto-portfolio-calculator";
 const DESC =
   "Free crypto portfolio calculator. Add every coin you hold with its quantity, average buy price and current price to see total value, unrealized profit or loss, return percentage and allocation by coin.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Crypto Portfolio Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function CryptoPortfolioCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "emergency-fund-calculator";
 const DESC =
   "Free emergency fund calculator. Find how much to save based on your monthly expenses and target months of coverage, and how long it takes to get there.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Emergency Fund Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function EmergencyFundCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

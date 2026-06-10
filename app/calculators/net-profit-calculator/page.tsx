@@ -18,7 +18,7 @@ const SELF_SLUG = "net-profit-calculator";
 const DESC =
   "Free net profit calculator. Work down the income statement from revenue through cost of goods, operating expenses, interest and tax to find net profit, gross, operating and net margins, with a waterfall chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Net Profit Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function NetProfitCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

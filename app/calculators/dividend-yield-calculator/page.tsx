@@ -18,7 +18,7 @@ const SELF_SLUG = "dividend-yield-calculator";
 const DESC =
   "Free dividend yield calculator. Work out the dividend yield, yield on cost and annual income from a stock using the annual dividend per share and share price.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Dividend Yield Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function DividendYieldCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

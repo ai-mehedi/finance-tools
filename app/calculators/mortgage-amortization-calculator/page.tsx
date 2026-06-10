@@ -18,7 +18,7 @@ const SELF_SLUG = "mortgage-amortization-calculator";
 const DESC =
   "Free mortgage amortization calculator. See your monthly payment, total interest and a year-by-year schedule of how principal and interest split, plus the savings from extra payments.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mortgage Amortization Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function MortgageAmortizationCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

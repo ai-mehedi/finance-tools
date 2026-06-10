@@ -97,3 +97,19 @@ body {
    site chrome so only the tool shows. Toggled by EmbedMode on <html>. */
 html[data-embed="1"] [data-embed-hide] { display: none !important; }
 html[data-embed="1"] body { background: #fff; }
+
+/* Print / "Save as PDF": drop site chrome and ads so a printed calculator page
+   is just the title, the tool and its result/content. */
+@media print {
+  [data-embed-hide],
+  header,
+  footer {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  .container {
+    max-width: 100% !important;
+  }
+}

@@ -18,7 +18,7 @@ const SELF_SLUG = "loan-affordability-calculator";
 const DESC =
   "Free loan affordability calculator. Enter your income, existing debts, debt-to-income limit, rate and term to find the largest monthly payment and loan amount you can comfortably afford.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Loan Affordability Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function LoanAffordabilityCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

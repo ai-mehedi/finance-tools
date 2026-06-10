@@ -18,7 +18,7 @@ const SELF_SLUG = "debt-avalanche-calculator";
 const DESC =
   "Free debt avalanche calculator. List your debts, balances and rates to see how attacking the highest interest rate first clears your debt fastest, with total interest, a payoff timeline and a balance chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Debt Avalanche Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function DebtAvalancheCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "expense-ratio-calculator";
 const DESC =
   "Free expense ratio calculator. See how much a fund's annual expense ratio really costs you over time, and how much larger your balance would be with a lower fee.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Expense Ratio Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function ExpenseRatioCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

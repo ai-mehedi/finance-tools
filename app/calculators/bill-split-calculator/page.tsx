@@ -18,7 +18,7 @@ const SELF_SLUG = "bill-split-calculator";
 const DESC =
   "Free bill split calculator. Split a restaurant or group bill evenly, add a tip, and see exactly how much each person owes, rounded up to the cent.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Bill Split Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function BillSplitCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

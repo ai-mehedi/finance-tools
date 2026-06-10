@@ -18,7 +18,7 @@ const SELF_SLUG = "cost-per-use-calculator";
 const DESC =
   "Free cost per use calculator. See what an item really costs each time you use it by spreading the price and running costs across your expected number of uses.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Cost Per Use Calculator",
   description: DESC,
   keywords: [
@@ -217,4 +217,14 @@ export default async function CostPerUseCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

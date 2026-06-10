@@ -18,7 +18,7 @@ const SELF_SLUG = "annuity-calculator";
 const DESC =
   "Free annuity calculator. See the future value of a starting balance plus regular monthly contributions growing at a fixed rate, with a growth chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Annuity Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function AnnuityCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

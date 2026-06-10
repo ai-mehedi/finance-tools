@@ -18,7 +18,7 @@ const SELF_SLUG = "mortgage-affordability-calculator";
 const DESC =
   "Free mortgage affordability calculator. Find the home price and loan amount you can afford from your income, debts and down payment using lender front-end and back-end DTI limits.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mortgage Affordability Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function MortgageAffordabilityCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

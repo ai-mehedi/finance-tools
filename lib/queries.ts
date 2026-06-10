@@ -83,6 +83,7 @@ export type ToolLite = {
   type: string;
   description?: string;
   thumbnail?: string;
+  ogImage?: string;
   url?: string;
   categories?: CategoryLite[];
 };

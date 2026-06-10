@@ -18,7 +18,7 @@ const SELF_SLUG = "401k-calculator";
 const DESC =
   "Free 401(k) calculator. Project your retirement balance from your salary, contribution rate, employer match and expected return, with a growth chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "401k Calculator",
   description: DESC,
   keywords: [
@@ -233,4 +233,14 @@ export default async function Four01kCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

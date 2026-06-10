@@ -18,7 +18,7 @@ const SELF_SLUG = "freelance-rate-calculator";
 const DESC =
   "Free freelance rate calculator. Find the hourly rate to charge so that, after taxes, business costs and unpaid time, you still hit your target take-home pay.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Freelance Rate Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function FreelanceRateCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

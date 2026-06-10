@@ -18,7 +18,7 @@ const SELF_SLUG = "loan-late-payment-calculator";
 const DESC =
   "Free loan late payment calculator. Estimate the true cost of paying a loan installment late, combining a flat late fee, a percentage fee and penalty interest for the days overdue.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Loan Late Payment Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function LoanLatePaymentCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

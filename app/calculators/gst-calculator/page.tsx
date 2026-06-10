@@ -18,7 +18,7 @@ const SELF_SLUG = "gst-calculator";
 const DESC =
   "Free GST calculator. Add or remove Goods and Services Tax from any price, pick a slab from 0 to 28 percent, and see the net amount split into CGST, SGST or IGST.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "GST Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function GstCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

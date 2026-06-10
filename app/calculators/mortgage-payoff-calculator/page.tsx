@@ -18,7 +18,7 @@ const SELF_SLUG = "mortgage-payoff-calculator";
 const DESC =
   "Free mortgage payoff calculator. Find out when your loan will be paid off and how much interest you save by adding an extra amount to each monthly payment, with a side-by-side balance chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mortgage Payoff Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function MortgagePayoffCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

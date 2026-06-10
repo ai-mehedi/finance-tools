@@ -18,7 +18,7 @@ const SELF_SLUG = "forex-margin-calculator";
 const DESC =
   "Free forex margin calculator. Work out the required margin to open a leveraged currency trade from your lot size, the pair price and your account leverage.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Forex Margin Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function ForexMarginCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

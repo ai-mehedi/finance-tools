@@ -18,7 +18,7 @@ const SELF_SLUG = "health-insurance-calculator";
 const DESC =
   "Free health insurance premium calculator. Estimate your monthly and annual premium from age, plan tier, area cost, tobacco use and dependents, with a chart showing how the premium climbs as you get older.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Health Insurance Premium Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function HealthInsuranceCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

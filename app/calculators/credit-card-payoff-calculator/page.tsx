@@ -18,7 +18,7 @@ const SELF_SLUG = "credit-card-payoff-calculator";
 const DESC =
   "Free credit card payoff calculator. See how long it takes to clear your balance, how much interest you pay, and watch the balance fall month by month.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Credit Card Payoff Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function CreditCardPayoffCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

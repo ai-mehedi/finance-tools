@@ -18,7 +18,7 @@ const SELF_SLUG = "present-value-calculator";
 const DESC =
   "Free present value calculator. Discount a future lump sum and a stream of payments back to today's dollars at a chosen rate, and see how each future dollar shrinks the further out it sits.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Present Value Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function PresentValueCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "marginal-tax-rate-calculator";
 const DESC =
   "Free marginal tax rate calculator. Enter your taxable income and filing status to see the rate on your next dollar, your effective rate, total tax owed and the tax paid in each bracket.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Marginal Tax Rate Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function MarginalTaxRateCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

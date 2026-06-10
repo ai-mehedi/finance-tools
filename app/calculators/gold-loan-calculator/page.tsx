@@ -18,7 +18,7 @@ const SELF_SLUG = "gold-loan-calculator";
 const DESC =
   "Free gold loan calculator. Estimate how much you can borrow against pledged gold from its weight, purity and market rate, then see the monthly EMI and total interest for your tenure.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Gold Loan Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function GoldLoanCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

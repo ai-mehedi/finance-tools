@@ -18,7 +18,7 @@ const SELF_SLUG = "millionaire-calculator";
 const DESC =
   "Free millionaire savings calculator. Find out how many years it takes your current savings plus monthly contributions to reach one million dollars at a chosen return, with a chart tracking the climb to your goal.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Millionaire Savings Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function MillionaireCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

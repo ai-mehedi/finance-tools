@@ -18,7 +18,7 @@ const SELF_SLUG = "mortgage-comparison-calculator";
 const DESC =
   "Free mortgage comparison calculator. Put two loan offers side by side on the same amount and compare monthly payment, total interest, points and fees, with a break-even point and total cost chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mortgage Comparison Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function MortgageComparisonCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

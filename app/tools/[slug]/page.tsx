@@ -27,8 +27,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url: `/tools/${slug}`,
       title,
       description,
-      ...(tool.thumbnail ? { images: [{ url: tool.thumbnail }] } : {}),
+      ...(tool.ogImage || tool.thumbnail ? { images: [{ url: (tool.ogImage || tool.thumbnail)! }] } : {}),
     },
+    ...(tool.ogImage ? { twitter: { card: "summary_large_image", title, description, images: [tool.ogImage] } } : {}),
   };
 }
 

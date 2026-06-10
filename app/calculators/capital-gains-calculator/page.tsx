@@ -18,7 +18,7 @@ const SELF_SLUG = "capital-gains-calculator";
 const DESC =
   "Free capital gains calculator. Work out the gain on a sale, estimate the tax at your rate, and see your after-tax profit and return on the original cost.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Capital Gains Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function CapitalGainsCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

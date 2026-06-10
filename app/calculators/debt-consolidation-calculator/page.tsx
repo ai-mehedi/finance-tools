@@ -18,7 +18,7 @@ const SELF_SLUG = "debt-consolidation-calculator";
 const DESC =
   "Free debt consolidation calculator. Roll several credit cards and loans into one and see your new monthly payment, payoff date and total interest saved, with a chart comparing both payoff paths.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Debt Consolidation Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function DebtConsolidationCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

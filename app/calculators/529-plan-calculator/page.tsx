@@ -18,7 +18,7 @@ const SELF_SLUG = "529-plan-calculator";
 const DESC =
   "Free 529 plan calculator. Project how your college savings grow with monthly contributions and compound returns, with a balance growth chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "529 Plan Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function Five29PlanCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

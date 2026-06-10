@@ -18,7 +18,7 @@ const SELF_SLUG = "lot-size-calculator";
 const DESC =
   "Free forex lot size calculator. Work out the right position size in standard, mini and micro lots from your account balance, risk percentage and stop loss so every trade risks the same amount.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Lot Size Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function LotSizeCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "credit-card-interest-calculator";
 const DESC =
   "Free credit card interest calculator. See how long a balance takes to clear and the total interest you pay, comparing a fixed monthly payment against a percent-of-balance minimum, with a payoff chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Credit Card Interest Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function CreditCardInterestCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "payroll-tax-calculator";
 const DESC =
   "Free payroll tax calculator. Break down FICA Social Security and Medicare taxes into the employee share, the matching employer share and the combined total, including the additional Medicare surtax.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Payroll Tax Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function PayrollTaxCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

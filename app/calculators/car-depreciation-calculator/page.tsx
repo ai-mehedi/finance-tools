@@ -18,7 +18,7 @@ const SELF_SLUG = "car-depreciation-calculator";
 const DESC =
   "Free car depreciation calculator. See how much value your vehicle loses each year and what it will be worth after several years, with a value curve chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Car Depreciation Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function CarDepreciationCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

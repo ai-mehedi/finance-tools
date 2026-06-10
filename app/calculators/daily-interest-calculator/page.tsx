@@ -18,7 +18,7 @@ const SELF_SLUG = "daily-interest-calculator";
 const DESC =
   "Free daily interest calculator. Work out the interest that builds up each day on a balance, with simple or daily compounding and a running interest chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Daily Interest Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function DailyInterestCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

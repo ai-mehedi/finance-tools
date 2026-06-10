@@ -18,7 +18,7 @@ const SELF_SLUG = "money-doubling-calculator";
 const DESC =
   "Free money doubling time calculator. Find exactly how many years it takes your investment to double or hit any target multiple at a given return, compare the Rule of 72 and Rule of 69.3, and see the growth on a chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Money Doubling Time Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function MoneyDoublingCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

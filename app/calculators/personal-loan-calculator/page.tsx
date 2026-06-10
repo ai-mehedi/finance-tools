@@ -18,7 +18,7 @@ const SELF_SLUG = "personal-loan-calculator";
 const DESC =
   "Free personal loan calculator. Work out your fixed monthly payment, total interest and payoff date for an amortizing loan, and see how extra monthly payments shorten the term.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Personal Loan Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function PersonalLoanCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

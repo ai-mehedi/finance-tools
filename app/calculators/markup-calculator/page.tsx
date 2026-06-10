@@ -18,7 +18,7 @@ const SELF_SLUG = "markup-calculator";
 const DESC =
   "Free markup calculator. Enter a unit cost and a markup percentage to find the selling price, profit per unit and the equivalent gross margin, with a chart comparing common markup levels.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Markup Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function MarkupCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "loan-tenure-calculator";
 const DESC =
   "Free loan tenure calculator. Enter your balance, interest rate and monthly payment to find out how many months and years it takes to clear the loan, with a chart of the falling balance.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Loan Tenure Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function LoanTenureCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

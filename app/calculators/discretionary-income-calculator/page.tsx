@@ -18,7 +18,7 @@ const SELF_SLUG = "discretionary-income-calculator";
 const DESC =
   "Free discretionary income calculator. Estimate the discretionary income used for income-driven student loan repayment and your likely monthly payment.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Discretionary Income Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function DiscretionaryIncomeCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

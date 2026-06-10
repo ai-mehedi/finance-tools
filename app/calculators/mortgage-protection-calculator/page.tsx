@@ -18,7 +18,7 @@ const SELF_SLUG = "mortgage-protection-calculator";
 const DESC =
   "Free mortgage protection calculator. Estimate the life-insurance cover needed to clear your mortgage if you die, see an illustrative monthly premium, and chart how the coverage gap shrinks as the loan amortizes.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mortgage Protection Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function MortgageProtectionCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

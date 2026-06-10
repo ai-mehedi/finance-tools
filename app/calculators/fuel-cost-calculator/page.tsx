@@ -18,7 +18,7 @@ const SELF_SLUG = "fuel-cost-calculator";
 const DESC =
   "Free fuel cost calculator. Estimate the cost of fuel for any trip from the distance, your vehicle's miles per gallon and the price per gallon, plus a yearly total.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Fuel Cost Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function FuelCostCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

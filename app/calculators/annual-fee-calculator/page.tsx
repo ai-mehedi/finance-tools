@@ -18,7 +18,7 @@ const SELF_SLUG = "annual-fee-calculator";
 const DESC =
   "Free annual fee calculator. Find out if a credit card's annual fee is worth it by weighing your rewards, perks and sign-up bonus against the cost.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Annual Fee Worth It Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function AnnualFeeCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

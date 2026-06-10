@@ -18,7 +18,7 @@ const SELF_SLUG = "loan-eligibility-calculator";
 const DESC =
   "Free loan eligibility calculator. Estimate the maximum loan you may qualify for from your income, existing debts and a lender's debt-to-income limit, with a clear income allocation chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Loan Eligibility Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function LoanEligibilityCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

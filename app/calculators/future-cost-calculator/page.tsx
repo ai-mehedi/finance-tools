@@ -18,7 +18,7 @@ const SELF_SLUG = "future-cost-calculator";
 const DESC =
   "Free future cost calculator. See how much an expense will cost years from now after inflation, using the formula Future cost = P times (1 + r)^t, with a rising cost chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Future Cost Calculator",
   description: DESC,
   keywords: [
@@ -218,4 +218,14 @@ export default async function FutureCostCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

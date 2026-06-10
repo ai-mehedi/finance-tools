@@ -18,7 +18,7 @@ const SELF_SLUG = "cash-advance-calculator";
 const DESC =
   "Free cash advance fee calculator. Estimate the upfront fee and the interest on a credit card cash advance so you can see the true total cost before you take one.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Cash Advance Fee Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function CashAdvanceCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

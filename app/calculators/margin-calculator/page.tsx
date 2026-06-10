@@ -18,7 +18,7 @@ const SELF_SLUG = "margin-calculator";
 const DESC =
   "Free margin calculator. Enter your cost and selling price, or a target margin, to find gross profit, gross margin percent and the equivalent markup, with a clear price-split chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Margin Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function MarginCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

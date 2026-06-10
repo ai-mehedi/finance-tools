@@ -18,7 +18,7 @@ const SELF_SLUG = "minimum-payment-calculator";
 const DESC =
   "Free minimum payment calculator. See how many years and how much interest it takes to clear a credit card balance when you only pay the monthly minimum, with a chart of the slowly falling balance.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Minimum Payment Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function MinimumPaymentCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

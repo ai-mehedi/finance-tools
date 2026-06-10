@@ -18,7 +18,7 @@ const SELF_SLUG = "loan-emi-calculator";
 const DESC =
   "Free loan EMI calculator. Work out your monthly EMI, total interest and total payment for any loan, with a chart of how the balance falls over time.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Loan EMI Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function LoanEmiCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

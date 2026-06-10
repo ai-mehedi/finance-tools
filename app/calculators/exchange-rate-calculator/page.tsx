@@ -18,7 +18,7 @@ const SELF_SLUG = "exchange-rate-calculator";
 const DESC =
   "Free exchange rate calculator. Convert any amount between two currencies using a quoted rate, and see how a markup or conversion fee reduces what you actually receive.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Exchange Rate Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function ExchangeRateCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

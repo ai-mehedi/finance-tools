@@ -15,6 +15,7 @@ export interface ITool {
   title: string;
   slug: string;
   thumbnail?: string;
+  ogImage?: string; // social-share (Open Graph) image URL
   url?: string;
   description?: string; // short summary
   content?: string; // long / rich content
@@ -53,6 +54,7 @@ const ToolSchema = new Schema<ITool, ToolModelType>(
     title: { type: String, required: true, trim: true },
     slug: { type: String, unique: true, lowercase: true, trim: true, index: true },
     thumbnail: { type: String }, // URL (e.g. an S3 Media url)
+    ogImage: { type: String }, // Open Graph / social-share image URL
     url: { type: String, trim: true },
     description: { type: String, trim: true },
     content: { type: String },

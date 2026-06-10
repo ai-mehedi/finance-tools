@@ -18,7 +18,7 @@ const SELF_SLUG = "future-value-calculator";
 const DESC =
   "Free future value calculator. Project the future value of a lump sum plus regular contributions at a given return, with a growth chart showing balance versus money invested.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Future Value Calculator",
   description: DESC,
   keywords: [
@@ -218,4 +218,14 @@ export default async function FutureValueCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

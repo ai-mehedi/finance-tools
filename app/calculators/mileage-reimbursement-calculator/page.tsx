@@ -18,7 +18,7 @@ const SELF_SLUG = "mileage-reimbursement-calculator";
 const DESC =
   "Free mileage reimbursement calculator. Multiply miles driven by the IRS standard rate or a custom cents-per-mile figure, add parking and tolls, and see the exact dollar amount you are owed.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mileage Reimbursement Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function MileageReimbursementCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

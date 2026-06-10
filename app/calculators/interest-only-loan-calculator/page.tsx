@@ -18,7 +18,7 @@ const SELF_SLUG = "interest-only-loan-calculator";
 const DESC =
   "Free interest only loan calculator. Compare the low interest only payment with the higher payment once the loan starts to amortize, and see total interest.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Interest Only Loan Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function InterestOnlyLoanCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

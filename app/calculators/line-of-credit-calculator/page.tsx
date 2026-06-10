@@ -18,7 +18,7 @@ const SELF_SLUG = "line-of-credit-calculator";
 const DESC =
   "Free line of credit calculator. Enter your drawn balance, interest rate and fixed monthly payment to see how long payoff takes, the total interest you will pay, and a balance chart over time.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Line of Credit Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function LineOfCreditCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

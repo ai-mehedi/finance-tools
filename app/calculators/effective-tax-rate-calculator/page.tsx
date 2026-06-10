@@ -18,7 +18,7 @@ const SELF_SLUG = "effective-tax-rate-calculator";
 const DESC =
   "Free effective tax rate calculator. Divide your total tax by your total income to find the real share of income you pay, plus your take-home rate.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Effective Tax Rate Calculator",
   description: DESC,
   keywords: [
@@ -218,4 +218,14 @@ export default async function EffectiveTaxRateCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

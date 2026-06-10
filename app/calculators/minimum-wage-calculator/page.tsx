@@ -18,7 +18,7 @@ const SELF_SLUG = "minimum-wage-calculator";
 const DESC =
   "Free minimum wage calculator. Turn an hourly minimum wage into daily, weekly, monthly and yearly gross pay, factor in overtime above a weekly threshold, and see earnings by pay period in a chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Minimum Wage Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function MinimumWageCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

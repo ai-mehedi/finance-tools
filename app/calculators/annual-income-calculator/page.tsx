@@ -18,7 +18,7 @@ const SELF_SLUG = "annual-income-calculator";
 const DESC =
   "Free annual income calculator. Convert any pay rate, hourly, daily, weekly or monthly, into yearly income, and back into monthly, weekly, daily and hourly figures.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Annual Income Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function AnnualIncomeCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

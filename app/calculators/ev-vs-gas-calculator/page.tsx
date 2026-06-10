@@ -18,7 +18,7 @@ const SELF_SLUG = "ev-vs-gas-calculator";
 const DESC =
   "Free EV vs gas savings calculator. Compare the fuel, electricity and maintenance cost of an electric car against a gas car over your ownership period, find the break-even year and see total savings on a chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "EV vs Gas Savings Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function EvVsGasCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

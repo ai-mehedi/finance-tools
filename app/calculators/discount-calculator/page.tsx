@@ -18,7 +18,7 @@ const SELF_SLUG = "discount-calculator";
 const DESC =
   "Free discount calculator. Work out the sale price, the dollar amount you save and the final cost with optional sales tax from any percentage off.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Discount Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function DiscountCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "bitcoin-halving-countdown";
 const DESC =
   "Free Bitcoin halving countdown. Estimate the date, days and blocks remaining until the next Bitcoin halving from the current block height and block time.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Bitcoin Halving Countdown",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function BitcoinHalvingCountdownPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

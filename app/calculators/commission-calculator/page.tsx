@@ -18,7 +18,7 @@ const SELF_SLUG = "commission-calculator";
 const DESC =
   "Free commission calculator. Work out your sales commission and total pay from a sales amount and rate, with support for a base salary and a higher tiered rate.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Commission Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function CommissionCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

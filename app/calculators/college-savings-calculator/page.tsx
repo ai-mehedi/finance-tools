@@ -18,7 +18,7 @@ const SELF_SLUG = "college-savings-calculator";
 const DESC =
   "Free college savings calculator. Project the inflated future cost of a degree against a 529 plan funded by a starting amount and monthly deposits, then see any shortfall and the monthly saving needed to fully fund it.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "College Savings Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function CollegeSavingsCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

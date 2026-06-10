@@ -18,7 +18,7 @@ const SELF_SLUG = "crypto-average-calculator";
 const DESC =
   "Free crypto average buy calculator. Add every purchase to find your weighted average cost basis, total coins held and total invested, then compare against the current price to see your profit or loss.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Crypto Average Buy Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function CryptoAverageCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

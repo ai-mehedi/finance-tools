@@ -18,7 +18,7 @@ const SELF_SLUG = "biweekly-mortgage-calculator";
 const DESC =
   "Free biweekly mortgage calculator. Compare paying half your mortgage every two weeks against monthly payments to see the interest saved and how many years sooner you pay off your loan.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Biweekly Mortgage Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function BiweeklyMortgageCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

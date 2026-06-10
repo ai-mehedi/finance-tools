@@ -18,7 +18,7 @@ const SELF_SLUG = "critical-illness-calculator";
 const DESC =
   "Free critical illness cover calculator. Estimate the lump sum you need to replace income, clear debts and pay for treatment after a serious diagnosis, then subtract any cover you already hold to find your gap.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Critical Illness Cover Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function CriticalIllnessCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "closing-cost-calculator";
 const DESC =
   "Free closing cost calculator. Estimate the one-time fees you pay at closing on a home, from loan origination to title insurance, and see your total cash to close.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Closing Cost Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function ClosingCostCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

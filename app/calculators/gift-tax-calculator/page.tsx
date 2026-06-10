@@ -18,7 +18,7 @@ const SELF_SLUG = "gift-tax-calculator";
 const DESC =
   "Free US gift tax calculator. See how much of a gift is covered by the annual exclusion, how much uses your lifetime exemption and whether any 40 percent gift tax is due.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Gift Tax Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function GiftTaxCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

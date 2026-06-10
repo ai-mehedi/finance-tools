@@ -18,7 +18,7 @@ const SELF_SLUG = "compound-savings-calculator";
 const DESC =
   "Free compound savings calculator. See how a starting deposit plus regular monthly deposits grow with compound interest, and watch the balance build over time.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Compound Savings Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function CompoundSavingsCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

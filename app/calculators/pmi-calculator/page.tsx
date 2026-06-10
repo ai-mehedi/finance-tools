@@ -18,7 +18,7 @@ const SELF_SLUG = "pmi-calculator";
 const DESC =
   "Free PMI calculator. Estimate your monthly private mortgage insurance premium, see when PMI drops off as your loan amortizes, and find the total PMI you will pay before reaching 80 percent loan-to-value.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "PMI Calculator",
   description: DESC,
   keywords: [
@@ -224,4 +224,14 @@ export default async function PmiCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

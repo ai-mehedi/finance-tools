@@ -18,7 +18,7 @@ const SELF_SLUG = "mortgage-calculator";
 const DESC =
   "Free mortgage calculator. Estimate your monthly mortgage payment including principal, interest, property tax, insurance and HOA, with a payoff chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mortgage Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function MortgageCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

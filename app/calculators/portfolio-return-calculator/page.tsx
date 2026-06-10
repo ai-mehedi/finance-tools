@@ -18,7 +18,7 @@ const SELF_SLUG = "portfolio-return-calculator";
 const DESC =
   "Free portfolio return calculator. Combine several holdings with their own returns to get your blended total return, annualized return and each position's contribution, with an allocation chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Portfolio Return Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function PortfolioReturnCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

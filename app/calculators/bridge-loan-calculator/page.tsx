@@ -18,7 +18,7 @@ const SELF_SLUG = "bridge-loan-calculator";
 const DESC =
   "Free bridge loan calculator. Estimate the monthly interest, total interest, fees and payoff on a short-term interest-only bridge loan between two property deals.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Bridge Loan Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function BridgeLoanCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

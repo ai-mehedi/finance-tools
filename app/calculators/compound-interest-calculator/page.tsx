@@ -18,7 +18,7 @@ const SELF_SLUG = "compound-interest-calculator";
 const DESC =
   "Free compound interest calculator. See how your savings or investments grow over time with regular contributions, any rate and compounding frequency.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Compound Interest Calculator",
   description: DESC,
   keywords: [
@@ -228,4 +228,14 @@ export default async function CompoundInterestCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

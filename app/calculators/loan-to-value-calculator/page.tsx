@@ -18,7 +18,7 @@ const SELF_SLUG = "loan-to-value-calculator";
 const DESC =
   "Free loan to value calculator. Work out your LTV ratio from a property value and loan amount, see your equity share and whether you cross the eighty percent mortgage insurance line.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Loan to Value Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function LoanToValueCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

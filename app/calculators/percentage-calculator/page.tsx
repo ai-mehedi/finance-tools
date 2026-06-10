@@ -18,7 +18,7 @@ const SELF_SLUG = "percentage-calculator";
 const DESC =
   "Free percentage calculator. Find what a percent of a number is, work out what percent one value is of another, or increase and decrease an amount by a percent, with a clear breakdown and a donut chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Percentage Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function PercentageCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

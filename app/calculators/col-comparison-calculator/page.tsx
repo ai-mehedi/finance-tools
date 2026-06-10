@@ -18,7 +18,7 @@ const SELF_SLUG = "col-comparison-calculator";
 const DESC =
   "Free cost of living comparison calculator. See the salary you would need in another city to keep the same standard of living, with a category by category breakdown.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Cost of Living Comparison Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function ColComparisonCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

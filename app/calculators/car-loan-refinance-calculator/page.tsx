@@ -18,7 +18,7 @@ const SELF_SLUG = "car-loan-refinance-calculator";
 const DESC =
   "Free car loan refinance calculator. Compare your current auto loan against a new rate and term to see your new monthly payment, monthly savings and lifetime savings.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Car Loan Refinance Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function CarLoanRefinanceCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

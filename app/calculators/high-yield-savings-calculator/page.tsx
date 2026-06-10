@@ -18,7 +18,7 @@ const SELF_SLUG = "high-yield-savings-calculator";
 const DESC =
   "Free high yield savings calculator. See how an opening deposit plus monthly contributions grow at a given APY, with a chart that splits your ending balance into the money you deposited and the interest it earned.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "High Yield Savings Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function HighYieldSavingsCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

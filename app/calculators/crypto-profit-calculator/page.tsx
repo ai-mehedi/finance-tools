@@ -18,7 +18,7 @@ const SELF_SLUG = "crypto-profit-calculator";
 const DESC =
   "Free crypto profit calculator. Enter your investment, buy price, sell price and exchange fees to see net profit or loss, return percentage, coins bought and the break-even price after fees.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Crypto Profit Calculator",
   description: DESC,
   keywords: [
@@ -224,4 +224,14 @@ export default async function CryptoProfitCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

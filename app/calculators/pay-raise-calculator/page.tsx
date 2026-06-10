@@ -18,7 +18,7 @@ const SELF_SLUG = "pay-raise-calculator";
 const DESC =
   "Free pay raise calculator. Turn a percentage or flat raise into your new hourly, monthly and annual pay, see the dollar increase, and check the real gain after inflation with a multi-year projection chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Pay Raise Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function PayRaiseCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "allowance-calculator";
 const DESC =
   "Free allowance calculator. See how a weekly or monthly kids' allowance adds up over time, how much gets saved, and how a small interest rate grows the pot.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Allowance Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function AllowanceCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

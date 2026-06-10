@@ -18,7 +18,7 @@ const SELF_SLUG = "credit-card-comparison-calculator";
 const DESC =
   "Free credit card comparison calculator. Compare two cards by their real annual cost, combining interest on a carried balance, the annual fee and the rewards you earn.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Credit Card Comparison Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function CreditCardComparisonCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

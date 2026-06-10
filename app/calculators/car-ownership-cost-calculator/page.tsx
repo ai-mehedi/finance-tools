@@ -18,7 +18,7 @@ const SELF_SLUG = "car-ownership-cost-calculator";
 const DESC =
   "Free total cost of ownership calculator for cars. Add up depreciation, financing, fuel, insurance and maintenance to see what a vehicle really costs per year, month and mile.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Total Cost of Ownership Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function CarOwnershipCostCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

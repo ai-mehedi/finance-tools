@@ -18,7 +18,7 @@ const SELF_SLUG = "balance-transfer-calculator";
 const DESC =
   "Free balance transfer calculator. See how much a 0% intro APR balance transfer could save you after the transfer fee, with a side-by-side payoff chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Balance Transfer Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function BalanceTransferCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

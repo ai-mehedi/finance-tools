@@ -18,7 +18,7 @@ const SELF_SLUG = "401k-match-calculator";
 const DESC =
   "Free 401k match calculator. See how much your employer adds to your retirement account each year and whether you are capturing the full match.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "401k Match Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function Four01kMatchCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

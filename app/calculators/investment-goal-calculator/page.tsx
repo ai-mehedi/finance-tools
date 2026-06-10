@@ -18,7 +18,7 @@ const SELF_SLUG = "investment-goal-calculator";
 const DESC =
   "Free investment goal calculator. Find the monthly contribution needed to reach a savings target by a set date, given your current balance and expected return, with a progress chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Investment Goal Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function InvestmentGoalCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

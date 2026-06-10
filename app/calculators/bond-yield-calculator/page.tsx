@@ -18,7 +18,7 @@ const SELF_SLUG = "bond-yield-calculator";
 const DESC =
   "Free bond yield calculator. Work out current yield and yield to maturity (YTM) for a coupon bond from its face value, coupon rate, price and term.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Bond Yield Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function BondYieldCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

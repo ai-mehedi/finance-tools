@@ -18,7 +18,7 @@ const SELF_SLUG = "hourly-to-salary-calculator";
 const DESC =
   "Free hourly to salary calculator. Convert an hourly wage into weekly, biweekly, monthly and annual gross pay based on your hours per week and paid weeks per year, with a pay-by-period chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Hourly to Salary Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function HourlyToSalaryCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

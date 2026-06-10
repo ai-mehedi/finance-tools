@@ -18,7 +18,7 @@ const SELF_SLUG = "fire-calculator";
 const DESC =
   "Free FIRE calculator. Find your financial independence number from your spending and a safe withdrawal rate, then see how many years of saving and investing it takes to retire early.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "FIRE Calculator",
   description: DESC,
   keywords: [
@@ -224,4 +224,14 @@ export default async function FireCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

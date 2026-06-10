@@ -18,7 +18,7 @@ const SELF_SLUG = "mutual-fund-calculator";
 const DESC =
   "Free mutual fund returns calculator. Project the maturity value of a one-time lump sum or a monthly SIP at an expected return, see the drag from the expense ratio, and chart value against money invested.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mutual Fund Returns Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function MutualFundCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "epf-calculator";
 const DESC =
   "Free EPF calculator. Estimate your Employees Provident Fund corpus at retirement from your basic pay, employee and employer contributions, the EPS diversion and yearly interest, with a corpus growth chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "EPF Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function EpfCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

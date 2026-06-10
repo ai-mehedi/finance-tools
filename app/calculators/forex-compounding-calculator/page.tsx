@@ -18,7 +18,7 @@ const SELF_SLUG = "forex-compounding-calculator";
 const DESC =
   "Free forex compounding calculator. Project how a trading account grows when you reinvest a fixed percentage gain each day, week or month, with optional deposits and a chart of balance versus money paid in.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Forex Compounding Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function ForexCompoundingCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

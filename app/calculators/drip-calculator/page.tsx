@@ -18,7 +18,7 @@ const SELF_SLUG = "drip-calculator";
 const DESC =
   "Free dividend reinvestment (DRIP) calculator. Project how reinvested dividends compound your shares and portfolio value over time, with a growth chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Dividend Reinvestment Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function DripCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

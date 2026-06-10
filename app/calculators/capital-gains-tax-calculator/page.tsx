@@ -18,7 +18,7 @@ const SELF_SLUG = "capital-gains-tax-calculator";
 const DESC =
   "Free capital gains tax calculator. Estimate US federal tax on a profitable sale, comparing short-term ordinary rates with long-term 0, 15 and 20 percent rates plus the 3.8 percent net investment income tax.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Capital Gains Tax Calculator",
   description: DESC,
   keywords: [
@@ -224,4 +224,14 @@ export default async function CapitalGainsTaxCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

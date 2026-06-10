@@ -18,7 +18,7 @@ const SELF_SLUG = "cost-per-mile-calculator";
 const DESC =
   "Free cost per mile calculator. Add up fuel, maintenance, insurance and depreciation to see the true cost of driving each mile, per month and per year.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Cost Per Mile Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function CostPerMileCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

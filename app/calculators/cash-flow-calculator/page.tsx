@@ -18,7 +18,7 @@ const SELF_SLUG = "cash-flow-calculator";
 const DESC =
   "Free cash flow calculator. Add up your monthly income and expenses to find your net cash flow, savings rate, and how much you could build over time.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Cash Flow Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function CashFlowCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

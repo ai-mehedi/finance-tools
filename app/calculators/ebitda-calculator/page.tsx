@@ -18,7 +18,7 @@ const SELF_SLUG = "ebitda-calculator";
 const DESC =
   "Free EBITDA calculator. Add back interest, taxes, depreciation and amortization to net income to find your EBITDA and EBITDA margin.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "EBITDA Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function EbitdaCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

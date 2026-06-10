@@ -18,7 +18,7 @@ const SELF_SLUG = "payback-period-calculator";
 const DESC =
   "Free payback period calculator. Find how many years it takes for an investment's cash inflows to recover the initial cost, with a discounted payback option and a cumulative cash flow chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Payback Period Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function PaybackPeriodCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

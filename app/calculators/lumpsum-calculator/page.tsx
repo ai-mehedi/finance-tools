@@ -18,7 +18,7 @@ const SELF_SLUG = "lumpsum-calculator";
 const DESC =
   "Free lumpsum investment calculator. See how a one-time investment grows at an expected annual return over time, with the maturity value, estimated returns and a year-by-year growth chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Lumpsum Investment Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function LumpsumCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

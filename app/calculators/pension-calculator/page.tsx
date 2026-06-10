@@ -18,7 +18,7 @@ const SELF_SLUG = "pension-calculator";
 const DESC =
   "Free pension calculator. Estimate the annual and monthly income from a defined-benefit pension using your years of service, accrual rate and projected final salary, with an early or late retirement adjustment and an accrual chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Pension Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function PensionCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

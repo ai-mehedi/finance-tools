@@ -18,7 +18,7 @@ const SELF_SLUG = "home-insurance-calculator";
 const DESC =
   "Free home insurance calculator. Estimate your annual and monthly homeowners premium from your dwelling rebuild cost, coverage limits, deductible and risk level, with a donut chart of where the premium goes.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Home Insurance Calculator",
   description: DESC,
   keywords: [
@@ -224,4 +224,14 @@ export default async function HomeInsuranceCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

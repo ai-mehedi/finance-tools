@@ -18,7 +18,7 @@ const SELF_SLUG = "fd-calculator";
 const DESC =
   "Free fixed deposit calculator. Find the maturity value and interest earned on an FD using compound interest, with a chart of how your deposit grows over the term.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Fixed Deposit Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function FdCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

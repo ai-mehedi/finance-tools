@@ -18,7 +18,7 @@ const SELF_SLUG = "nps-calculator";
 const DESC =
   "Free NPS calculator. Estimate your National Pension System corpus at retirement from monthly contributions, then see your tax-free lump sum and indicative monthly pension after buying an annuity.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "NPS Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function NpsCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

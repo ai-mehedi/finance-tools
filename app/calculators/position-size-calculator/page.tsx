@@ -18,7 +18,7 @@ const SELF_SLUG = "position-size-calculator";
 const DESC =
   "Free forex position size calculator. Work out how many lots to trade so that hitting your stop loss costs only a set percentage of your account, with units, mini and micro lots and a stop-distance chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Forex Position Size Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function PositionSizeCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

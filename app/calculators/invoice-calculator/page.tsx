@@ -18,7 +18,7 @@ const SELF_SLUG = "invoice-calculator";
 const DESC =
   "Free invoice total calculator. Add line items with quantity and unit price, apply a percentage discount, sales tax and shipping, and see the subtotal, tax and grand total instantly.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Invoice Total Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function InvoiceCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

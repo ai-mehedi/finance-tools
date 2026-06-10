@@ -18,7 +18,7 @@ const SELF_SLUG = "lease-vs-buy-calculator";
 const DESC =
   "Free lease vs buy calculator for cars. Compare the total cost of leasing against buying with a loan, including resale value, to see which is cheaper.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Lease vs Buy Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function LeaseVsBuyCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

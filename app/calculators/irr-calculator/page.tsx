@@ -18,7 +18,7 @@ const SELF_SLUG = "irr-calculator";
 const DESC =
   "Free IRR calculator. Find the internal rate of return on an investment from its initial cost and a series of yearly cash flows, with a cumulative cash flow chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "IRR Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function IrrCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

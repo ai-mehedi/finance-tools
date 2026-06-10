@@ -18,7 +18,7 @@ const SELF_SLUG = "npv-calculator";
 const DESC =
   "Free NPV calculator. Discount a project's future cash flows back to today, subtract the upfront cost, and see the net present value, profitability index, IRR and discounted payback period with a cumulative chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "NPV Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function NpvCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

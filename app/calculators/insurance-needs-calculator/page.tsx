@@ -18,7 +18,7 @@ const SELF_SLUG = "insurance-needs-calculator";
 const DESC =
   "Free life insurance needs calculator. Use the DIME method to estimate how much cover your family needs based on income, debts, mortgage and education costs.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Insurance Needs Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function InsuranceNeedsCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

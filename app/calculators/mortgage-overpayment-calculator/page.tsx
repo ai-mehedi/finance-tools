@@ -18,7 +18,7 @@ const SELF_SLUG = "mortgage-overpayment-calculator";
 const DESC =
   "Free mortgage overpayment calculator. See how a regular extra monthly payment cuts the interest you pay and clears your home loan years early, with a chart comparing both balance curves.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mortgage Overpayment Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function MortgageOverpaymentCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "human-life-value-calculator";
 const DESC =
   "Free human life value calculator. Estimate the economic value of your future income to your family and the life insurance cover needed to replace it, with an income-replacement chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Human Life Value Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function HumanLifeValueCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

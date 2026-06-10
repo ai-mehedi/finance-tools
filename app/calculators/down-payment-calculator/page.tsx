@@ -18,7 +18,7 @@ const SELF_SLUG = "down-payment-calculator";
 const DESC =
   "Free down payment calculator. Work out your down payment, loan amount, closing costs and total cash needed to buy a home from the price and percentage down.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Down Payment Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function DownPaymentCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

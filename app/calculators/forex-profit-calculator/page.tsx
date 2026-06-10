@@ -18,7 +18,7 @@ const SELF_SLUG = "forex-profit-calculator";
 const DESC =
   "Free forex profit calculator. Work out the profit or loss on a currency trade from your entry and exit price, lot size and trade direction, with pip movement.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Forex Profit Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function ForexProfitCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

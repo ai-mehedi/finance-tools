@@ -18,7 +18,7 @@ const SELF_SLUG = "loan-refinance-calculator";
 const DESC =
   "Free loan refinance calculator. Compare your current loan with a new rate and term, factor in closing costs, and find your monthly savings, break-even point and lifetime cost difference.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Loan Refinance Calculator",
   description: DESC,
   keywords: [
@@ -224,4 +224,14 @@ export default async function LoanRefinanceCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

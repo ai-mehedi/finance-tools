@@ -18,7 +18,7 @@ const SELF_SLUG = "car-affordability-calculator";
 const DESC =
   "Free car affordability calculator. Start from a monthly budget and see the car price you can afford after down payment, trade-in, interest, tax and running costs.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Car Affordability Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function CarAffordabilityCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

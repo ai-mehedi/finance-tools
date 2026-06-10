@@ -18,7 +18,7 @@ const SELF_SLUG = "mortgage-points-calculator";
 const DESC =
   "Free mortgage points calculator. Weigh the upfront cost of discount points against the lower monthly payment, find your break-even month and lifetime savings, with a cumulative-cost chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mortgage Points Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function MortgagePointsCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

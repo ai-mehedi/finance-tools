@@ -21,7 +21,7 @@ const UPDATED = "June 2026";
 const DESC =
   "Free loan payoff calculator. See how fast you can clear a loan, how much interest you will pay, and how much an extra monthly payment shaves off your debt-free date.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Loan Payoff Calculator",
   description: DESC,
   keywords: [
@@ -248,4 +248,14 @@ export default async function LoanPayoffCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

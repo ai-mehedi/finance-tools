@@ -18,7 +18,7 @@ const SELF_SLUG = "cd-calculator";
 const DESC =
   "Free certificate of deposit calculator. See your CD value at maturity, the interest earned, and the effective APY based on your deposit, rate and term.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Certificate of Deposit Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function CdCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

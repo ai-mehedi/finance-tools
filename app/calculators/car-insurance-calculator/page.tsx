@@ -18,7 +18,7 @@ const SELF_SLUG = "car-insurance-calculator";
 const DESC =
   "Free car insurance calculator. Estimate your annual and monthly premium based on vehicle value, driver age, coverage level, driving record, mileage and location.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Car Insurance Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function CarInsuranceCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

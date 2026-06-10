@@ -18,7 +18,7 @@ const SELF_SLUG = "credit-limit-calculator";
 const DESC =
   "Free credit limit increase calculator. See how a higher credit limit lowers your utilization ratio and whether it brings you under the recommended 30% line.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Credit Limit Increase Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function CreditLimitCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

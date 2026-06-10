@@ -18,7 +18,7 @@ const SELF_SLUG = "education-loan-calculator";
 const DESC =
   "Free education loan EMI calculator. Estimate your monthly student loan payment, total interest and payoff with a balance chart over the loan term.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Education Loan EMI Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function EducationLoanCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

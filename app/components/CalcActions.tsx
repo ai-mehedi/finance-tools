@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Share2, Code2, Check, Copy, X } from "lucide-react";
+import { Share2, Code2, Check, Copy, X, Printer } from "lucide-react";
 
 /**
  * Per-calculator action bar: Share (native share or copy link) + Embed (copy an
@@ -29,8 +29,12 @@ export default function CalcActions({ title }: { title: string }) {
     }
   }, [title]);
 
+  // Self-resizing embed: the iframe posts its height (EmbedMode) and this small
+  // script listens and resizes it, so it never shows scrollbars or empty space.
+  const embedId = url ? "topicdrill-" + url.split("/").pop() : "topicdrill-calc";
   const embedCode = url
-    ? `<iframe src="${url}?embed=1" width="100%" height="640" style="border:1px solid #e4e4e7;border-radius:16px" title="${title}" loading="lazy"></iframe>`
+    ? `<iframe id="${embedId}" src="${url}?embed=1" width="100%" height="640" style="border:1px solid #e4e4e7;border-radius:8px" title="${title}" loading="lazy"></iframe>
+<script>(function(){var f=document.getElementById("${embedId}");window.addEventListener("message",function(e){if(f&&e.source===f.contentWindow&&e.data&&e.data.type==="td-embed-height"){f.style.height=e.data.height+"px";}});})();</script>`
     : "";
 
   async function copy(text: string, which: "link" | "embed") {
@@ -70,6 +74,12 @@ export default function CalcActions({ title }: { title: string }) {
           className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition-colors hover:border-orange-300 hover:text-orange-600"
         >
           <Code2 className="size-3.5" /> Embed
+        </button>
+        <button
+          onClick={() => window.print()}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition-colors hover:border-orange-300 hover:text-orange-600"
+        >
+          <Printer className="size-3.5" /> Print / PDF
         </button>
       </div>
 

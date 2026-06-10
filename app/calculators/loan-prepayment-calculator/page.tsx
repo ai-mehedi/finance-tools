@@ -18,7 +18,7 @@ const SELF_SLUG = "loan-prepayment-calculator";
 const DESC =
   "Free loan prepayment calculator. See how a one-time lump sum and recurring extra payments shorten your loan term and slash total interest, with a before-and-after balance chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Loan Prepayment Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function LoanPrepaymentCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

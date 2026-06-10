@@ -18,7 +18,7 @@ const SELF_SLUG = "cpi-calculator";
 const DESC =
   "Free CPI calculator. Convert a dollar amount between two periods using Consumer Price Index values to see the effect of inflation on buying power.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "CPI Calculator",
   description: DESC,
   keywords: [
@@ -218,4 +218,14 @@ export default async function CpiCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "crypto-roi-calculator";
 const DESC =
   "Free crypto ROI calculator. Enter your buy price, sell price, amount invested and exchange fees to see net profit, return on investment and annualized return, with a chart of profit across exit prices.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Crypto ROI Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function CryptoRoiCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

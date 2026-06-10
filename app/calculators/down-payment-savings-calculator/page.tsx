@@ -18,7 +18,7 @@ const SELF_SLUG = "down-payment-savings-calculator";
 const DESC =
   "Free down payment savings calculator. See how long it takes to save your home down payment from a monthly amount, starting balance and savings rate, with a growth chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Down Payment Savings Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function DownPaymentSavingsCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

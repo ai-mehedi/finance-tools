@@ -18,7 +18,7 @@ const SELF_SLUG = "loan-interest-calculator";
 const DESC =
   "Free loan interest calculator. See the monthly payment, total interest and full cost of a fixed-rate loan, plus a chart showing how each payment shifts from interest to principal.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Loan Interest Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function LoanInterestCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "latte-factor-calculator";
 const DESC =
   "Free latte factor calculator. See what a small daily habit, like a coffee, could grow to if you invested it instead, with a long-term growth chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Latte Factor Calculator",
   description: DESC,
   keywords: [
@@ -218,4 +218,14 @@ export default async function LatteFactorCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

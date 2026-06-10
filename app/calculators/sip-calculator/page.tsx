@@ -18,7 +18,7 @@ const SELF_SLUG = "sip-calculator";
 const DESC =
   "Free SIP calculator. Estimate the future value of a Systematic Investment Plan from a fixed monthly investment, expected return and time period, with a growth chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "SIP Calculator",
   description: DESC,
   keywords: [
@@ -229,4 +229,14 @@ export default async function SipCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

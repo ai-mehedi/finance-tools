@@ -18,7 +18,7 @@ const SELF_SLUG = "hourly-rate-calculator";
 const DESC =
   "Free hourly rate calculator. Convert any wage or salary between hourly, daily, weekly, monthly and yearly pay based on your working hours.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Hourly Rate Calculator",
   description: DESC,
   keywords: [
@@ -241,4 +241,14 @@ export default async function HourlyRateCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

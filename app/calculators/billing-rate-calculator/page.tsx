@@ -18,7 +18,7 @@ const SELF_SLUG = "billing-rate-calculator";
 const DESC =
   "Free hourly billing rate calculator. Work out the rate to charge clients to hit your target income after business costs, time off and non-billable hours.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Hourly Billing Rate Calculator",
   description: DESC,
   keywords: [
@@ -219,4 +219,14 @@ export default async function BillingRateCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

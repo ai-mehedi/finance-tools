@@ -18,7 +18,7 @@ const SELF_SLUG = "income-protection-calculator";
 const DESC =
   "Free income protection calculator. Work out the monthly benefit you need if illness or injury stops you working, allow for existing cover and a waiting period, and see total payouts to retirement.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Income Protection Calculator",
   description: DESC,
   keywords: [
@@ -223,4 +223,14 @@ export default async function IncomeProtectionCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

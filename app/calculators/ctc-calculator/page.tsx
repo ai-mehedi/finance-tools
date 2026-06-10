@@ -18,7 +18,7 @@ const SELF_SLUG = "ctc-calculator";
 const DESC =
   "Free CTC calculator. Break your annual cost to company into basic pay, allowances, retirement and gratuity, then estimate your monthly take-home pay.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "CTC Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function CtcCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "52-week-savings-calculator";
 const DESC =
   "Free 52 week savings challenge calculator. See how a small, growing weekly deposit adds up over a year, with your total and a savings growth chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "52 Week Savings Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function Five2WeekSavingsCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

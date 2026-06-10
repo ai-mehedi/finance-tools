@@ -18,7 +18,7 @@ const SELF_SLUG = "monthly-expense-calculator";
 const DESC =
   "Free monthly expense calculator. Add up housing, food, transport and more, compare it to your take-home pay, and see your leftover and savings rate with a category donut chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Monthly Expense Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function MonthlyExpenseCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

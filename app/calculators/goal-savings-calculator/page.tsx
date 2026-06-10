@@ -18,7 +18,7 @@ const SELF_SLUG = "goal-savings-calculator";
 const DESC =
   "Free goal based savings calculator. Find out exactly how much to set aside each month to hit a savings target by a chosen date, accounting for your existing balance and expected return.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Goal Based Savings Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function GoalSavingsCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

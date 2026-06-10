@@ -18,7 +18,7 @@ const SELF_SLUG = "mining-calculator";
 const DESC =
   "Free crypto mining profitability calculator. Estimate daily, monthly and yearly mining revenue, electricity cost and net profit from your hash rate, power draw, coin price and network difficulty, plus a hardware payback chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mining Profitability Calculator",
   description: DESC,
   keywords: [
@@ -224,4 +224,14 @@ export default async function MiningCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

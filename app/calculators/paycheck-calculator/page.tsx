@@ -18,7 +18,7 @@ const SELF_SLUG = "paycheck-calculator";
 const DESC =
   "Free paycheck calculator. Estimate your take-home pay per paycheck after federal tax, state tax, Social Security, Medicare and 401k contributions, with a donut chart of where each dollar goes.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Paycheck Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function PaycheckCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

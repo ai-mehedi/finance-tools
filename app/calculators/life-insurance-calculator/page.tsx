@@ -18,7 +18,7 @@ const SELF_SLUG = "life-insurance-calculator";
 const DESC =
   "Free life insurance calculator. Estimate how much coverage you need using the DIME method: debt, income replacement, mortgage and education, less your assets.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Life Insurance Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function LifeInsuranceCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

@@ -18,7 +18,7 @@ const SELF_SLUG = "bonus-calculator";
 const DESC =
   "Free bonus calculator. Estimate the take-home pay on a work bonus after federal, state and FICA withholding using the IRS flat supplemental wage rate.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Bonus Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function BonusCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

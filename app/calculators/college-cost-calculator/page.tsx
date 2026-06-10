@@ -18,7 +18,7 @@ const SELF_SLUG = "college-cost-calculator";
 const DESC =
   "Free college cost calculator. Project the future cost of a degree by growing today's tuition with education inflation across each year of study, with a year by year chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "College Cost Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function CollegeCostCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

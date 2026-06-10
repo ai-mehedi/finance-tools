@@ -18,7 +18,7 @@ const SELF_SLUG = "business-loan-calculator";
 const DESC =
   "Free business loan calculator. Estimate your monthly payment, total interest, total repayment and the effective cost including a one-time origination fee, with a payoff chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Business Loan Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function BusinessLoanCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

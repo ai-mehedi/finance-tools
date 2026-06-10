@@ -18,7 +18,7 @@ const SELF_SLUG = "cashback-calculator";
 const DESC =
   "Free cashback rewards calculator. Estimate the cashback you earn across spending categories, subtract any annual fee, and see your net rewards and effective rate.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Cashback Rewards Calculator",
   description: DESC,
   keywords: [
@@ -220,4 +220,14 @@ export default async function CashbackCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

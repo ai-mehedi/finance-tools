@@ -18,7 +18,7 @@ const SELF_SLUG = "annualized-return-calculator";
 const DESC =
   "Free annualized return calculator. Convert a total gain over any holding period into a yearly compound rate (CAGR) so you can compare investments fairly.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Annualized Return Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function AnnualizedReturnCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

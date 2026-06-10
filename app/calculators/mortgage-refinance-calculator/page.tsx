@@ -18,7 +18,7 @@ const SELF_SLUG = "mortgage-refinance-calculator";
 const DESC =
   "Free mortgage refinance calculator. Compare your current loan with a new rate and term, see your monthly savings and lifetime interest, and find the break-even month when closing costs are repaid.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Mortgage Refinance Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function MortgageRefinanceCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

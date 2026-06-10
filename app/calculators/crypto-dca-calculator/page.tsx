@@ -18,7 +18,7 @@ const SELF_SLUG = "crypto-dca-calculator";
 const DESC =
   "Free crypto DCA calculator. Model dollar-cost averaging into Bitcoin or any coin with a recurring buy, see how many coins you accumulate, your average cost and projected portfolio value over time.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Crypto DCA Calculator",
   description: DESC,
   keywords: [
@@ -224,4 +224,14 @@ export default async function CryptoDcaCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

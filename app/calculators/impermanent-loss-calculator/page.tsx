@@ -18,7 +18,7 @@ const SELF_SLUG = "impermanent-loss-calculator";
 const DESC =
   "Free impermanent loss calculator for 50/50 liquidity pools. Compare the value of providing liquidity versus holding, see the loss in dollars and percent, and view the full IL curve.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Impermanent Loss Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function ImpermanentLossCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

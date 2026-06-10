@@ -18,7 +18,7 @@ const SELF_SLUG = "50-30-20-budget-calculator";
 const DESC =
   "Free 50/30/20 budget calculator. Split your monthly take-home income into 50% needs, 30% wants and 20% savings with clear dollar targets.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "50/30/20 Budget Calculator",
   description: DESC,
   keywords: [
@@ -218,4 +218,14 @@ export default async function Five03020BudgetCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

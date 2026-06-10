@@ -18,7 +18,7 @@ const SELF_SLUG = "annuity-payout-calculator";
 const DESC =
   "Free annuity payout calculator. Find the level monthly income a starting balance can pay over a set number of years while it keeps earning interest, with a balance chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Annuity Payout Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function AnnuityPayoutCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

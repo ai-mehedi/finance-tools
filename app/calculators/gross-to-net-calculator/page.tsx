@@ -18,7 +18,7 @@ const SELF_SLUG = "gross-to-net-calculator";
 const DESC =
   "Free gross to net salary calculator. Turn a gross salary into estimated take-home pay after income tax, retirement contributions and other deductions, shown per paycheck with a donut breakdown.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Gross to Net Salary Calculator",
   description: DESC,
   keywords: [
@@ -221,4 +221,14 @@ export default async function GrossToNetCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }

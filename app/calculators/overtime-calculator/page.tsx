@@ -18,7 +18,7 @@ const SELF_SLUG = "overtime-calculator";
 const DESC =
   "Free overtime pay calculator. Work out your gross weekly paycheck from regular and overtime hours at time-and-a-half or double time, with an hour-by-hour pay chart.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Overtime Pay Calculator",
   description: DESC,
   keywords: [
@@ -222,4 +222,14 @@ export default async function OvertimeCalculatorPage() {
       </div>
     </StaticPage>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const self = await getToolBySlug(SELF_SLUG);
+  if (!self?.ogImage) return baseMetadata;
+  return {
+    ...baseMetadata,
+    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
+    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
+  };
 }
