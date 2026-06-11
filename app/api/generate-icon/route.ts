@@ -39,6 +39,20 @@ function buildPrompt(name: string, type?: string) {
   );
 }
 
+// Landscape editorial illustration for Open Graph / social-share cards and article
+// featured images — a full scene with a background, NOT a transparent app icon.
+function buildImagePrompt(name: string, type?: string) {
+  const subject = type ? `${type}: "${name}"` : `"${name}"`;
+  const color = colorFor(name);
+  return (
+    `A clean, modern editorial hero illustration for ${subject}, designed as a social-share / Open Graph card. ` +
+    `Flat vector illustration style with soft gradients and a bold ${color} dominant palette with complementary accents, ` +
+    `depicting a relevant personal-finance scene (charts, coins, documents, devices or people as fits the topic), ` +
+    `clear focal point with generous negative space, balanced wide landscape composition, soft depth and subtle shadows, ` +
+    `no text, no logos, no watermark, professional, friendly, high quality.`
+  );
+}
+
 export async function POST(request: Request) {
   const denied = await requireAdmin();
   if (denied) return denied;
@@ -47,8 +61,12 @@ export async function POST(request: Request) {
   if (!apiKey) return fail("OPENAI_API_KEY is not set. Add it to .env.local.", 500);
 
   try {
-    const { name, type, quality } = await request.json();
+    const { name, type, quality, variant } = await request.json();
     if (!name || !String(name).trim()) return fail("name is required.", 400);
+
+    // "image" = landscape social-share / featured image; anything else = square app icon.
+    const isImage = variant === "image";
+    const cleanName = String(name).trim();
 
     const res = await fetch(ENDPOINT, {
       method: "POST",
@@ -58,9 +76,9 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         model: "gpt-image-1",
-        prompt: buildPrompt(String(name).trim(), type),
-        size: "1024x1024", // square
-        background: "transparent",
+        prompt: isImage ? buildImagePrompt(cleanName, type) : buildPrompt(cleanName, type),
+        size: isImage ? "1536x1024" : "1024x1024", // landscape vs square
+        background: isImage ? "opaque" : "transparent",
         output_format: "png",
         quality: quality === "high" || quality === "medium" ? quality : "low",
         n: 1,
@@ -76,13 +94,18 @@ export async function POST(request: Request) {
     const b64 = data?.data?.[0]?.b64_json as string | undefined;
     if (!b64) return fail("No image returned from OpenAI.", 502);
 
-    // Resize to 512px and convert to WebP (keeps transparency, ~30-60KB instead of ~1.5MB PNG).
-    const optimized = await sharp(Buffer.from(b64, "base64"))
-      .resize(512, 512, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-      .webp({ quality: 90 })
-      .toBuffer();
+    // Images: crop to the 1.91:1 Open Graph ratio (1200x630). Icons: square, transparent.
+    const optimized = isImage
+      ? await sharp(Buffer.from(b64, "base64"))
+          .resize(1200, 630, { fit: "cover" })
+          .webp({ quality: 82 })
+          .toBuffer()
+      : await sharp(Buffer.from(b64, "base64"))
+          .resize(512, 512, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+          .webp({ quality: 90 })
+          .toBuffer();
 
-    const key = buildKey(`${name}.webp`, "icons");
+    const key = buildKey(`${cleanName}.webp`, isImage ? "og" : "icons");
     const { url } = await uploadToS3(optimized, key, "image/webp");
 
     return ok({ url, key }, 201);

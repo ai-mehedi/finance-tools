@@ -148,7 +148,7 @@ export function ArticleForm({ article }: { article?: ArticleValue }) {
           </Card>
 
           <Card className="p-5">
-            <ImageField label="Featured image" value={form.featuredImage} onChange={(url) => set("featuredImage", url)} generateName={form.title} generateType="finance blog article" />
+            <ImageField label="Featured image" value={form.featuredImage} onChange={(url) => set("featuredImage", url)} generateName={form.title} generateType="finance blog article" variant="image" />
           </Card>
         </div>
       </div>

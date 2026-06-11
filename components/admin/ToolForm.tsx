@@ -259,7 +259,7 @@ export function ToolForm({ tool }: { tool?: ToolValue }) {
           </Card>
 
           <Card className="p-5">
-            <ImageField label="OG / Social share image" value={form.ogImage} onChange={(url) => set("ogImage", url)} generateName={form.title} generateType="finance calculator social share card" />
+            <ImageField label="OG / Social share image" value={form.ogImage} onChange={(url) => set("ogImage", url)} generateName={form.title} generateType="finance calculator" variant="image" />
             <p className="mt-2 text-xs text-zinc-400">Used as the preview image when this tool is shared on Google, social media and chat apps. Upload one or generate with AI.</p>
           </Card>
         </div>

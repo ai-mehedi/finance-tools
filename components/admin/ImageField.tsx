@@ -11,14 +11,18 @@ export function ImageField({
   onChange,
   generateName,
   generateType,
+  variant = "icon",
 }: {
   label?: string;
   value?: string;
   onChange: (url: string) => void;
-  /** When provided, shows an "AI generate" button that creates a 3D icon from this name. */
+  /** When provided, shows an "AI generate" button that creates an image/icon from this name. */
   generateName?: string;
   generateType?: string;
+  /** "icon" = square transparent app icon (default); "image" = landscape social-share / featured image. */
+  variant?: "icon" | "image";
 }) {
+  const isImage = variant === "image";
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -37,7 +41,7 @@ export function ImageField({
       const res = await fetch("/api/generate-icon", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name, type: generateType }),
+        body: JSON.stringify({ name, type: generateType, variant }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Generation failed");
@@ -155,7 +159,11 @@ export function ImageField({
           className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-600 transition-colors hover:bg-orange-100 disabled:opacity-60"
         >
           {generating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-          {generating ? "Generating 3D icon…" : value ? "Regenerate 3D icon" : "Generate 3D icon with AI"}
+          {generating
+            ? isImage ? "Generating image…" : "Generating 3D icon…"
+            : value
+              ? isImage ? "Regenerate image" : "Regenerate 3D icon"
+              : isImage ? "Generate image with AI" : "Generate 3D icon with AI"}
         </button>
       )}
 
