@@ -39,17 +39,18 @@ function buildPrompt(name: string, type?: string) {
   );
 }
 
-// Landscape editorial illustration for Open Graph / social-share cards and article
-// featured images — a full scene with a background, NOT a transparent app icon.
+// Landscape photographic hero image for Open Graph / social-share cards and article
+// featured images — a realistic editorial photo with a background, NOT an illustration
+// or a transparent app icon.
 function buildImagePrompt(name: string, type?: string) {
   const subject = type ? `${type}: "${name}"` : `"${name}"`;
   const color = colorFor(name);
   return (
-    `A clean, modern editorial hero illustration for ${subject}, designed as a social-share / Open Graph card. ` +
-    `Flat vector illustration style with soft gradients and a bold ${color} dominant palette with complementary accents, ` +
-    `depicting a relevant personal-finance scene (charts, coins, documents, devices or people as fits the topic), ` +
-    `clear focal point with generous negative space, balanced wide landscape composition, soft depth and subtle shadows, ` +
-    `no text, no logos, no watermark, professional, friendly, high quality.`
+    `A photorealistic editorial photograph for ${subject}, used as a featured image and social-share / Open Graph card. ` +
+    `Real-world photography, shot on a full-frame DSLR with a 35mm lens, natural lighting, shallow depth of field with a softly blurred background (bokeh), ` +
+    `depicting a relevant real personal-finance scene (a real person at a desk with a laptop, real banknotes and coins, printed documents, a calculator, a smartphone showing a banking app, or a cozy home-office, whatever best fits the topic), ` +
+    `cinematic color grading with a subtle ${color} tone, clear focal point with generous negative space, balanced wide landscape composition, true-to-life textures and realistic shadows, ` +
+    `high-resolution magazine-quality stock photo, sharp and professional, no text, no logos, no watermark, not an illustration, not a cartoon, not a 3D render, not flat vector art.`
   );
 }
 
