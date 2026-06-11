@@ -57,8 +57,9 @@ export function ArticleForm({ article }: { article?: ArticleValue }) {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
-  // One click: generate the full article (content, excerpt, SEO + a featured
-  // image) from the title + focus keyword, then fill the form for review.
+  // One click: generate the article content, excerpt and SEO from the title +
+  // focus keyword, then fill the form for review. The featured image is NOT
+  // auto-generated — add it manually with the Featured image field.
   async function autoWrite() {
     if (!form.title.trim()) {
       setError("Enter a title first, then auto-write.");
@@ -96,18 +97,6 @@ export function ArticleForm({ article }: { article?: ArticleValue }) {
         metaDescription: data.metaDescription ?? f.metaDescription,
         keywords: Array.isArray(data.keywords) ? data.keywords.join(", ") : f.keywords,
       }));
-
-      // Featured image is best-effort: don't block the content fill if it fails.
-      if (!form.featuredImage) {
-        fetch("/api/generate-icon", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name: form.title.trim(), type: "finance blog article", variant: "image" }),
-        })
-          .then((r) => r.json())
-          .then((d) => { if (d.url) set("featuredImage", d.url); })
-          .catch(() => {});
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
     } finally {

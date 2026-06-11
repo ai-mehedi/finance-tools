@@ -37,7 +37,7 @@ export async function generateAndCreateArticle({
   topic,
   authorId,
   status = "draft",
-  withImage = true,
+  withImage = false,
 }: {
   topic: TopicInput;
   authorId: string;

@@ -61,7 +61,7 @@ async function run(request: Request) {
           },
           authorId,
           status: "draft",
-          withImage: true,
+          withImage: false, // AI featured images off — images are added manually
         });
         topic.status = "generated";
         topic.articleId = article._id;
