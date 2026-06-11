@@ -3,6 +3,11 @@ import { Schema, model, models, Types, type Model, type HydratedDocument } from 
 export const ARTICLE_STATUSES = ["draft", "published", "archived"] as const;
 export type ArticleStatus = (typeof ARTICLE_STATUSES)[number];
 
+export interface IFaq {
+  question: string;
+  answer: string;
+}
+
 export interface IArticle {
   title: string;
   slug: string;
@@ -16,11 +21,20 @@ export interface IArticle {
   metaTitle?: string;
   metaDescription?: string;
   keywords: string[];
+  faq: IFaq[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 type ArticleModelType = Model<IArticle>;
+
+const FaqSchema = new Schema<IFaq>(
+  {
+    question: { type: String, required: true, trim: true },
+    answer: { type: String, required: true, trim: true },
+  },
+  { _id: false }
+);
 
 function slugify(value: string): string {
   return value
@@ -46,6 +60,7 @@ const ArticleSchema = new Schema<IArticle, ArticleModelType>(
     metaTitle: { type: String, trim: true },
     metaDescription: { type: String, trim: true },
     keywords: { type: [String], default: [] },
+    faq: { type: [FaqSchema], default: [] },
   },
   { timestamps: true }
 );

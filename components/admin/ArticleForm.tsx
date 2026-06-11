@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
@@ -51,9 +51,68 @@ export function ArticleForm({ article }: { article?: ArticleValue }) {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  // One click: generate the full article (content, excerpt, SEO + a featured
+  // image) from the title + focus keyword, then fill the form for review.
+  async function autoWrite() {
+    if (!form.title.trim()) {
+      setError("Enter a title first, then auto-write.");
+      return;
+    }
+    setError(null);
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/generate-article", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          title: form.title.trim(),
+          focusKeyword: form.focusKeyword.trim() || undefined,
+          categoryId: form.categories[0],
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Generation failed");
+
+      const faqHtml = Array.isArray(data.faq) && data.faq.length
+        ? `\n<h2>Frequently Asked Questions</h2>\n${data.faq
+            .map((f: { question: string; answer: string }) => `<h3>${f.question}</h3>\n<p>${f.answer}</p>`)
+            .join("\n")}`
+        : "";
+
+      setForm((f) => ({
+        ...f,
+        content: (data.content ?? "") + faqHtml,
+        excerpt: data.excerpt ?? f.excerpt,
+        // Keep anything you already typed; only fill blanks from the AI.
+        focusKeyword: f.focusKeyword.trim() || data.focusKeyword || f.focusKeyword,
+        slug: f.slug.trim() || data.slug || f.slug,
+        metaTitle: data.metaTitle ?? f.metaTitle,
+        metaDescription: data.metaDescription ?? f.metaDescription,
+        keywords: Array.isArray(data.keywords) ? data.keywords.join(", ") : f.keywords,
+      }));
+
+      // Featured image is best-effort: don't block the content fill if it fails.
+      if (!form.featuredImage) {
+        fetch("/api/generate-icon", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name: form.title.trim(), type: "finance blog article", variant: "image" }),
+        })
+          .then((r) => r.json())
+          .then((d) => { if (d.url) set("featuredImage", d.url); })
+          .catch(() => {});
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Generation failed");
+    } finally {
+      setGenerating(false);
+    }
   }
 
   async function save(e: React.FormEvent) {
@@ -92,6 +151,10 @@ export function ArticleForm({ article }: { article?: ArticleValue }) {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button type="button" variant="outline" onClick={autoWrite} disabled={generating || saving}>
+            {generating ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+            {generating ? "Writing…" : "Auto-write with AI"}
+          </Button>
           <Link href="/admin/articles"><Button type="button" variant="outline">Cancel</Button></Link>
           <Button type="submit" variant="primary" disabled={saving}>{saving ? "Saving…" : "Save Article"}</Button>
         </div>

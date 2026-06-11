@@ -8,7 +8,7 @@ import JsonLd from "../../components/JsonLd";
 import { AdSlot } from "../../components/AdSlot";
 import ShareButtons from "../../components/ShareButtons";
 import { getArticleBySlug, getArticles } from "@/lib/queries";
-import { articleSchema, breadcrumbSchema, abs, openGraphFor } from "@/lib/seo";
+import { articleSchema, breadcrumbSchema, faqSchema, abs, openGraphFor } from "@/lib/seo";
 import { normalizeContentHtml } from "@/lib/utils";
 
 export const revalidate = 1800;
@@ -58,6 +58,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             ...(cat ? [{ name: cat.name, path: `/blog?category=${cat.slug}` }] : []),
             { name: article.title, path: `/blog/${article.slug}` },
           ]),
+          ...(article.faq?.length ? [faqSchema(article.faq)] : []),
         ]}
       />
       <SiteHeader active="Blog" />

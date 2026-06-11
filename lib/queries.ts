@@ -182,7 +182,13 @@ export async function getArticleBySlug(slug: string) {
     .populate("categories", "name slug")
     .lean();
   return article
-    ? (ser(article) as unknown as ArticleLite & { content?: string; focusKeyword?: string; metaTitle?: string; metaDescription?: string })
+    ? (ser(article) as unknown as ArticleLite & {
+        content?: string;
+        focusKeyword?: string;
+        metaTitle?: string;
+        metaDescription?: string;
+        faq?: { question: string; answer: string }[];
+      })
     : null;
 }
 
