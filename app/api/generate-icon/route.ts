@@ -11,14 +11,21 @@ export async function POST(request: Request) {
   if (!process.env.OPENAI_API_KEY) return fail("OPENAI_API_KEY is not set. Add it to .env.local.", 500);
 
   try {
-    const { name, type, quality, variant } = await request.json();
+    const { name, type, quality, variant, headline } = await request.json();
     if (!name || !String(name).trim()) return fail("name is required.", 400);
+
+    const isImage = variant === "image";
+    // For a landscape image, default the burned-in thumbnail headline to the name.
+    // Pass headline: "" to get a clean photo with no text overlay.
+    const headlineText =
+      typeof headline === "string" ? headline.trim() : isImage ? String(name).trim() : undefined;
 
     // "image" = landscape social-share / featured image; anything else = square app icon.
     const { url, key } = await generateImage(String(name).trim(), {
-      variant: variant === "image" ? "image" : "icon",
+      variant: isImage ? "image" : "icon",
       quality: quality === "high" || quality === "medium" ? quality : "low",
       type,
+      headline: isImage ? headlineText : undefined,
     });
 
     return ok({ url, key }, 201);
