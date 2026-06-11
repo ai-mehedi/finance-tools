@@ -8,7 +8,7 @@ import TrustBadges from "../../components/TrustBadges";
 import Footer from "../../components/Footer";
 import JsonLd from "../../components/JsonLd";
 import { getCategoryBySlug, getTools, getToolCategoriesWithCounts } from "@/lib/queries";
-import { breadcrumbSchema, abs } from "@/lib/seo";
+import { breadcrumbSchema, abs, openGraphFor } from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title,
     description,
     alternates: { canonical: `/categories/${slug}` },
-    openGraph: { type: "website", url: `/categories/${slug}`, title, description },
+    openGraph: openGraphFor({ path: `/categories/${slug}`, title, description }),
   };
 }
 

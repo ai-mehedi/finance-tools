@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
     "reduce loan term",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Loan Prepayment Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Loan Prepayment Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Loan Prepayment Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Loan Prepayment Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

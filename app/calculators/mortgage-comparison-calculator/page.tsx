@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
     "best mortgage rate",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Mortgage Comparison Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Mortgage Comparison Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Mortgage Comparison Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Mortgage Comparison Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

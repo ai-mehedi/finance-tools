@@ -30,8 +30,8 @@ const baseMetadata: Metadata = {
     "how much does a baby cost",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Baby Cost Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Baby Cost Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Baby Cost Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Baby Cost Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

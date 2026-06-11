@@ -5,12 +5,14 @@ import Footer from "../components/Footer";
 import { AdSlot } from "../components/AdSlot";
 import ToolCard from "../components/ToolCard";
 import { getTools } from "@/lib/queries";
+import { openGraphFor } from "@/lib/seo";
 
 export const revalidate = 3600;
 export const metadata = {
   title: "Calculators",
   description: "Free online financial calculators for loans, savings, investing, taxes and more.",
   alternates: { canonical: "/calculators" },
+  openGraph: openGraphFor({ path: "/calculators", title: "Calculators | TopicDrill", description: "Free online financial calculators for loans, savings, investing, taxes and more." }),
 };
 
 const PER_PAGE = 24;

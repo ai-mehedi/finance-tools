@@ -8,7 +8,8 @@ import JsonLd from "../../components/JsonLd";
 import { AdSlot } from "../../components/AdSlot";
 import ShareButtons from "../../components/ShareButtons";
 import { getToolBySlug } from "@/lib/queries";
-import { webAppSchema, faqSchema, breadcrumbSchema, abs } from "@/lib/seo";
+import { webAppSchema, faqSchema, breadcrumbSchema, abs, openGraphFor } from "@/lib/seo";
+import { normalizeContentHtml } from "@/lib/utils";
 
 export const revalidate = 3600;
 
@@ -22,13 +23,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title,
     description,
     alternates: { canonical: `/tools/${slug}` },
-    openGraph: {
-      type: "website",
-      url: `/tools/${slug}`,
+    openGraph: openGraphFor({
+      path: `/tools/${slug}`,
       title,
       description,
-      ...(tool.ogImage || tool.thumbnail ? { images: [{ url: (tool.ogImage || tool.thumbnail)! }] } : {}),
-    },
+      image: tool.ogImage || tool.thumbnail || undefined,
+    }),
     ...(tool.ogImage ? { twitter: { card: "summary_large_image", title, description, images: [tool.ogImage] } } : {}),
   };
 }
@@ -97,7 +97,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
 
             {/* Content */}
             {tool.content && (
-              <div className="tiptap mt-8 rounded-2xl border border-zinc-200 bg-white p-6" dangerouslySetInnerHTML={{ __html: tool.content }} />
+              <div className="tiptap mt-8 rounded-2xl border border-zinc-200 bg-white p-6" dangerouslySetInnerHTML={{ __html: normalizeContentHtml(tool.content) }} />
             )}
 
             {/* FAQ */}

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import StaticPage, { H2, P } from "../components/StaticPage";
+import { openGraphFor } from "@/lib/seo";
 
 export const metadata = {
   title: "About Us",
   alternates: { canonical: "/about" },
+  openGraph: openGraphFor({ path: "/about", title: "About Us | TopicDrill", description: "Who builds TopicDrill and why. Free, fast financial calculators with no sign-ups and no clutter." }),
   description: "Who builds TopicDrill and why. Free, fast financial calculators with no sign-ups and no clutter.",
 };
 

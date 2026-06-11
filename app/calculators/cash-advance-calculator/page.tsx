@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
     "atm cash advance fee",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Cash Advance Fee Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Cash Advance Fee Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Cash Advance Fee Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Cash Advance Fee Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

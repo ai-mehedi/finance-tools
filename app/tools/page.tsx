@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import { AdSlot } from "../components/AdSlot";
 import ToolCard from "../components/ToolCard";
 import { getTools } from "@/lib/queries";
+import { openGraphFor } from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -14,6 +15,7 @@ export const metadata = {
   // calculator), so consolidate ranking signals onto the keyword-rich
   // /calculators URL instead of competing with ourselves.
   alternates: { canonical: "/calculators" },
+  openGraph: openGraphFor({ path: "/calculators", title: "All Tools & Calculators | TopicDrill", description: "Browse 200+ free financial calculators and tools for loans, mortgage, investing, taxes, savings and more." }),
   description: "Browse 200+ free financial calculators and tools for loans, mortgage, investing, taxes, savings and more.",
 };
 

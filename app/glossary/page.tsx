@@ -1,8 +1,10 @@
 import StaticPage from "../components/StaticPage";
+import { openGraphFor } from "@/lib/seo";
 
 export const metadata = {
   title: "Financial Glossary",
   alternates: { canonical: "/glossary" },
+  openGraph: openGraphFor({ path: "/glossary", title: "Financial Glossary | TopicDrill", description: "Common money and finance terms explained in plain English, without the jargon." }),
   description: "Common money and finance terms explained in plain English, without the jargon.",
 };
 

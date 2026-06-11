@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
     "time value of money",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Present Value Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Present Value Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Present Value Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Present Value Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

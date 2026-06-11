@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
     "compound growth calculator",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Lumpsum Investment Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Lumpsum Investment Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Lumpsum Investment Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Lumpsum Investment Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

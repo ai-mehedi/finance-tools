@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
     "financial net worth",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Net Worth Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Net Worth Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Net Worth Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Net Worth Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

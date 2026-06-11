@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
     "line of credit payment",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Line of Credit Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Line of Credit Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Line of Credit Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Line of Credit Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

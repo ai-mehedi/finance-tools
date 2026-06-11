@@ -3,10 +3,12 @@ import { Bug, Lightbulb, Handshake, Mail } from "lucide-react";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import ContactForm from "../components/ContactForm";
+import { openGraphFor } from "@/lib/seo";
 
 export const metadata = {
   title: "Contact Us",
   alternates: { canonical: "/contact" },
+  openGraph: openGraphFor({ path: "/contact", title: "Contact Us | TopicDrill", description: "Questions, feedback, a wrong number in a calculator, or a partnership idea. Send us a message." }),
   description: "Questions, feedback, a wrong number in a calculator, or a partnership idea. Send us a message.",
 };
 

@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
     "pay off debt fast",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Debt Avalanche Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Debt Avalanche Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Debt Avalanche Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Debt Avalanche Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

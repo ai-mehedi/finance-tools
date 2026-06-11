@@ -16,9 +16,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/calculators`, changeFrequency: "daily", priority: 0.9 },
     { url: `${BASE}/categories`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE}/blog`, changeFrequency: "daily", priority: 0.8 },
+    { url: `${BASE}/glossary`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${BASE}/faqs`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/about`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/editorial-policy`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/contact`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${BASE}/disclaimer`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${BASE}/privacy-policy`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.2 },
   ];
 
   const dt = (d?: string) => (d ? new Date(d) : undefined);

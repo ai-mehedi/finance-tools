@@ -30,8 +30,8 @@ const baseMetadata: Metadata = {
     "sip future value",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "SIP Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "SIP Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "SIP Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "SIP Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

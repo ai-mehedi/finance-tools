@@ -30,8 +30,8 @@ const baseMetadata: Metadata = {
     "halving timer",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Bitcoin Halving Countdown | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Bitcoin Halving Countdown | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Bitcoin Halving Countdown | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Bitcoin Halving Countdown | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

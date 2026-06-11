@@ -52,8 +52,13 @@ function Toolbar({ editor }: { editor: Editor }) {
     try {
       const res = await fetch("/api/upload", { method: "POST", body });
       const data = await res.json();
-      if (res.ok && data.url) editor.chain().focus().setImage({ src: data.url }).run();
-      else alert(data.error ?? "Upload failed");
+      if (res.ok && data.url) {
+        // Always set alt text (SEO + a11y: avoids "missing alt" flags). Default
+        // to the file name so an image is never inserted without one.
+        const fallbackAlt = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
+        const alt = (window.prompt("Describe this image (alt text):", fallbackAlt) || fallbackAlt).trim();
+        editor.chain().focus().setImage({ src: data.url, alt }).run();
+      } else alert(data.error ?? "Upload failed");
     } catch {
       alert("Upload failed");
     }

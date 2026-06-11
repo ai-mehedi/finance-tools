@@ -30,8 +30,8 @@ const baseMetadata: Metadata = {
     "freelance day rate",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Freelance Rate Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Freelance Rate Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Freelance Rate Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Freelance Rate Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

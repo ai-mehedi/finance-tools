@@ -30,8 +30,8 @@ const baseMetadata: Metadata = {
     "how much to charge per hour",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Hourly Billing Rate Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Hourly Billing Rate Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Hourly Billing Rate Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Hourly Billing Rate Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
     "investment return calculator",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Portfolio Return Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Portfolio Return Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Portfolio Return Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Portfolio Return Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

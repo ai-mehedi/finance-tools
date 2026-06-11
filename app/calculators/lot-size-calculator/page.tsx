@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
     "stop loss position sizing",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Lot Size Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Lot Size Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Lot Size Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Lot Size Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

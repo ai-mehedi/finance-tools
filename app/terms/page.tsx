@@ -1,9 +1,11 @@
 import Link from "next/link";
 import StaticPage, { H2, P } from "../components/StaticPage";
+import { openGraphFor } from "@/lib/seo";
 
 export const metadata = {
   title: "Terms of Use",
   alternates: { canonical: "/terms" },
+  openGraph: openGraphFor({ path: "/terms", title: "Terms of Use | TopicDrill", description: "The simple rules for using TopicDrill's calculators and content." }),
   description: "The simple rules for using TopicDrill's calculators and content.",
 };
 

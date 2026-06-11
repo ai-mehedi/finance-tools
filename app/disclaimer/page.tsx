@@ -1,8 +1,10 @@
 import StaticPage, { H2, P } from "../components/StaticPage";
+import { openGraphFor } from "@/lib/seo";
 
 export const metadata = {
   title: "Disclaimer",
   alternates: { canonical: "/disclaimer" },
+  openGraph: openGraphFor({ path: "/disclaimer", title: "Disclaimer | TopicDrill", description: "How to read the results from TopicDrill's calculators and guides." }),
   description: "How to read the results from TopicDrill's calculators and guides.",
 };
 

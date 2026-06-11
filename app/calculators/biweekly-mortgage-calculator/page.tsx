@@ -30,8 +30,8 @@ const baseMetadata: Metadata = {
     "pay off mortgage early calculator",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Biweekly Mortgage Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Biweekly Mortgage Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Biweekly Mortgage Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Biweekly Mortgage Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [

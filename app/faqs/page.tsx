@@ -1,6 +1,12 @@
 import StaticPage from "../components/StaticPage";
+import { openGraphFor } from "@/lib/seo";
 
-export const metadata = { title: "FAQs", description: "Frequently asked questions about TopicDrill's free financial tools.", alternates: { canonical: "/faqs" } };
+export const metadata = {
+  title: "FAQs",
+  description: "Frequently asked questions about TopicDrill's free financial tools.",
+  alternates: { canonical: "/faqs" },
+  openGraph: openGraphFor({ path: "/faqs", title: "FAQs | TopicDrill", description: "Frequently asked questions about TopicDrill's free financial tools." }),
+};
 
 const FAQS = [
   { q: "Are the tools really free?", a: "Yes. Every calculator and tool on TopicDrill is 100% free with no sign-up required." },

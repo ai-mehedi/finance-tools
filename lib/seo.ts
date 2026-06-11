@@ -6,6 +6,41 @@ export const PUBLISHER_LOGO = `${SITE_URL}/hero.webp`;
 
 export const abs = (path = "/") => `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
+/** Default Open Graph / Twitter image (1200×630) used when a page has no custom image. */
+export const OG_IMAGE = {
+  url: "/og.png",
+  width: 1200,
+  height: 630,
+  alt: `${SITE_NAME} — Free Financial Calculators & Money Guides`,
+};
+
+/**
+ * Build a complete, self-consistent Open Graph object for a page.
+ *
+ * Next.js shallow-merges metadata: when a child segment defines `openGraph`,
+ * it fully OVERWRITES the parent's (layout) `openGraph` rather than merging
+ * nested fields. So every page that sets openGraph must include `siteName` and
+ * `images` itself, or those tags vanish (the "Open Graph tags incomplete"
+ * audit flag). Keeping `url` equal to the page's canonical path also prevents
+ * the "Open Graph URL not matching canonical" flag.
+ */
+export function openGraphFor(opts: {
+  path: string;
+  title: string;
+  description?: string;
+  type?: "website" | "article";
+  image?: string;
+}) {
+  return {
+    type: opts.type ?? ("website" as const),
+    siteName: SITE_NAME,
+    url: opts.path,
+    title: opts.title,
+    ...(opts.description ? { description: opts.description } : {}),
+    images: [opts.image ? { url: opts.image } : OG_IMAGE],
+  };
+}
+
 // Real brand/social profiles for the Organization entity. YMYL E-E-A-T: an
 // entity Google can verify ranks better. TODO: add your REAL profile URLs only
 // (an empty array is better than links that 404).

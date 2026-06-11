@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import StaticPage, { H2, P } from "../components/StaticPage";
 import JsonLd from "../components/JsonLd";
-import { breadcrumbSchema, SITE_NAME } from "@/lib/seo";
+import { breadcrumbSchema, SITE_NAME, openGraphFor } from "@/lib/seo";
 
 const PATH = "/editorial-policy";
 const DESC =
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "Editorial Policy",
   description: DESC,
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: `Editorial Policy | ${SITE_NAME}`, description: DESC },
+  openGraph: openGraphFor({ path: PATH, title: `Editorial Policy | ${SITE_NAME}`, description: DESC }),
 };
 
 export default function EditorialPolicyPage() {

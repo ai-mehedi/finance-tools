@@ -8,7 +8,8 @@ import JsonLd from "../../components/JsonLd";
 import { AdSlot } from "../../components/AdSlot";
 import ShareButtons from "../../components/ShareButtons";
 import { getArticleBySlug, getArticles } from "@/lib/queries";
-import { articleSchema, breadcrumbSchema, abs } from "@/lib/seo";
+import { articleSchema, breadcrumbSchema, abs, openGraphFor } from "@/lib/seo";
+import { normalizeContentHtml } from "@/lib/utils";
 
 export const revalidate = 1800;
 
@@ -29,14 +30,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     keywords: a.focusKeyword,
     alternates: { canonical: `/blog/${slug}` },
     openGraph: {
-      type: "article",
-      url: `/blog/${slug}`,
-      title,
-      description,
+      ...openGraphFor({ path: `/blog/${slug}`, title, description, type: "article", image: a.featuredImage }),
       publishedTime: a.createdAt,
       modifiedTime: (a as { updatedAt?: string }).updatedAt || a.createdAt,
       authors: author ? [author] : undefined,
-      ...(a.featuredImage ? { images: [{ url: a.featuredImage }] } : {}),
     },
   };
 }
@@ -102,7 +99,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           )}
 
           {article.content ? (
-            <div className="tiptap mt-8" dangerouslySetInnerHTML={{ __html: article.content }} />
+            <div className="tiptap mt-8" dangerouslySetInnerHTML={{ __html: normalizeContentHtml(article.content) }} />
           ) : (
             <p className="mt-8 rounded-xl border border-dashed border-zinc-200 bg-white p-8 text-center text-sm text-zinc-400">
               Full article coming soon.

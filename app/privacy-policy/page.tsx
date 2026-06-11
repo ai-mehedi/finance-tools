@@ -1,9 +1,11 @@
 import Link from "next/link";
 import StaticPage, { H2, P } from "../components/StaticPage";
+import { openGraphFor } from "@/lib/seo";
 
 export const metadata = {
   title: "Privacy Policy",
   alternates: { canonical: "/privacy-policy" },
+  openGraph: openGraphFor({ path: "/privacy-policy", title: "Privacy Policy | TopicDrill", description: "What TopicDrill collects, what it does not, and how we handle your information." }),
   description: "What TopicDrill collects, what it does not, and how we handle your information.",
 };
 

@@ -5,12 +5,14 @@ import Footer from "../components/Footer";
 import { AdSlot } from "../components/AdSlot";
 import BlogCard from "../components/BlogCard";
 import { getArticles, getBlogCategories, getCategoryBySlug } from "@/lib/queries";
+import { openGraphFor } from "@/lib/seo";
 
 export const revalidate = 1800;
 
 export const metadata = {
   title: "Finance Blog",
   alternates: { canonical: "/blog" },
+  openGraph: openGraphFor({ path: "/blog", title: "Finance Blog | TopicDrill", description: "Expert insights, practical tips and in-depth guides to help you make smarter financial decisions." }),
   description: "Expert insights, practical tips and in-depth guides to help you make smarter financial decisions.",
 };
 

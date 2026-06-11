@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
     "savings target planner",
   ],
   alternates: { canonical: PATH },
-  openGraph: { type: "website", url: PATH, title: "Goal Based Savings Calculator | TopicDrill", description: DESC },
-  twitter: { card: "summary", title: "Goal Based Savings Calculator | TopicDrill", description: DESC },
+  openGraph: { type: "website", url: PATH, siteName: "TopicDrill", title: "Goal Based Savings Calculator | TopicDrill", description: DESC, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", title: "Goal Based Savings Calculator | TopicDrill", description: DESC, images: ["/og.png"] },
 };
 
 const FAQ = [
