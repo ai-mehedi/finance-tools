@@ -1,0 +1,40 @@
+mortgage calculator	Commercial	2740000	4399	58	90	0.69	Video, Related searches, Things to know	3 weeks	
+inflation calculator	Informational	450000	723	45	82	1.67	Video, Related searches	3 weeks	
+paycheck calculator	Informational	450000	722	55	72	5.33	Video, Ads bottom, Related searches	3 weeks	
+margin calculator	Informational	110000	176	45	50	4.12	Video, Related searches	3 weeks	
+mortgage payoff calculator	Informational	49500	79	71	49	0.63	Video, People also ask, Related searches, AI Overview	3 weeks	
+mortgage affordability calculator	Informational	40500	64	66	72	1.53	Video, Related searches	3 weeks	
+loan payoff calculator	Informational	27100	43	56	55	2.42	Video, Ads top, Ads bottom, Related searches	2 weeks	
+mortgage refinance calculator	Commercial	27100	43	76	68	2.31	Video, Ads bottom, Related searches	2 weeks	
+options profit calculator	Commercial	22200	35	48	26	2.50	Sitelinks, Video, Related searches	3 weeks	
+loan interest calculator	Commercial	18100	29	39	69	0.89	Video, People also ask, Related searches	3 weeks	
+net worth calculator	Informational	18100	29	51	65	0.39	Video, People also ask, Related searches	3 weeks	
+overtime calculator	Informational	14800	23	56	37	3.20	Video, People also ask, Related searches	3 weeks	
+pay raise calculator	Informational	14800	23	60	25	3.92	Video, Related searches	3 weeks	
+interest only loan calculator	Informational	12100	19	45	47	2.30	Video, People also ask, Related searches	3 weeks	
+mutual fund calculator	Informational	8100	12	81	60	0.50	Video, Related searches	3 weeks	
+irr calculator	Informational	6600	10	53	52	0.94	Video, Video carousel, People also ask, Related searches	3 weeks	
+life insurance calculator	Informational	6600	10	48	40	6.80	Video, People also ask, Related searches, AI Overview	3 weeks	
+nps calculator	Informational	6600	10	72	37	2.64	Sitelinks, Video, Related searches	2 weeks	
+mortgage points calculator	Informational	2900	4	65	41	1.40	Sitelinks, Video, People also ask, Related searches, AI Overview	3 weeks	
+loan to value calculator	Informational	2400	3	59	61	2.59	Video, People also ask, Related searches, AI Overview	3 weeks	
+loan refinance calculator	Commercial	1900	3	75	72	4.04	Video, People also ask, Related searches	3 weeks	
+mortgage comparison calculator	Commercial	1300	2	44	25	1.84	Video, Ads bottom, Related searches	1 month	
+loan comparison calculator	Commercial	1000	1	36	39	3.80	Video, Related searches	1 month	
+millionaire calculator	Informational	1000	1	51	30	0.39	Video, Related searches	3 weeks	
+mining calculator	Commercial	1000	1	44	70	0.80	Sitelinks, Video, Related searches	1 month	
+mortgage overpayment calculator	Informational	1000	1	82	47	0.42	Video, Related searches	1 month	
+payback period calculator	Informational	880	1	40	27	3.48	Video, Related searches	1 month	
+loan emi calculator	Commercial	720	1	74	75	1.69	Video, Related searches	1 month	
+monthly expense calculator	Commercial	720	1	53	42	2.32	Video, Related searches	1 month	
+loan affordability calculator	Informational	480	0	58	62	1.99	Sitelinks, Video, Related searches	1 month	
+loan prepayment calculator	Informational	480	0	48	51	4.30	Video, Related searches	1 month	
+net profit calculator	Informational, Commercial	480	0	52	35	4.27	Video, Ads bottom, People also ask, Related searches	1 month	
+minimum wage calculator	Informational, Commercial	390	0	67	60	0.00	Video, Related searches	1 month	
+inventory turnover calculator	Informational	260	0	71	35	1.17	Video, Video carousel, People also ask, Related searches	1 month	
+loan forgiveness calculator	Informational	260	0	79	50	5.94	Video, Video carousel, Related searches	1 month	
+investment goal calculator	Informational	210	0	37	43	1.59	Video, Related searches	1 month	
+invoice calculator	Commercial	170	0	70	19	4.95	Video, Related searches	1 month	
+loan eligibility calculator	Commercial	170	0	63	58	3.38	Video, Ads bottom, Related searches	1 month	
+insurance needs calculator	Informational	30	0	49	33	3.98	Video, Related searches, AI Overview	3 weeks	
+loan tenure calculator		20				0.00			

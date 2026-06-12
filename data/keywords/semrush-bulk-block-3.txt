@@ -1,0 +1,74 @@
+tip calculator	Informational	673000	1083	35	47	0.37	Video, People also ask, Related searches	3 weeks	
+retirement calculator	Commercial	246000	394	61	80	1.27	Video, Ads bottom, People also ask, Related searches, Short videos	3 weeks	
+salary calculator	Informational	165000	265	40	87	2.16	Video, People also ask, Related searches	2 weeks	
+roth ira calculator	Commercial	135000	13	97	44	1.35	Sitelinks, Video, Related searches	3 weeks	
+sales tax calculator	Transactional	90500	145	57	61	2.10	Video, Related searches	2 weeks	
+rmd calculator	Informational	74000	118	68	50	0.31	Video, People also ask, Related searches, AI Overview	3 weeks	
+take home pay calculator	Informational	60500	97	61	83	2.84	Video, Related searches	3 weeks	
+savings calculator	Informational	49500	79	42	54	0.92	Video, Related searches	3 weeks	
+sip calculator	Informational	49500	79	62	72	1.64	Sitelinks, Video, People also ask, Related searches	2 weeks	
+social security calculator	Informational, Navigational	49500	79	71	90	0.11	Video, People also ask, Related searches	3 weeks	
+salary to hourly calculator	Informational	40500	64	73	69	0.59	Video, Related searches, AI Overview	3 weeks	
+simple interest calculator	Informational	27100	43	50	73	1.38	Video, Related searches	3 weeks	
+student loan calculator	Informational	27100	43	40	71	3.23	Video, People also ask, Related searches, AI Overview	3 weeks	
+tax refund calculator	Informational	27100	43	58	67	0.91	Video, People also ask, Related searches	3 weeks	
+rent vs buy calculator	Commercial	22200	35	49	64	0.06	Video, Related searches	3 weeks	
+profit margin calculator	Informational	18100	29	50	49	1.83	Video, Ads bottom, People also ask, Related searches	3 weeks	
+roi calculator	Informational	18100	29	41	49	1.57	Video, Ads bottom, People also ask, Related searches	3 weeks	
+rent affordability calculator	Informational	14800	23	56	51	0.38	Video, Related searches	3 weeks	
+reverse mortgage calculator	Commercial	14800	23	77	31	8.21	Sitelinks, Video, Ads top, People also ask, Related searches, Ads middle, AI Overview	3 weeks	
+present value calculator	Informational	12100	19	34	45	1.53	Video, People also ask, Related searches, AI Overview	3 weeks	
+property tax calculator	Informational	12100	19	54	43	0.71	Video, Related searches	3 weeks	
+retirement savings calculator	Commercial	12100	19	70	70	1.42	Video, Ads bottom, Related searches	3 weeks	
+self employment tax calculator	Informational	9900	15	73	36	0.78	Video, People also ask, Related searches, AI Overview	3 weeks	
+time value of money calculator	Informational	9900	15	57	55	0.44	Video, Related searches	3 weeks	
+tax bracket calculator	Informational	8100	12	67	59	0.46	Video, People also ask, Related searches	3 weeks	
+retirement withdrawal calculator	Informational	6600	10	85	28	0.64	Video, Ads bottom, People also ask, Related searches	3 weeks	
+stock profit calculator	Informational	6600	10	38	37	1.81	Video, Related searches, AI Overview	3 weeks	
+whole life insurance calculator	Informational	6600	10	67	39	5.76	Sitelinks, Video, People also ask, Related searches, AI Overview	3 weeks	
+stock average calculator	Informational, Transactional	5400	8	57	60	2.26	Video, Related searches	3 weeks	
+severance pay calculator	Informational	4400	0	86	33	0.67	Video, People also ask, AI Overview	3 weeks	
+student loan payoff calculator	Informational	4400	7	57	50	4.91	Video, Related searches	3 weeks	
+rule of 72 calculator	Informational	2900	4	68	35	0.32	Video, People also ask, Related searches, AI Overview	3 weeks	
+second mortgage calculator	Commercial	2900	4	74	61	3.58	Video, People also ask, Related searches, AI Overview	3 weeks	
+swp calculator	Informational	2900	4	61	39	1.82	Video, People also ask, Related searches	3 weeks	
+tax deduction calculator	Informational, Commercial	2900	4	72	84	1.49	Video, People also ask, Related searches	3 weeks	
+salary inflation calculator	Informational	2400	3	37	56	1.94	People also ask, Related searches	3 weeks	
+savings goal calculator	Informational	2400	3	61	33	1.80	Video, People also ask, Related searches	3 weeks	
+stock return calculator	Informational	2400	3	50	55	1.62	Sitelinks, Video, Related searches	3 weeks	
+student loan refinance calculator	Commercial	2400	3	72	43	8.62	Video, People also ask, Related searches	3 weeks	
+property tax estimator	Informational	1900	3	54	45	1.02	Video, Related searches, AI Overview	3 weeks	
+purchasing power calculator	Transactional	1900	3	45	43	2.13	Video, Related searches	3 weeks	
+rent split calculator	Informational	1900	3	73	34	0.85	Video, Related searches	3 weeks	
+stamp duty calculator	Informational	1900	3	66	51	0.10	Sitelinks, Video, Related searches	3 weeks	
+traditional ira calculator	Informational	1900	3	76	37	0.74	Video, People also ask, Related searches	3 weeks	
+withholding tax calculator	Informational	1900	0	92	60	1.29	Video, People also ask, Related searches	2 weeks	
+vat calculator	Informational	1600	2	72	36	2.42	Sitelinks, Video, Related searches	1 month	
+wedding budget calculator	Informational	1600	2	58	31	1.79	Sitelinks, Video, Ads bottom, People also ask, Related searches	1 month	
+rent increase calculator	Informational	1000	1	62	22	1.16	Video, People also ask, Related searches	3 weeks	
+savings rate calculator	Commercial	1000	1	58	47	2.74	Video, Related searches	1 month	
+rd calculator	Informational	880	1	45	41	0.77	Video, Related searches	1 month	
+split bill calculator	Informational	720	1	65	35	1.19	Sitelinks, Video, People also ask, Related searches	1 month	
+term insurance calculator	Informational, Commercial	720	1	38	33	7.36	Image pack, Video, Related searches, AI Overview	1 month	
+staking calculator	Informational	390	0	56	50	1.04	Related searches	1 month	
+risk reward calculator	Informational	320	0	32	23	2.48	Video, Video carousel, People also ask, Related searches	3 weeks	
+salary increment calculator	Informational	320	0	50	32	3.92	Video, Related searches	1 month	
+sinking fund calculator	Informational	260	0		8	0.00	Video, Video carousel, Related searches	1 month	
+xirr calculator	Informational	260	0	52	18	0.00	Video, People also ask, Related searches	1 month	
+real interest rate calculator	Informational	210	0	46	22	0.00	Video, People also ask, Related searches	1 month	
+pro rata salary calculator	Commercial	110	0	58	19	0.00	Sitelinks, Video, Related searches	1 month	
+stp calculator	Informational	90	0		2	0.00	Video, Related searches	3 weeks	
+travel insurance calculator	Commercial	90	0	50	66	3.28	Sitelinks, Video, Related searches	1 month	
+vacation savings calculator	Informational	90	0	39	12	0.00	Video, Related searches	1 month	
+working capital calculator	Informational	90	0	61	18	6.49	Sitelinks, Video, Related searches	1 month	
+sales revenue calculator	Transactional	50	0	51	22	0.00	Video, Ads bottom, People also ask, Related searches	1 month	
+student budget calculator	Informational	50	0	51	12	0.00	Video, Video carousel	4 weeks	
+retirement corpus calculator	Commercial	40	0	88	31	1.87	Video, Related searches	1 month	
+subscription cost calculator		30				0.00			
+zero based budget calculator	Informational	30	0	72	47	0.87	Sitelinks, Video, Related searches	1 month	
+term vs whole life calculator		20				2.28			
+tuition inflation calculator		20				0.00			
+profit margin tax calculator
+real vs nominal calculator
+scholarship savings calculator
+two card payoff calculator

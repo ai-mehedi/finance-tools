@@ -1,0 +1,10 @@
+percentage calculator	Informational	450000	722	52	77	3.19	Video, Related searches	3 weeks	
+personal loan calculator	Informational	60500	97	41	73	3.00	Video, Ads bottom, People also ask, Related searches, AI Overview	3 weeks	
+percentage change calculator	Informational	49500	79	58	72	7.83	Video, Related searches	2 weeks	
+payroll tax calculator	Commercial	8100	12	83	56	6.14	Video, People also ask, Related searches	3 weeks	
+pmi calculator	Informational	5400	8	52	50	0.80	Video, People also ask, Related searches	3 weeks	
+pension calculator	Informational	4400	7	78	40	1.44	Video, People also ask, Related searches	3 weeks	
+pip calculator	Commercial	2900	4	41	33	0.40	Video, Related searches	3 weeks	
+position size calculator	Commercial	2400	3	52	40	1.40	Video, Related searches	3 weeks	
+ppf calculator	Informational	1000	1	57	43	4.82	Video, People also ask, Related searches	1 month	
+portfolio return calculator	Informational	210	0	64	56	1.44	Video, Related searches	1 month	

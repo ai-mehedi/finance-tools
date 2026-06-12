@@ -1,0 +1,100 @@
+mortgage calculator	Commercial	2740000	4399	58	90	0.69	Video, Related searches, Things to know	3 weeks	
+inflation calculator	Informational	450000	723	45	82	1.67	Video, Related searches	3 weeks	
+paycheck calculator	Informational	450000	722	55	72	5.33	Video, Ads bottom, Related searches	3 weeks	
+percentage calculator	Informational	450000	722	52	77	3.19	Video, Related searches	3 weeks	
+margin calculator	Informational	110000	176	45	50	4.12	Video, Related searches	3 weeks	
+income tax calculator	Informational	90500	145	67	78	0.35	Video, Related searches	3 weeks	
+personal loan calculator	Informational	60500	97	41	73	3.00	Video, Ads bottom, People also ask, Related searches, AI Overview	3 weeks	
+heloc calculator	Informational	49500	79	83	65	4.73	Sitelinks, Video, People also ask, Related searches, AI Overview	3 weeks	
+hourly to salary calculator	Informational	49500	79	71	64	0.24	Sitelinks, Video, Related searches	3 weeks	
+mortgage payoff calculator	Informational	49500	79	71	49	0.63	Video, People also ask, Related searches, AI Overview	3 weeks	
+percentage change calculator	Informational	49500	79	58	72	7.83	Video, Related searches	2 weeks	
+future value calculator	Informational	40500	65	35	25	0.36	Video, Related searches	3 weeks	
+mortgage affordability calculator	Informational	40500	64	66	72	1.53	Video, Related searches	3 weeks	
+mortgage amortization calculator	Informational	33100	53	73	67	0.66	Sitelinks, Video, Related searches	3 weeks	
+home affordability calculator	Informational	27100	43	46	73	1.31	Sitelinks, Video, Related searches, AI Overview	3 weeks	
+loan payoff calculator	Informational	27100	43	56	55	2.42	Video, Ads top, Ads bottom, Related searches	2 weeks	
+mortgage refinance calculator	Commercial	27100	43	76	68	2.31	Video, Ads bottom, Related searches	2 weeks	
+options profit calculator	Commercial	22200	35	48	26	2.50	Sitelinks, Video, Related searches	3 weeks	
+fuel cost calculator	Transactional	18100	29	37	66	3.71	Video, Related searches	3 weeks	
+loan interest calculator	Commercial	18100	29	39	69	0.89	Video, People also ask, Related searches	3 weeks	
+markup calculator	Informational	18100	29	33	37	1.24	Video, Ads bottom, People also ask, Related searches	3 weeks	
+net worth calculator	Informational	18100	29	51	65	0.39	Video, People also ask, Related searches	3 weeks	
+overtime calculator	Informational	14800	23	56	37	3.20	Video, People also ask, Related searches	3 weeks	
+pay raise calculator	Informational	14800	23	60	25	3.92	Video, Related searches	3 weeks	
+fire calculator	Commercial	12100	19	36	49	1.44	Sitelinks, Video, Ads bottom	3 weeks	
+interest only loan calculator	Informational	12100	19	45	47	2.30	Video, People also ask, Related searches	3 weeks	
+hourly rate calculator	Informational	9900	15	53	67	2.04	Sitelinks, Video, Related searches	3 weeks	
+home insurance calculator	Informational	8100	13	50	46	7.43	Sitelinks, Video, People also ask, Related searches, AI Overview	3 weeks	
+mutual fund calculator	Informational	8100	12	81	60	0.50	Video, Related searches	3 weeks	
+payroll tax calculator	Commercial	8100	12	83	56	6.14	Video, People also ask, Related searches	3 weeks	
+high yield savings calculator	Informational	6600	10	61	56	2.47	Video, Ads bottom, People also ask, Related searches, AI Overview	3 weeks	
+irr calculator	Informational	6600	10	53	52	0.94	Video, Video carousel, People also ask, Related searches	3 weeks	
+life insurance calculator	Informational	6600	10	48	40	6.80	Video, People also ask, Related searches, AI Overview	3 weeks	
+nps calculator	Informational	6600	10	72	37	2.64	Sitelinks, Video, Related searches	2 weeks	
+npv calculator	Informational	6600	10	56	52	4.30	Video, People also ask, Related searches	3 weeks	
+exchange rate calculator	Informational	5400	8	52	90	0.10	Instant answer, Video, Related searches	3 weeks	
+money market calculator	Informational	5400	8	42	26	1.69	Sitelinks, Video, People also ask, Related searches	3 weeks	
+pmi calculator	Informational	5400	8	52	50	0.80	Video, People also ask, Related searches	3 weeks	
+expense tracker	Informational	4400	7	47	55	8.68	Image pack, Video, People also ask, Related searches, Things to know, AI Overview	3 weeks	
+pension calculator	Informational	4400	7	78	40	1.44	Video, People also ask, Related searches	3 weeks	
+gross profit calculator	Informational	3600	5	54	34	1.29	Video, People also ask	3 weeks	
+line of credit calculator	Commercial	2900	4	58	35	2.60	Video, People also ask, Related searches	3 weeks	
+lot size calculator	Commercial	2900	4	52	47	0.55	Video, People also ask, Related searches	3 weeks	
+minimum payment calculator	Informational	2900	4	40	28	3.08	Video, People also ask, Related searches, AI Overview	3 weeks	
+mortgage points calculator	Informational	2900	4	65	41	1.40	Sitelinks, Video, People also ask, Related searches, AI Overview	3 weeks	
+pip calculator	Commercial	2900	4	41	33	0.40	Video, Related searches	3 weeks	
+fd calculator	Informational	2400	3	66	61	1.67	Video, People also ask	3 weeks	
+gross to net calculator	Informational, Commercial	2400	3	78	79	3.85	Video, People also ask, Related searches	3 weeks	
+loan to value calculator	Informational	2400	3	59	61	2.59	Video, People also ask, Related searches, AI Overview	3 weeks	
+mileage reimbursement calculator	Informational	2400	3	55	28	2.43	Video, People also ask, Related searches	3 weeks	
+position size calculator	Commercial	2400	3	52	40	1.40	Video, Related searches	3 weeks	
+expense ratio calculator	Informational	1900	3	40	18	2.03	Video, People also ask, Related searches	3 weeks	
+extra payment calculator	Informational	1900	3	46	60	0.26	Sitelinks, Video, Related searches	3 weeks	
+gift tax calculator	Informational	1900	3	66	33	0.75	Video, People also ask, Related searches, AI Overview	3 weeks	
+loan refinance calculator	Commercial	1900	3	75	72	4.04	Video, People also ask, Related searches	3 weeks	
+gas fee calculator	Transactional	1600	2	58	71	2.48	Video, Related searches	1 month	
+gst calculator	Informational	1600	2	63	40	0.00	Video, See results about, Related searches	1 month	
+health insurance calculator	Informational	1600	2	46	43	2.89	Video, Ads bottom, Related searches	4 weeks	
+home loan emi calculator	Commercial	1600	2	79	81	1.19	Video, People also ask, Related searches	1 month	
+marginal tax rate calculator	Informational	1600	2	72	41	0.52	Video, People also ask, Related searches	3 weeks	
+forex profit calculator	Informational	1300	2	63	39	3.08	Sitelinks, Related searches	1 month	
+mortgage comparison calculator	Commercial	1300	2	44	25	1.84	Video, Ads bottom, Related searches	1 month	
+loan comparison calculator	Commercial	1000	1	36	39	3.80	Video, Related searches	1 month	
+lumpsum calculator	Informational	1000	1	58	35	1.36	Video, Video carousel, People also ask, Related searches	1 month	
+millionaire calculator	Informational	1000	1	51	30	0.39	Video, Related searches	3 weeks	
+mining calculator	Commercial	1000	1	44	70	0.80	Sitelinks, Video, Related searches	1 month	
+mortgage overpayment calculator	Informational	1000	1	82	47	0.42	Video, Related searches	1 month	
+ppf calculator	Informational	1000	1	57	43	4.82	Video, People also ask, Related searches	1 month	
+payback period calculator	Informational	880	1	40	27	3.48	Video, Related searches	1 month	
+lease vs buy calculator	Commercial	720	1	52	17	0.35	Video, Related searches	1 month	
+loan emi calculator	Commercial	720	1	74	75	1.69	Video, Related searches	1 month	
+monthly expense calculator	Commercial	720	1	53	42	2.32	Video, Related searches	1 month	
+forex compounding calculator	Informational	590	0	66	12	3.13	Video carousel, Related searches	1 month	
+forex margin calculator	Informational	480	0	59	38	2.57	People also ask, Related searches	1 month	
+loan affordability calculator	Informational	480	0	58	62	1.99	Sitelinks, Video, Related searches	1 month	
+loan prepayment calculator	Informational	480	0	48	51	4.30	Video, Related searches	1 month	
+net profit calculator	Informational, Commercial	480	0	52	35	4.27	Video, Ads bottom, People also ask, Related searches	1 month	
+minimum wage calculator	Informational, Commercial	390	0	67	60	0.00	Video, Related searches	1 month	
+freelance rate calculator	Informational	320	0	66	22	0.00	Sitelinks, Video, Related searches	1 month	
+gold loan calculator	Informational	260	0	52	48	10.20	People also ask, Related searches	1 month	
+inventory turnover calculator	Informational	260	0	71	35	1.17	Video, Video carousel, People also ask, Related searches	1 month	
+loan forgiveness calculator	Informational	260	0	79	50	5.94	Video, Video carousel, Related searches	1 month	
+investment goal calculator	Informational	210	0	37	43	1.59	Video, Related searches	1 month	
+portfolio return calculator	Informational	210	0	64	56	1.44	Video, Related searches	1 month	
+impermanent loss calculator	Informational	170	0	63	19	0.00	Sitelinks, Video, Video carousel, People also ask, Related searches	1 month	
+invoice calculator	Commercial	170	0	70	19	4.95	Video, Related searches	1 month	
+loan eligibility calculator	Commercial	170	0	63	58	3.38	Video, Ads bottom, Related searches	1 month	
+human life value calculator	Informational	90	0	44	14	0.00	Video, Related searches	1 month	
+latte factor calculator	Informational, Commercial	90	0	61	13	0.00	Sitelinks, Video, Video carousel, Related searches	1 month	
+future cost calculator	Informational	40	0	34	44	0.00	Video, Related searches	1 month	
+goal savings calculator	Commercial	40	0	44	47	1.80	Related searches	1 month	
+hra exemption calculator	Informational	40	0	100	29	0.00	Video, People also ask, Related searches	1 month	
+income protection calculator	Commercial	40	0	67	16	0.00	Sitelinks, Video, Related searches	1 month	
+insurance needs calculator	Informational	30	0	49	33	3.98	Video, Related searches, AI Overview	3 weeks	
+money doubling calculator		30				0.42			
+mortgage protection calculator	Informational	30	0	78	27	2.97	Video, Ads bottom, People also ask, Related searches, AI Overview	3 weeks	
+income vs expense calculator		20				0.00			
+loan tenure calculator		20				0.00			
+flat vs reducing rate calculator		10				0.00			
+loan late payment calculator

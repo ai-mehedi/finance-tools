@@ -2,89 +2,115 @@
 // Projects the balance of a Roth IRA from a starting balance plus annual
 // contributions growing at an assumed return until retirement. Because Roth
 // contributions are made with after-tax dollars, qualified withdrawals are
-// tax free, so the ending balance is also the after-tax (spendable) amount.
-// A taxable-account comparison shows the tax drag a Roth avoids.
+// completely tax free — so the projected balance equals the spendable amount.
+// For comparison we also estimate what an equivalent taxable account would be
+// worth after paying tax on the gains, to show the Roth tax advantage.
+//
+// Contributions are capped at the annual IRA limit (with a catch-up amount for
+// savers age 50 and older), and they stop at the chosen retirement age.
+
+// 2024 IRA contribution limits.
+export const IRA_LIMIT = 7000;
+export const IRA_CATCHUP_LIMIT = 8000; // age 50+
 
 export interface RothIraInput {
-  currentBalance: number;
-  annualContribution: number;
-  annualRatePct: number;
   currentAge: number;
   retirementAge: number;
-  taxRatePct: number; // marginal rate used for the taxable comparison
+  startingBalance: number;
+  annualContribution: number;
+  annualReturnPct: number;
+  taxRatePct: number; // marginal rate, used for the taxable comparison
 }
 
 export interface RothIraYearPoint {
   age: number;
-  roth: number; // tax-free Roth balance
-  taxable: number; // comparable taxable account after annual tax on gains
-  contributed: number; // cumulative out-of-pocket contributions plus start
+  rothBalance: number;
+  contributed: number; // cumulative contributions plus starting balance
+  taxableBalance: number; // after-tax value of an equivalent taxable account
 }
 
 export interface RothIraResult {
-  endingBalance: number; // tax-free Roth value at retirement
-  totalContributions: number; // excludes the starting balance
-  totalGrowth: number;
-  taxableEnding: number; // a taxable account holding the same contributions
-  taxAdvantage: number; // endingBalance minus taxableEnding
-  years: number;
+  appliedContribution: number; // contribution after applying the IRS cap
+  capApplied: boolean;
+  rothBalance: number; // tax-free at retirement
+  totalContributed: number; // out-of-pocket including starting balance
+  totalGrowth: number; // tax-free earnings
+  taxableBalance: number; // comparable taxable account, after tax on gains
+  taxesSaved: number; // Roth advantage vs the taxable account
   schedule: RothIraYearPoint[];
 }
 
 export function computeRothIra(input: RothIraInput): RothIraResult | null {
   const {
-    currentBalance,
-    annualContribution,
-    annualRatePct,
     currentAge,
     retirementAge,
+    startingBalance,
+    annualContribution,
+    annualReturnPct,
     taxRatePct,
   } = input;
 
-  if (!Number.isFinite(currentAge) || !Number.isFinite(retirementAge)) return null;
-  if (retirementAge <= currentAge) return null;
-  if (currentBalance < 0 || annualContribution < 0) return null;
-  if (!Number.isFinite(annualRatePct)) return null;
+  if (!Number.isFinite(currentAge) || currentAge < 0) return null;
+  if (!Number.isFinite(retirementAge) || retirementAge <= currentAge) return null;
+  if (startingBalance < 0 || annualContribution < 0) return null;
+  if (!Number.isFinite(annualReturnPct)) return null;
+  if (!Number.isFinite(taxRatePct) || taxRatePct < 0 || taxRatePct > 100) return null;
 
   const years = Math.round(retirementAge - currentAge);
-  const r = annualRatePct / 100;
-  const tax = Math.max(0, taxRatePct) / 100;
-  // After-tax growth rate for the taxable comparison: gains are taxed each year.
-  const taxableRate = r * (1 - tax);
+  const r = annualReturnPct / 100;
+  const taxRate = taxRatePct / 100;
 
-  let roth = currentBalance;
-  let taxable = currentBalance;
+  // Apply the IRS annual contribution cap (catch-up kicks in at age 50).
+  const limit = currentAge >= 50 ? IRA_CATCHUP_LIMIT : IRA_LIMIT;
+  const appliedContribution = Math.min(annualContribution, limit);
+  const capApplied = annualContribution > limit;
+
+  let rothBalance = startingBalance;
+  // Taxable comparison: same contributions, but gains are taxed each year, so
+  // it compounds at an after-tax rate. Starting balance assumed already taxed.
+  const afterTaxR = r * (1 - taxRate);
+  let taxableBalance = startingBalance;
+  let contributedCum = startingBalance;
 
   const schedule: RothIraYearPoint[] = [
-    { age: currentAge, roth, taxable, contributed: currentBalance },
+    {
+      age: Math.round(currentAge),
+      rothBalance,
+      contributed: contributedCum,
+      taxableBalance,
+    },
   ];
 
-  for (let i = 1; i <= years; i++) {
-    // Contribution made at the start of the year, then grows for the year.
-    roth = (roth + annualContribution) * (1 + r);
-    taxable = (taxable + annualContribution) * (1 + taxableRate);
-    const contributed = currentBalance + annualContribution * i;
+  for (let y = 1; y <= years; y++) {
+    // Contribution at the start of the year, then a full year of growth.
+    const ageThisYear = currentAge + y - 1;
+    const limitThisYear = ageThisYear >= 50 ? IRA_CATCHUP_LIMIT : IRA_LIMIT;
+    const contribThisYear = Math.min(annualContribution, limitThisYear);
+
+    rothBalance = (rothBalance + contribThisYear) * (1 + r);
+    taxableBalance = (taxableBalance + contribThisYear) * (1 + afterTaxR);
+    contributedCum += contribThisYear;
+
     schedule.push({
-      age: currentAge + i,
-      roth,
-      taxable,
-      contributed,
+      age: Math.round(currentAge + y),
+      rothBalance,
+      contributed: contributedCum,
+      taxableBalance,
     });
   }
 
-  const totalContributions = annualContribution * years;
-  const endingBalance = roth;
-  const totalGrowth = endingBalance - currentBalance - totalContributions;
-  const taxableEnding = taxable;
-  const taxAdvantage = endingBalance - taxableEnding;
+  const totalContributed = contributedCum;
+  const totalGrowth = rothBalance - totalContributed;
+  const taxesSaved = rothBalance - taxableBalance;
 
   return {
-    endingBalance,
-    totalContributions,
+    appliedContribution,
+    capApplied,
+    rothBalance,
+    totalContributed,
     totalGrowth,
-    taxableEnding,
-    taxAdvantage,
-    years,
+    taxableBalance,
+    taxesSaved,
     schedule,
   };
 }

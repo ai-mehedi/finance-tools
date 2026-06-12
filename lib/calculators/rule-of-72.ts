@@ -1,8 +1,8 @@
 // Pure logic for the Rule of 72 Calculator.
 // The Rule of 72 is a mental-math shortcut: divide 72 by the annual rate of
 // return (as a whole-number percent) to estimate the years it takes money to
-// double. This tool reports that estimate, the exact doubling time from the
-// real compound-interest formula, and a doublings schedule for charting.
+// double. This tool reports that estimate alongside the exact doubling time from
+// the real compound-interest formula, and a doublings schedule for charting.
 
 export type SolveFor = "years" | "rate";
 
@@ -11,7 +11,7 @@ export interface RuleOf72Input {
   // When solving for years, ratePct is required. When solving for rate, years is required.
   ratePct: number;
   years: number;
-  principal: number; // starting amount, used only to label the chart
+  principal: number; // starting amount, used to label the chart and value markers
 }
 
 export interface RuleOf72DoublingPoint {
@@ -22,10 +22,11 @@ export interface RuleOf72DoublingPoint {
 
 export interface RuleOf72Result {
   solveFor: SolveFor;
-  rulePct: number; // the rate used (input or solved)
-  ruleYears: number; // the Rule-of-72 estimate
+  rulePct: number; // the rate used (input or solved by the rule)
+  ruleYears: number; // the Rule-of-72 estimate (years to double)
   exactYears: number; // exact doubling time at the rate
-  exactRatePct: number; // exact rate that doubles in the given years
+  exactRatePct: number; // exact rate that doubles money in the given years
+  principal: number;
   schedule: RuleOf72DoublingPoint[];
 }
 
@@ -42,13 +43,13 @@ export function computeRuleOf72(input: RuleOf72Input): RuleOf72Result | null {
     if (!Number.isFinite(ratePct) || ratePct <= 0) return null;
     rulePct = ratePct;
     ruleYears = 72 / ratePct;
-    // Exact: ln(2) / ln(1 + r)
+    // Exact doubling time: ln(2) / ln(1 + r)
     exactYears = Math.log(2) / Math.log(1 + ratePct / 100);
     exactRatePct = ratePct;
   } else {
     if (!Number.isFinite(years) || years <= 0) return null;
     ruleYears = years;
-    rulePct = 72 / years;
+    rulePct = 72 / years; // Rule-of-72 estimate of the rate needed
     // Exact rate that doubles money in the given number of years.
     exactRatePct = (Math.pow(2, 1 / years) - 1) * 100;
     exactYears = years;
@@ -69,7 +70,7 @@ export function computeRuleOf72(input: RuleOf72Input): RuleOf72Result | null {
     });
   }
 
-  return { solveFor, rulePct, ruleYears, exactYears, exactRatePct, schedule };
+  return { solveFor, rulePct, ruleYears, exactYears, exactRatePct, principal: p, schedule };
 }
 
 const usd = new Intl.NumberFormat("en-US", {

@@ -1,87 +1,79 @@
 // Pure logic for the Property Tax Estimator.
-// Unlike a single-rate calculator, this estimator stacks several local levies
-// (county, city, school district and any special assessments) and adds an
-// optional flat fee, then returns the blended rate and a breakdown of where
-// each dollar of tax goes — useful for plotting a donut of the levy mix.
+// Estimates annual property tax from an assessed value and a tax rate, where
+// the rate can be entered either as a percentage or in mills (1 mill = $1 of
+// tax per $1,000 of assessed value). Supports a homestead/exemption amount
+// subtracted from the assessed value before tax, and returns a multi-year
+// projection assuming an optional annual value growth rate.
 
-export interface LevyInput {
-  countyRatePct: number; // county tax rate, percent of taxable value
-  cityRatePct: number; // municipal / city tax rate
-  schoolRatePct: number; // school district tax rate
-  specialRatePct: number; // special districts (fire, water, library, etc.)
-  flatFee: number; // fixed annual charge added on top
+export type RateUnit = "percent" | "mills";
+
+export interface PropertyTaxInput {
+  assessedValue: number; // assessed (taxable) value of the property
+  exemption: number; // amount deducted before tax (e.g. homestead exemption)
+  rate: number; // the tax rate value, interpreted by rateUnit
+  rateUnit: RateUnit; // percent of value, or mills per $1,000
+  appreciationPct: number; // assumed annual growth in assessed value
+  years: number; // projection horizon for the schedule
 }
 
-export interface PropertyTaxEstimatorInput extends LevyInput {
-  homeValue: number; // market value of the property
-  assessmentRatioPct: number; // taxable value as a percent of market value
-  exemption: number; // dollar reduction to taxable value
+export interface PropertyTaxYearPoint {
+  year: number;
+  assessed: number; // assessed value that year
+  taxable: number; // assessed minus exemption (floored at 0)
+  tax: number; // estimated tax that year
+  cumulative: number; // total tax paid through that year
 }
 
-export interface LevyLine {
-  label: string;
-  ratePct: number;
-  amount: number;
+export interface PropertyTaxResult {
+  annualTax: number; // first-year estimated tax
+  monthlyTax: number; // annual divided by 12
+  effectiveRatePct: number; // tax divided by assessed value, percent
+  taxableValue: number; // first-year taxable value
+  totalOverHorizon: number; // sum of tax across all projected years
+  schedule: PropertyTaxYearPoint[];
 }
 
-export interface PropertyTaxEstimatorResult {
-  taxableValue: number;
-  blendedRatePct: number; // sum of all percentage levies
-  leviesTotal: number; // tax from percentage levies only
-  flatFee: number;
-  annualTax: number; // levies plus flat fee
-  monthlyTax: number;
-  lines: LevyLine[]; // one entry per levy, for the donut/breakdown
+// Convert any rate input into a plain decimal fraction of assessed value.
+function rateToFraction(rate: number, unit: RateUnit): number {
+  return unit === "mills" ? rate / 1000 : rate / 100;
 }
 
-const LEVY_LABELS: { key: keyof LevyInput; label: string }[] = [
-  { key: "countyRatePct", label: "County" },
-  { key: "cityRatePct", label: "City / municipal" },
-  { key: "schoolRatePct", label: "School district" },
-  { key: "specialRatePct", label: "Special districts" },
-];
+export function computePropertyTax(input: PropertyTaxInput): PropertyTaxResult | null {
+  const { assessedValue, exemption, rate, rateUnit, appreciationPct, years } = input;
 
-export function computePropertyTaxEstimate(
-  input: PropertyTaxEstimatorInput
-): PropertyTaxEstimatorResult | null {
-  const {
-    homeValue,
-    assessmentRatioPct,
-    exemption,
-    countyRatePct,
-    cityRatePct,
-    schoolRatePct,
-    specialRatePct,
-    flatFee,
-  } = input;
+  if (!Number.isFinite(assessedValue) || assessedValue <= 0) return null;
+  if (!Number.isFinite(rate) || rate < 0) return null;
+  if (!Number.isFinite(exemption) || exemption < 0) return null;
+  if (!Number.isFinite(appreciationPct)) return null;
+  if (!Number.isFinite(years) || years <= 0) return null;
 
-  if (!Number.isFinite(homeValue) || homeValue <= 0) return null;
-  if (!Number.isFinite(assessmentRatioPct) || assessmentRatioPct <= 0) return null;
-  if (exemption < 0 || flatFee < 0) return null;
+  const frac = rateToFraction(rate, rateUnit);
+  const growth = appreciationPct / 100;
+  const horizon = Math.min(Math.round(years), 60);
 
-  const rates = [countyRatePct, cityRatePct, schoolRatePct, specialRatePct];
-  if (rates.some((r) => !Number.isFinite(r) || r < 0)) return null;
+  const schedule: PropertyTaxYearPoint[] = [];
+  let cumulative = 0;
 
-  const taxableValue = Math.max(0, homeValue * (assessmentRatioPct / 100) - exemption);
+  for (let y = 1; y <= horizon; y++) {
+    const assessed = assessedValue * Math.pow(1 + growth, y - 1);
+    const taxable = Math.max(assessed - exemption, 0);
+    const tax = taxable * frac;
+    cumulative += tax;
+    schedule.push({ year: y, assessed, taxable, tax, cumulative });
+  }
 
-  const lines: LevyLine[] = LEVY_LABELS.map(({ key, label }) => {
-    const ratePct = input[key];
-    return { label, ratePct, amount: taxableValue * (ratePct / 100) };
-  });
-
-  const leviesTotal = lines.reduce((s, l) => s + l.amount, 0);
-  const blendedRatePct = rates.reduce((s, r) => s + r, 0);
-  const annualTax = leviesTotal + flatFee;
+  const first = schedule[0];
+  const annualTax = first.tax;
   const monthlyTax = annualTax / 12;
+  const effectiveRatePct = (annualTax / assessedValue) * 100;
 
   return {
-    taxableValue,
-    blendedRatePct,
-    leviesTotal,
-    flatFee,
     annualTax,
     monthlyTax,
-    lines,
+    effectiveRatePct,
+    taxableValue: first.taxable,
+    totalOverHorizon: cumulative,
+    schedule,
   };
 }
 
@@ -100,3 +92,5 @@ export function formatCompact(n: number): string {
   if (abs >= 1_000) return `$${(n / 1_000).toFixed(1)}k`;
   return `$${Math.round(n)}`;
 }
+
+export const formatPct = (n: number) => `${Number.isFinite(n) ? n.toFixed(2) : "0.00"}%`;

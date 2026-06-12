@@ -9,6 +9,7 @@ import ShareButtons from "../../components/ShareButtons";
 import Five03020BudgetCalculator from "./Five03020BudgetCalculator";
 import { getRelatedTools, getArticles, getToolBySlug } from "@/lib/queries";
 import { abs, breadcrumbSchema, faqSchema, EDITORIAL, personSchema, SITE_URL } from "@/lib/seo";
+import { toolMetadata } from "@/lib/tool-metadata";
 
 export const revalidate = 3600;
 
@@ -219,13 +220,6 @@ export default async function Five03020BudgetCalculatorPage() {
     </StaticPage>
   );
 }
-
 export async function generateMetadata(): Promise<Metadata> {
-  const self = await getToolBySlug(SELF_SLUG);
-  if (!self?.ogImage) return baseMetadata;
-  return {
-    ...baseMetadata,
-    openGraph: { ...(baseMetadata.openGraph as object), images: [{ url: self.ogImage }] },
-    twitter: { ...(baseMetadata.twitter as object), card: "summary_large_image", images: [self.ogImage] },
-  };
+  return toolMetadata(SELF_SLUG, baseMetadata);
 }
