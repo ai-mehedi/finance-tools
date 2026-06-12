@@ -1,6 +1,7 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { ToolModel } from "@/models/Tool";
 import { ok, fail, requireAdmin, handleError } from "@/lib/api";
+import { pingIndexNow } from "@/lib/indexnow";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export async function PUT(request: Request, { params }: Params) {
     const body = await request.json();
     const tool = await ToolModel.findByIdAndUpdate(id, body, { new: true, runValidators: true });
     if (!tool) return fail("Tool not found.", 404);
+    if (tool.status === "active") await pingIndexNow([tool.url || `/tools/${tool.slug}`]);
     return ok({ tool });
   } catch (err) {
     return handleError(err);

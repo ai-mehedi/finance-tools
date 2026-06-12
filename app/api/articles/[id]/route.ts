@@ -1,6 +1,7 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { ArticleModel } from "@/models/Article";
 import { ok, fail, requireAdmin, handleError } from "@/lib/api";
+import { pingIndexNow } from "@/lib/indexnow";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,7 @@ export async function PUT(request: Request, { params }: Params) {
       runValidators: true,
     });
     if (!article) return fail("Article not found.", 404);
+    if (article.status === "published") await pingIndexNow([`/blog/${article.slug}`]);
     return ok({ article });
   } catch (err) {
     return handleError(err);

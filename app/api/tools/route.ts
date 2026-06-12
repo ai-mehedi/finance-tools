@@ -1,6 +1,7 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { ToolModel } from "@/models/Tool";
 import { ok, fail, requireAdmin, handleError, parseListQuery, paginated } from "@/lib/api";
+import { pingIndexNow } from "@/lib/indexnow";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     if (!body?.title) return fail("title is required.", 400);
     const tool = await ToolModel.create(body);
+    if (tool.status === "active") await pingIndexNow([tool.url || `/tools/${tool.slug}`]);
     return ok({ tool }, 201);
   } catch (err) {
     return handleError(err);

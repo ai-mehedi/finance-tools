@@ -1,6 +1,7 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { ArticleModel } from "@/models/Article";
 import { ok, fail, requireAdmin, handleError, parseListQuery, paginated } from "@/lib/api";
+import { pingIndexNow } from "@/lib/indexnow";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
     if (!body?.title) return fail("title is required.", 400);
     if (!body?.author) return fail("author is required.", 400);
     const article = await ArticleModel.create(body);
+    if (article.status === "published") await pingIndexNow([`/blog/${article.slug}`]);
     return ok({ article }, 201);
   } catch (err) {
     return handleError(err);
