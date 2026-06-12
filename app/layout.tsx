@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | TopicDrill",
   },
   description:
-    "Free, fast financial calculators and clear money guides covering loans, mortgage, investing, taxes, savings and retirement. No sign-ups, no clutter.",
+    "Free, fast financial calculators and clear money guides covering loans, mortgage, investing, taxes, savings and retirement. No sign-ups, no clutter — just accurate numbers you can act on, instantly.",
   applicationName: "TopicDrill",
   alternates: { canonical: "/" },
   openGraph: {
