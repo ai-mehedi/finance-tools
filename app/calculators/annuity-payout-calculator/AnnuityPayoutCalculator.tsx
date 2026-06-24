@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeAnnuityPayout,
   formatUSD,
@@ -35,35 +37,25 @@ function compute(f: FormState): AnnuityPayoutResult | null {
 }
 
 export default function AnnuityPayoutCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<AnnuityPayoutResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a starting balance and number of years greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a starting balance and number of years greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Payout details</h2>
@@ -98,6 +90,10 @@ export default function AnnuityPayoutCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -136,7 +132,53 @@ export default function AnnuityPayoutCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <BalanceChart result={result} />}
+
+      {/* What-if: how the payout period changes the monthly payout and total interest. */}
+      {result && <PayoutPeriodScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the payout period so the user sees how the level monthly payout, total
+ *  paid out, and interest earned shift across 10 / 15 / 20 / 25 / 30 years plus
+ *  their own value. Same balance and rate — only the years change. */
+function PayoutPeriodScenarios({ form }: { form: FormState }) {
+  const base = num(form.years) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const periods = Array.from(new Set([10, 15, 20, 25, 30, base]))
+      .filter((y) => y > 0)
+      .sort((a, b) => a - b);
+
+    const built = periods.map((years) => {
+      const r = compute({ ...form, years: String(years) });
+      return {
+        years,
+        monthly: r?.monthlyPayout ?? 0,
+        totalPaid: r?.totalPaidOut ?? 0,
+        interest: r?.totalInterest ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.years === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "years", label: "Payout period", format: (v) => `${v} yr` },
+    { key: "monthly", label: "Monthly payout", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "totalPaid", label: "Total paid out", align: "right", format: (v) => formatUSD0(Number(v)) },
+    { key: "interest", label: "Interest earned", align: "right", format: (v) => formatUSD0(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you stretched the payout over more or fewer years?"
+      caption="Same starting balance and rate — only the payout period changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="annuity-payout-period-scenarios"
+    />
   );
 }
 

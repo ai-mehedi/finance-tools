@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeWithholding,
   formatUSD,
@@ -58,30 +60,23 @@ function compute(f: FormState): WithholdingResult | null {
 }
 
 export default function WithholdingTaxCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<WithholdingResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter gross pay above 0, with pre-tax deductions smaller than gross pay and non-negative values."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter gross pay above 0, with pre-tax deductions smaller than gross pay and non-negative values.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -94,7 +89,7 @@ export default function WithholdingTaxCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Paycheck details</h2>
@@ -161,6 +156,10 @@ export default function WithholdingTaxCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -202,7 +201,59 @@ export default function WithholdingTaxCalculator() {
 
       {/* Bracket chart */}
       {result && result.brackets.length > 0 && <BracketChart result={result} />}
+
+      {/* What-if: how different gross pay per period changes withholding & take-home. */}
+      {result && <GrossPayScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps gross pay per period so the user sees how withholding, take-home, and
+ *  the projected refund/balance-due shift across a range of pay levels. */
+function GrossPayScenarios({ form }: { form: FormState }) {
+  const base = num(form.grossPerPeriod) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const grosses = Array.from(
+      new Set([1500, 2500, 3500, 5000, 7500, base]),
+    )
+      .filter((g) => g > 0)
+      .sort((a, b) => a - b);
+
+    const built = grosses.map((gross) => {
+      const r = compute({ ...form, grossPerPeriod: String(gross) });
+      return {
+        gross,
+        withheld: r?.perPeriodWithholding ?? 0,
+        net: r?.netPerPeriod ?? 0,
+        refundOrDue: r?.refundOrDue ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.gross === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "gross", label: "Gross / period", format: (v) => formatUSD(Number(v)) },
+    { key: "withheld", label: "Withheld / period", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "net", label: "Take-home / period", align: "right", format: (v) => formatUSD(Number(v)) },
+    {
+      key: "refundOrDue",
+      label: "Refund (+) / due (−)",
+      align: "right",
+      format: (v) => formatUSD(Number(v)),
+    },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your pay changed?"
+      caption="Same settings — only the gross pay per period changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="withholding-tax-gross-pay-scenarios"
+    />
   );
 }
 

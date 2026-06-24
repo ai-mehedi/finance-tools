@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeLatePayment,
   formatUSD,
@@ -39,30 +41,20 @@ function compute(f: FormState): LatePaymentResult | null {
 }
 
 export default function LoanLatePaymentCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<LatePaymentResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter an installment greater than 0 and non-negative fees, rate and days." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter an installment greater than 0 and non-negative fees, rate and days.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -75,7 +67,7 @@ export default function LoanLatePaymentCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your overdue payment</h2>
@@ -125,6 +117,10 @@ export default function LoanLatePaymentCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -158,7 +154,50 @@ export default function LoanLatePaymentCalculator() {
       </form>
 
       {result && result.totalLateCost > 0 && <PenaltyDonut result={result} breakdown={breakdown} />}
+
+      {/* What-if: how the penalty and total due grow the longer the payment stays late. */}
+      {result && <DaysLateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps how many days the payment is overdue so the user sees the penalty and
+ *  total due at 0 / 7 / 15 / 30 / 60 / 90 days plus their own value. */
+function DaysLateScenarios({ form }: { form: FormState }) {
+  const base = num(form.daysLate) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const days = Array.from(new Set([0, 7, 15, 30, 60, 90, base]))
+      .filter((d) => d >= 0 && Number.isFinite(d))
+      .sort((a, b) => a - b);
+
+    const built = days.map((d) => {
+      const r = compute({ ...form, daysLate: String(d) });
+      return {
+        days: d,
+        penalty: r?.totalLateCost ?? 0,
+        totalDue: r?.totalDue ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.days === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "days", label: "Days late", format: (v) => `${v} days` },
+    { key: "penalty", label: "Late penalty", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "totalDue", label: "Total now due", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you pay even later?"
+      caption="Same payment and fees — only the number of days overdue changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="loan-late-payment-scenarios"
+    />
   );
 }
 

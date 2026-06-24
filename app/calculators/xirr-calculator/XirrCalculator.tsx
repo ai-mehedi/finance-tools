@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calculator, RotateCcw, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeXirr,
   formatUSD,
@@ -176,7 +177,75 @@ export default function XirrCalculator() {
 
       {/* Cumulative chart */}
       {result && result.schedule.length > 1 && <FlowChart result={result} />}
+
+      {/* What-if: how the final amount received changes the annualized XIRR. */}
+      {result && <FinalValueScenarios rows={rows} />}
     </div>
+  );
+}
+
+/** Sweeps the size of the largest inflow (the money you take out) so the user
+ *  sees how a higher or lower exit value reshapes the annualized XIRR and net
+ *  gain, keeping every dated cash flow otherwise unchanged. */
+function FinalValueScenarios({ rows }: { rows: Row[] }) {
+  const { gridRows, highlightIndex, columns } = useMemo(() => {
+    // The scenario we sweep is the single largest positive cash flow — the
+    // "exit" value most people want to stress-test.
+    let idx = -1;
+    let best = -Infinity;
+    rows.forEach((r, i) => {
+      const v = num(r.amount);
+      if (Number.isFinite(v) && v > best) {
+        best = v;
+        idx = i;
+      }
+    });
+
+    const base = idx >= 0 ? num(rows[idx].amount) : NaN;
+    if (idx < 0 || !Number.isFinite(base) || base <= 0) {
+      return { gridRows: [], highlightIndex: -1, columns: [] as GridColumn[] };
+    }
+
+    const amounts = Array.from(
+      new Set([0.7, 0.85, 1, 1.15, 1.3, 1.5].map((m) => Math.round(base * m)).concat(Math.round(base)))
+    )
+      .filter((a) => a > 0)
+      .sort((a, b) => a - b);
+
+    const built = amounts.map((amount) => {
+      const trial = rows.map((r, i) => (i === idx ? { ...r, amount: String(amount) } : r));
+      const r = compute(trial);
+      return {
+        amount,
+        xirr: r ? formatPct(r.ratePct) : "—",
+        netGain: r ? r.netGain : 0,
+      };
+    });
+
+    const cols: GridColumn[] = [
+      { key: "amount", label: "Amount received", format: (v) => formatUSD(Number(v)) },
+      { key: "xirr", label: "Annualized XIRR", align: "right" },
+      { key: "netGain", label: "Net gain", align: "right", format: (v) => formatUSD(Number(v)) },
+    ];
+
+    return {
+      gridRows: built,
+      highlightIndex: built.findIndex((b) => b.amount === Math.round(base)),
+      columns: cols,
+    };
+  }, [rows]);
+
+  if (gridRows.length === 0) return null;
+
+  return (
+    <ScenarioGrid
+      title="What if the final amount were different?"
+      caption="Same dated cash flows — only your largest inflow changes."
+      columns={columns}
+      rows={gridRows}
+      highlightIndex={highlightIndex}
+      csvName="xirr-final-value-scenarios"
+    />
   );
 }
 

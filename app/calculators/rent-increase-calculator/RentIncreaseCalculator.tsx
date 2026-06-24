@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeRentIncrease,
   formatUSD,
@@ -43,30 +45,20 @@ function compute(f: FormState): RentIncreaseResult | null {
 }
 
 export default function RentIncreaseCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<RentIncreaseResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a rent above 0, a non-negative increase and at least 1 year to project." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a rent above 0, a non-negative increase and at least 1 year to project.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -79,7 +71,7 @@ export default function RentIncreaseCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -130,6 +122,10 @@ export default function RentIncreaseCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -164,7 +160,58 @@ export default function RentIncreaseCalculator() {
 
       {/* Projection chart */}
       {result && result.schedule.length > 1 && <RentChart result={result} />}
+
+      {/* What-if: how different annual increases change the new rent and yearly cost. */}
+      {result && <IncreaseScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the annual increase so the user sees the new monthly rent, extra per
+ *  year, and projected rent at a range of rates plus their own value. */
+function IncreaseScenarios({ form }: { form: FormState }) {
+  const base = num(form.increase) || 0;
+  const isPercent = form.mode === "percent";
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const presets = isPercent ? [0, 2, 3, 5, 8, 10] : [0, 25, 50, 100, 150, 200];
+    const values = Array.from(new Set([...presets, base]))
+      .filter((v) => v >= 0)
+      .sort((a, b) => a - b);
+
+    const built = values.map((increase) => {
+      const r = compute({ ...form, increase: String(increase) });
+      return {
+        increase,
+        newMonthlyRent: r?.newMonthlyRent ?? 0,
+        annualDifference: r?.annualDifference ?? 0,
+        projectedRent: r?.projectedRent ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.increase === base) };
+  }, [form, base, isPercent]);
+
+  const columns: GridColumn[] = [
+    {
+      key: "increase",
+      label: isPercent ? "Increase / yr" : "Increase / yr ($)",
+      format: (v) => (isPercent ? `${Number(v)}%` : formatUSD(Number(v))),
+    },
+    { key: "newMonthlyRent", label: "New monthly rent", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "annualDifference", label: "Extra / year", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "projectedRent", label: "Projected rent", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the annual increase were different?"
+      caption="Same rent and horizon — only the yearly increase changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="rent-increase-scenarios"
+    />
   );
 }
 

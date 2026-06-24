@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
+import AmortizationTable from "../../components/calc/AmortizationTable";
 import {
   computeMortgage,
   formatUSD,
@@ -20,6 +23,7 @@ type FormState = {
   annualTax: string;
   annualInsurance: string;
   monthlyHOA: string;
+  extraMonthly: string;
 };
 
 const DEFAULTS: FormState = {
@@ -30,6 +34,7 @@ const DEFAULTS: FormState = {
   annualTax: "3500",
   annualInsurance: "1500",
   monthlyHOA: "0",
+  extraMonthly: "0",
 };
 
 const num = (s: string) => (s.trim() === "" ? NaN : Number(s));
@@ -43,7 +48,15 @@ function compute(f: FormState): MortgageResult | null {
     annualTax: num(f.annualTax) || 0,
     annualInsurance: num(f.annualInsurance) || 0,
     monthlyHOA: num(f.monthlyHOA) || 0,
+    extraMonthly: num(f.extraMonthly) || 0,
   });
+}
+
+/** "21 years 4 months" from a month count. */
+function formatTerm(months: number): string {
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  return [y > 0 ? `${y} yr` : "", m > 0 ? `${m} mo` : ""].filter(Boolean).join(" ") || "0 mo";
 }
 
 function Money({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (v: string) => void }) {
@@ -59,30 +72,20 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function MortgageCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<MortgageResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a home price and loan term greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a home price and loan term greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -96,7 +99,7 @@ export default function MortgageCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Loan details</h2>
@@ -117,6 +120,13 @@ export default function MortgageCalculator() {
                 <Input id="term" type="number" min={0} step="any" inputMode="decimal" className="h-11" value={form.termYears} onChange={(e) => set("termYears", e.target.value)} />
               </div>
             </div>
+
+            <Money
+              id="extra"
+              label="Extra payment / mo (optional)"
+              value={form.extraMonthly}
+              onChange={(v) => set("extraMonthly", v)}
+            />
 
             <details className="group rounded-xl border border-zinc-200 bg-zinc-50/60 p-3">
               <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-zinc-600 [&::-webkit-details-marker]:hidden">
@@ -140,6 +150,10 @@ export default function MortgageCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -167,14 +181,70 @@ export default function MortgageCalculator() {
           {result && (
             <p className="mt-4 text-xs leading-relaxed text-zinc-500">
               Loan amount <span className="font-semibold text-zinc-600">{formatUSD(result.loanAmount)}</span> · Total interest{" "}
-              <span className="font-semibold text-zinc-600">{formatUSD(result.totalInterest)}</span> over {result.payoffYears} years.
+              <span className="font-semibold text-zinc-600">{formatUSD(result.totalInterest)}</span> · Paid off in{" "}
+              <span className="font-semibold text-zinc-600">{formatTerm(result.payoffMonths)}</span>.
             </p>
+          )}
+          {result && result.extraMonthly > 0 && result.monthsSaved > 0 && (
+            <div className="mt-3 rounded-lg bg-emerald-50 px-3 py-2.5 text-xs leading-relaxed text-emerald-800">
+              Paying <span className="font-bold">{formatUSD2(result.extraMonthly)}</span> extra each month saves you{" "}
+              <span className="font-bold">{formatUSD(result.interestSaved)}</span> in interest and pays the loan off{" "}
+              <span className="font-bold">{formatTerm(result.monthsSaved)}</span> sooner.
+            </div>
           )}
         </div>
       </form>
 
       {result && result.schedule.length > 1 && <BalanceChart result={result} />}
+
+      {/* What-if: how different extra monthly payments change interest + payoff time. */}
+      {result && <ExtraPaymentScenarios form={form} />}
+
+      {/* Full month-by-month amortization schedule with CSV export. */}
+      {result && <AmortizationTable rows={result.amortization} format={formatUSD} csvName="mortgage-amortization" />}
     </div>
+  );
+}
+
+/** Sweeps the extra monthly payment so the user sees interest saved and the new
+ *  payoff time at $0 / $100 / $250 / $500 / $1000 plus their own value. */
+function ExtraPaymentScenarios({ form }: { form: FormState }) {
+  const base = num(form.extraMonthly) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const extras = Array.from(new Set([0, 100, 250, 500, 1000, base]))
+      .filter((e) => e >= 0)
+      .sort((a, b) => a - b);
+
+    const built = extras.map((extra) => {
+      const r = compute({ ...form, extraMonthly: String(extra) });
+      return {
+        extra,
+        interest: r?.totalInterest ?? 0,
+        saved: r?.interestSaved ?? 0,
+        payoff: r ? formatTerm(r.payoffMonths) : "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.extra === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "extra", label: "Extra / month", format: (v) => formatUSD(Number(v)) },
+    { key: "payoff", label: "Paid off in", align: "right" },
+    { key: "interest", label: "Total interest", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "saved", label: "Interest saved", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you paid extra each month?"
+      caption="Same loan — only the extra monthly principal changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="mortgage-extra-payment-scenarios"
+    />
   );
 }
 

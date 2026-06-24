@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeDrip,
   formatUSD,
@@ -58,35 +60,25 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function DripCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<DripResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter an investment, share price and number of years greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter an investment, share price and number of years greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your investment</h2>
@@ -132,6 +124,10 @@ export default function DripCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -172,7 +168,50 @@ export default function DripCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <DripChart result={result} />}
+
+      {/* What-if: how faster dividend growth compounds the final portfolio value. */}
+      {result && <DividendGrowthScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the annual dividend growth rate so the user sees how a faster-growing
+ *  dividend compounds the final value and total dividends collected. */
+function DividendGrowthScenarios({ form }: { form: FormState }) {
+  const base = num(form.dividendGrowthPct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([0, 3, 5, 7, 10, base]))
+      .filter((g) => g >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((growth) => {
+      const r = compute({ ...form, dividendGrowthPct: String(growth) });
+      return {
+        growth,
+        finalValue: r?.finalValue ?? 0,
+        totalDividends: r?.totalDividends ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.growth === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "growth", label: "Dividend growth", format: (v) => `${Number(v)}%` },
+    { key: "finalValue", label: "Final value", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "totalDividends", label: "Total dividends", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the dividend grew faster?"
+      caption="Same investment — only the annual dividend growth rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="drip-dividend-growth-scenarios"
+    />
   );
 }
 

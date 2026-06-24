@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeGrossToNet,
   formatUSD,
@@ -48,30 +50,23 @@ function compute(f: FormState): GrossToNetResult | null {
 }
 
 export default function GrossToNetCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<GrossToNetResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a gross salary above 0 with tax and retirement rates between 0 and 100."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a gross salary above 0 with tax and retirement rates between 0 and 100.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -86,7 +81,7 @@ export default function GrossToNetCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -140,6 +135,10 @@ export default function GrossToNetCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -173,7 +172,52 @@ export default function GrossToNetCalculator() {
       </form>
 
       {result && result.slices.length > 0 && <SalaryDonut result={result} />}
+
+      {/* What-if: how take-home pay changes across different gross salary levels. */}
+      {result && <SalaryScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the gross annual salary so the user sees take-home pay and effective
+ *  take-home % at several salary levels plus their own value. */
+function SalaryScenarios({ form }: { form: FormState }) {
+  const base = num(form.grossAnnual) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const salaries = Array.from(
+      new Set([40000, 60000, 75000, 100000, 150000, base]),
+    )
+      .filter((s) => s > 0)
+      .sort((a, b) => a - b);
+
+    const built = salaries.map((gross) => {
+      const r = compute({ ...form, grossAnnual: String(gross) });
+      return {
+        gross,
+        net: r?.netAnnual ?? 0,
+        pct: r ? `${r.takeHomePct.toFixed(1)}%` : "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.gross === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "gross", label: "Gross salary / yr", format: (v) => formatUSD(Number(v)) },
+    { key: "net", label: "Take-home / yr", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "pct", label: "Of gross", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your salary were different?"
+      caption="Same tax and deduction settings — only the gross salary changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="gross-to-net-salary-scenarios"
+    />
   );
 }
 

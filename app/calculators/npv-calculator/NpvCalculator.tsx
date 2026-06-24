@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calculator, RotateCcw, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeNpv,
   formatUSD,
@@ -171,7 +172,50 @@ export default function NpvCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <CumulativeChart result={result} />}
+
+      {/* What-if: how different discount rates change NPV, IRR margin & profitability. */}
+      {result && <DiscountRateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the discount rate so the user sees how NPV and the profitability
+ *  index shift at 5% / 8% / 10% / 12% / 15% plus their own rate. */
+function DiscountRateScenarios({ form }: { form: FormState }) {
+  const base = num(form.discountRatePct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([5, 8, 10, 12, 15, base]))
+      .filter((r) => Number.isFinite(r))
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, discountRatePct: String(rate) });
+      return {
+        rate,
+        npv: r?.npv ?? 0,
+        pi: r ? r.profitabilityIndex.toFixed(2) : "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Discount rate", format: (v) => `${Number(v)}%` },
+    { key: "npv", label: "NPV", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "pi", label: "Profitability index", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the discount rate were different?"
+      caption="Same cash flows — only the discount rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="npv-discount-rate-scenarios"
+    />
   );
 }
 

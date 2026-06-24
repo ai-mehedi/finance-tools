@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeRentAffordability,
   formatUSD,
@@ -34,30 +36,23 @@ function compute(f: FormState): RentAffordabilityResult | null {
 }
 
 export default function RentAffordabilityCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<RentAffordabilityResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a monthly income above 0, a non-negative debt amount and a rent share between 1 and 100."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a monthly income above 0, a non-negative debt amount and a rent share between 1 and 100.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -70,7 +65,7 @@ export default function RentAffordabilityCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -109,6 +104,10 @@ export default function RentAffordabilityCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -143,7 +142,52 @@ export default function RentAffordabilityCalculator() {
 
       {/* Affordability bands chart */}
       {result && <BandsChart result={result} />}
+
+      {/* What-if: how different target rent shares change affordable rent + leftover. */}
+      {result && <RentShareScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the target rent share so the user sees affordable rent and money left
+ *  over at 20% / 25% / 30% / 35% / 40% plus their own chosen share. */
+function RentShareScenarios({ form }: { form: FormState }) {
+  const base = num(form.rentPercent);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const presets = [20, 25, 30, 35, 40];
+    const candidates = Number.isFinite(base) ? [...presets, base] : presets;
+    const percents = Array.from(new Set(candidates))
+      .filter((p) => p > 0 && p <= 100)
+      .sort((a, b) => a - b);
+
+    const built = percents.map((percent) => {
+      const r = compute({ ...form, rentPercent: String(percent) });
+      return {
+        percent,
+        rent: r?.recommendedRent ?? 0,
+        remaining: r?.remainingAfterRent ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.percent === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "percent", label: "Rent share", format: (v) => `${Number(v)}%` },
+    { key: "rent", label: "Affordable rent", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "remaining", label: "Left after rent & debt", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you spent a different share on rent?"
+      caption="Same income and debts — only the target rent share changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="rent-affordability-calculator"
+    />
   );
 }
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeSalaryIncrement,
   formatUSD,
@@ -34,35 +36,25 @@ function compute(f: FormState): SalaryIncrementResult | null {
 }
 
 export default function SalaryIncrementCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<SalaryIncrementResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a salary above 0 and a number of years between 1 and 60." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a salary above 0 and a number of years between 1 and 60.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -98,6 +90,10 @@ export default function SalaryIncrementCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -127,7 +123,50 @@ export default function SalaryIncrementCalculator() {
 
       {/* Salary growth chart */}
       {result && result.schedule.length > 1 && <IncrementChart result={result} />}
+
+      {/* What-if: how different annual raise rates change the final salary and total increase. */}
+      {result && <RaiseRateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the annual raise % so the user sees their final salary and total
+ *  increase at 2% / 3% / 5% / 7% / 10% plus their own value. */
+function RaiseRateScenarios({ form }: { form: FormState }) {
+  const base = num(form.incrementPct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([2, 3, 5, 7, 10, base]))
+      .filter((p) => p >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((pct) => {
+      const r = compute({ ...form, incrementPct: String(pct) });
+      return {
+        pct,
+        finalSalary: r?.finalSalary ?? 0,
+        totalIncrease: r?.totalIncrease ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.pct === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "pct", label: "Annual raise", format: (v) => `${Number(v)}%` },
+    { key: "finalSalary", label: "Final salary", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "totalIncrease", label: "Total increase", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your annual raise were different?"
+      caption="Same salary and horizon — only the yearly raise rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="salary-increment-raise-rate-scenarios"
+    />
   );
 }
 

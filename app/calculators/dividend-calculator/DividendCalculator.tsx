@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeDividend,
   formatUSD,
@@ -43,35 +45,25 @@ function compute(f: FormState): DividendResult | null {
 }
 
 export default function DividendCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<DividendResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a number of years greater than 0 and non-negative amounts." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a number of years greater than 0 and non-negative amounts.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your investment</h2>
@@ -123,6 +115,10 @@ export default function DividendCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -152,7 +148,50 @@ export default function DividendCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <DividendChart result={result} />}
+
+      {/* What-if: how different dividend yields change total dividends and final value. */}
+      {result && <YieldScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the dividend yield so the user sees how total dividends and the final
+ *  portfolio value change at 2% / 3% / 4% / 6% / 8% plus their own yield. */
+function YieldScenarios({ form }: { form: FormState }) {
+  const base = num(form.dividendYieldPct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const yields = Array.from(new Set([2, 3, 4, 6, 8, base]))
+      .filter((y) => y >= 0)
+      .sort((a, b) => a - b);
+
+    const built = yields.map((dividendYieldPct) => {
+      const r = compute({ ...form, dividendYieldPct: String(dividendYieldPct) });
+      return {
+        yieldPct: dividendYieldPct,
+        totalDividends: r?.totalDividends ?? 0,
+        finalValue: r?.finalPortfolioValue ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.yieldPct === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "yieldPct", label: "Dividend yield", format: (v) => `${v}%` },
+    { key: "totalDividends", label: "Total dividends", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "finalValue", label: "Final portfolio value", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the dividend yield were different?"
+      caption="Same investment and horizon — only the dividend yield changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="dividend-yield-scenarios"
+    />
   );
 }
 

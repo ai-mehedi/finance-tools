@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeSalary,
   formatUSD,
@@ -49,37 +51,28 @@ function compute(f: FormState): SalaryResult | null {
 }
 
 export default function SalaryCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<SalaryResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a non-negative pay amount, 1 to 168 hours per week and 1 to 7 days per week."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError(
-        "Enter a non-negative pay amount, 1 to 168 hours per week and 1 to 7 days per week."
-      );
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your pay</h2>
@@ -125,6 +118,10 @@ export default function SalaryCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -152,7 +149,60 @@ export default function SalaryCalculator() {
 
       {/* Pay period chart */}
       {result && <PeriodChart result={result} />}
+
+      {/* What-if: how different pay amounts scale the annual + monthly take. */}
+      {result && <PayAmountScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the entered pay amount so the user sees how their annual and monthly
+ *  pay scale at a few rates around their own value. */
+function PayAmountScenarios({ form }: { form: FormState }) {
+  const base = num(form.amount);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const seed = Number.isFinite(base) && base > 0 ? base : 30;
+    const candidates = [
+      seed * 0.5,
+      seed * 0.75,
+      seed,
+      seed * 1.25,
+      seed * 1.5,
+      seed * 2,
+    ].map((a) => Math.round(a * 100) / 100);
+
+    const amounts = Array.from(new Set(candidates))
+      .filter((a) => a >= 0)
+      .sort((a, b) => a - b);
+
+    const built = amounts.map((amount) => {
+      const r = compute({ ...form, amount: String(amount) });
+      return {
+        amount,
+        annual: r?.annual ?? 0,
+        monthly: r?.monthly ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.amount === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "amount", label: "Pay amount", format: (v) => formatUSD2(Number(v)) },
+    { key: "annual", label: "Annual", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "monthly", label: "Monthly", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your pay rate changed?"
+      caption="Same schedule — only the entered pay amount changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="salary-pay-amount-scenarios"
+    />
   );
 }
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeSecondMortgage,
   formatUSD,
@@ -43,30 +45,22 @@ function compute(f: FormState): SecondMortgageResult | null {
 }
 
 export default function SecondMortgageCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<SecondMortgageResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null
+    ? "Enter a loan amount and term greater than 0, a home value above 0, and a valid CLTV cap."
+    : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a loan amount and term greater than 0, a home value above 0, and a valid CLTV cap.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const loanNum = num(form.loanAmount) || 0;
@@ -80,7 +74,7 @@ export default function SecondMortgageCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -137,6 +131,10 @@ export default function SecondMortgageCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -178,7 +176,50 @@ export default function SecondMortgageCalculator() {
 
       {/* Balance chart */}
       {result && result.schedule.length > 1 && <BalanceChart result={result} />}
+
+      {/* What-if: how different loan amounts change the payment and total interest. */}
+      {result && <LoanAmountScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the second-mortgage amount so the user sees how the monthly payment and
+ *  total interest move at a range of loan sizes plus their own value. */
+function LoanAmountScenarios({ form }: { form: FormState }) {
+  const base = num(form.loanAmount) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const amounts = Array.from(new Set([10000, 25000, 50000, 75000, 100000, base]))
+      .filter((a) => a > 0)
+      .sort((a, b) => a - b);
+
+    const built = amounts.map((loanAmount) => {
+      const r = compute({ ...form, loanAmount: String(loanAmount) });
+      return {
+        loanAmount,
+        payment: r?.monthlyPayment ?? 0,
+        interest: r?.totalInterest ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.loanAmount === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "loanAmount", label: "Loan amount", format: (v) => formatUSD(Number(v)) },
+    { key: "payment", label: "Monthly payment", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "interest", label: "Total interest", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you borrowed a different amount?"
+      caption="Same rate and term — only the second-mortgage amount changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="second-mortgage-loan-amount-scenarios"
+    />
   );
 }
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeLoanEligibility,
   formatUSD,
@@ -52,35 +54,25 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function LoanEligibilityCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<LoanEligibilityResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a monthly income and loan term greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a monthly income and loan term greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your finances</h2>
@@ -116,6 +108,10 @@ export default function LoanEligibilityCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -155,7 +151,50 @@ export default function LoanEligibilityCalculator() {
 
       {/* Income allocation donut */}
       {result && result.affordablePayment > 0 && <IncomeDonut result={result} />}
+
+      {/* What-if: how different interest rates change the eligible loan amount. */}
+      {result && <RateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the interest rate so the user sees how their eligible loan amount and
+ *  total interest change at 5% / 6% / 7% / 8% / 9% plus their own rate. */
+function RateScenarios({ form }: { form: FormState }) {
+  const base = num(form.annualRatePct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([5, 6, 7, 8, 9, base]))
+      .filter((r) => r >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, annualRatePct: String(rate) });
+      return {
+        rate,
+        eligible: r?.eligibleAmount ?? 0,
+        interest: r?.totalInterest ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Interest rate", format: (v) => `${Number(v)}%` },
+    { key: "eligible", label: "Eligible amount", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "interest", label: "Total interest", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the interest rate were different?"
+      caption="Same income and term — only the interest rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="loan-eligibility-rate-scenarios"
+    />
   );
 }
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computePmi,
   formatUSD,
@@ -50,30 +52,23 @@ function monthLabel(m: number | null): string {
 }
 
 export default function PmiCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<PmiResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a home price above the down payment, a term over 0 years, and non-negative rates."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a home price above the down payment, a term over 0 years, and non-negative rates.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -88,7 +83,7 @@ export default function PmiCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your loan</h2>
@@ -137,6 +132,10 @@ export default function PmiCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -168,7 +167,55 @@ export default function PmiCalculator() {
 
       {/* LTV chart */}
       {result && result.schedule.length > 1 && <LtvChart result={result} />}
+
+      {/* What-if: how a bigger down payment shrinks (or eliminates) PMI cost. */}
+      {result && <DownPaymentScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the down payment so the user sees how total PMI cost and how long
+ *  they pay PMI change as they put more money down (20% removes PMI entirely). */
+function DownPaymentScenarios({ form }: { form: FormState }) {
+  const base = num(form.downPayment) || 0;
+  const price = num(form.homePrice) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    // Down payment values at 5/10/15/20/25% of the home price, plus the user's own.
+    const fromPct = [5, 10, 15, 20, 25].map((p) => Math.round((price * p) / 100));
+    const downs = Array.from(new Set([...fromPct, base]))
+      .filter((d) => d >= 0 && d < price)
+      .sort((a, b) => a - b);
+
+    const built = downs.map((down) => {
+      const r = compute({ ...form, downPayment: String(down) });
+      return {
+        down,
+        downPct: r ? r.downPaymentPct : (price > 0 ? (down / price) * 100 : 0),
+        totalPmi: r?.totalPmiCost ?? 0,
+        monthsWithPmi: r?.monthsWithPmi ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.down === base) };
+  }, [form, base, price]);
+
+  const columns: GridColumn[] = [
+    { key: "down", label: "Down payment", format: (v) => formatUSD(Number(v)) },
+    { key: "downPct", label: "Down %", align: "right", format: (v) => `${Number(v).toFixed(1)}%` },
+    { key: "totalPmi", label: "Total PMI cost", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "monthsWithPmi", label: "Months paying PMI", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you put more money down?"
+      caption="Same home & loan — only the down payment changes. PMI disappears at 20% down."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="pmi-down-payment-scenarios"
+    />
   );
 }
 

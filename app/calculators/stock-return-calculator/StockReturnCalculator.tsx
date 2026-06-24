@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeStockReturn,
   formatUSD,
@@ -40,30 +42,23 @@ function compute(f: FormState): StockReturnResult | null {
 }
 
 export default function StockReturnCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<StockReturnResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter positive shares, a buy price above zero, and a holding period above zero."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter positive shares, a buy price above zero, and a holding period above zero.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const isGain = result ? result.totalReturn >= 0 : true;
@@ -79,7 +74,7 @@ export default function StockReturnCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your holding</h2>
@@ -132,6 +127,10 @@ export default function StockReturnCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -161,7 +160,63 @@ export default function StockReturnCalculator() {
 
       {/* Growth chart */}
       {result && result.schedule.length > 1 && <ReturnChart result={result} />}
+
+      {/* What-if: how different sell prices change total return + CAGR. */}
+      {result && <SellPriceScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the sell price so the user sees total return and annualized CAGR at a
+ *  spread of exit prices around their own value. */
+function SellPriceScenarios({ form }: { form: FormState }) {
+  const base = num(form.sellPrice);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const buy = num(form.buyPrice) || 0;
+    const candidates = [
+      buy,
+      buy * 1.25,
+      buy * 1.5,
+      buy * 2,
+      buy * 3,
+      Number.isFinite(base) ? base : buy,
+    ];
+
+    const prices = Array.from(new Set(candidates.map((p) => Math.round(p * 100) / 100)))
+      .filter((p) => p >= 0)
+      .sort((a, b) => a - b);
+
+    const built = prices.map((price) => {
+      const r = compute({ ...form, sellPrice: String(price) });
+      return {
+        sellPrice: price,
+        totalReturn: r?.totalReturn ?? 0,
+        totalReturnPct: r ? `${r.totalReturnPct.toFixed(2)}%` : "—",
+        annualizedPct: r ? `${r.annualizedPct.toFixed(2)}%` : "—",
+      };
+    });
+
+    const target = Math.round((Number.isFinite(base) ? base : -1) * 100) / 100;
+    return { rows: built, highlightIndex: built.findIndex((r) => r.sellPrice === target) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "sellPrice", label: "Sell price / share", format: (v) => formatUSD(Number(v)) },
+    { key: "totalReturn", label: "Total return", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "totalReturnPct", label: "Total return %", align: "right" },
+    { key: "annualizedPct", label: "Annualized (CAGR)", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you sold at a different price?"
+      caption="Same holding — only the exit price per share changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="stock-return-sell-price-scenarios"
+    />
   );
 }
 

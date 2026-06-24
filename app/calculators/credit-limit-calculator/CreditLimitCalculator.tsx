@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeCreditLimit,
   formatUSD,
@@ -34,35 +36,26 @@ function compute(f: FormState): CreditLimitResult | null {
 }
 
 export default function CreditLimitCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<CreditLimitResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null ? "Enter a current limit greater than 0 and non-negative amounts." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a current limit greater than 0 and non-negative amounts.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your card</h2>
@@ -103,6 +96,10 @@ export default function CreditLimitCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -143,7 +140,52 @@ export default function CreditLimitCalculator() {
       </form>
 
       {result && <UtilizationBars result={result} />}
+
+      {/* What-if: how different limit increases change utilization. */}
+      {result && <IncreaseScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the requested limit increase so the user sees how a bigger or smaller
+ *  bump changes their new utilization and spend headroom at the 30% line. */
+function IncreaseScenarios({ form }: { form: FormState }) {
+  const base = num(form.increaseAmount) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const increases = Array.from(new Set([0, 1000, 2000, 3000, 5000, 10000, base]))
+      .filter((v) => v >= 0)
+      .sort((a, b) => a - b);
+
+    const built = increases.map((increase) => {
+      const r = compute({ ...form, increaseAmount: String(increase) });
+      return {
+        increase,
+        newLimit: r?.newLimit ?? 0,
+        newUtil: r?.newUtilizationPct ?? 0,
+        headroom: r?.headroomAt30 ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.increase === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "increase", label: "Limit increase", format: (v) => formatUSD(Number(v)) },
+    { key: "newLimit", label: "New limit", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "newUtil", label: "New utilization", align: "right", format: (v) => formatPct(Number(v)) },
+    { key: "headroom", label: "Headroom at 30%", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the increase were bigger or smaller?"
+      caption="Same balance — only the requested limit increase changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="credit-limit-increase-scenarios"
+    />
   );
 }
 

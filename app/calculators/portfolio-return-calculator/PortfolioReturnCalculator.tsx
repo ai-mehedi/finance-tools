@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calculator, RotateCcw, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computePortfolioReturn,
   formatUSD,
@@ -196,7 +197,52 @@ export default function PortfolioReturnCalculator() {
       </form>
 
       {result && result.schedule.length > 0 && <AllocationChart result={result} />}
+
+      {/* What-if: how the holding period changes the annualized return. */}
+      {result && <HoldingPeriodScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the holding period so the user sees how the same total return
+ *  annualizes over 1 / 2 / 3 / 5 / 10 years plus their own value. The total
+ *  return and ending value are fixed by the holdings; only the CAGR changes. */
+function HoldingPeriodScenarios({ form }: { form: FormState }) {
+  const base = num(form.years);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [1, 2, 3, 5, 10, base];
+    const periods = Array.from(new Set(candidates))
+      .filter((y) => Number.isFinite(y) && y > 0)
+      .sort((a, b) => a - b);
+
+    const built = periods.map((years) => {
+      const r = compute({ ...form, years: String(years) });
+      return {
+        years,
+        annualized: r?.annualizedReturnPct ?? 0,
+        ending: r?.endingValue ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.years === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "years", label: "Holding period", format: (v) => `${Number(v)} yr` },
+    { key: "annualized", label: "Annualized return", align: "right", format: (v) => formatPct(Number(v)) },
+    { key: "ending", label: "Ending value", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you held it longer?"
+      caption="Same holdings and total return — only the holding period changes the annualized rate."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="portfolio-return-holding-period-scenarios"
+    />
   );
 }
 

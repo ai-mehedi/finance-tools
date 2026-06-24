@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeEffectiveTaxRate,
   formatUSD,
@@ -25,35 +27,25 @@ function compute(f: FormState): EffectiveTaxRateResult | null {
 }
 
 export default function EffectiveTaxRateCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<EffectiveTaxRateResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter an income greater than 0 and a non-negative tax amount." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter an income greater than 0 and a non-negative tax amount.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Enter your figures</h2>
@@ -85,6 +77,10 @@ export default function EffectiveTaxRateCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -119,7 +115,60 @@ export default function EffectiveTaxRateCalculator() {
       </form>
 
       {result && <SplitBar result={result} />}
+
+      {/* What-if: how different tax amounts change your effective rate + take-home. */}
+      {result && <TaxPaidScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the total tax paid so the user sees how their effective rate and
+ *  take-home shift across a range of tax amounts plus their own value. */
+function TaxPaidScenarios({ form }: { form: FormState }) {
+  const base = num(form.taxPaid) || 0;
+  const income = num(form.income) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [
+      income * 0.05,
+      income * 0.1,
+      income * 0.15,
+      income * 0.2,
+      income * 0.25,
+      base,
+    ].map((v) => Math.round(v));
+
+    const taxes = Array.from(new Set(candidates))
+      .filter((t) => t >= 0)
+      .sort((a, b) => a - b);
+
+    const built = taxes.map((tax) => {
+      const r = compute({ ...form, taxPaid: String(tax) });
+      return {
+        tax,
+        effective: r ? formatPct(r.effectiveRate) : "—",
+        takeHome: r?.takeHome ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.tax === base) };
+  }, [form, base, income]);
+
+  const columns: GridColumn[] = [
+    { key: "tax", label: "Total tax paid", format: (v) => formatUSD(Number(v)) },
+    { key: "effective", label: "Effective rate", align: "right" },
+    { key: "takeHome", label: "Take-home", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your tax bill were different?"
+      caption="Same income — only the total tax paid changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="effective-tax-rate-scenarios"
+    />
   );
 }
 

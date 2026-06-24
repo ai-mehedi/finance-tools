@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeCarLoan,
   formatUSD,
@@ -50,35 +52,25 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function CarLoanCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<CarLoanResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a car price and loan term greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a car price and loan term greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Loan details</h2>
@@ -110,6 +102,10 @@ export default function CarLoanCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -149,7 +145,53 @@ export default function CarLoanCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <BalanceChart result={result} />}
+
+      {/* What-if: how a longer or shorter term changes the monthly payment and total interest. */}
+      {result && <TermScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the loan term so the user sees how the monthly payment and total
+ *  interest shift across 3/4/5/6/7 years plus their own term. Shorter terms
+ *  mean a higher payment but far less interest. */
+function TermScenarios({ form }: { form: FormState }) {
+  const base = num(form.termYears);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const terms = Array.from(new Set([3, 4, 5, 6, 7, base]))
+      .filter((t) => Number.isFinite(t) && t > 0)
+      .sort((a, b) => a - b);
+
+    const built = terms.map((term) => {
+      const r = compute({ ...form, termYears: String(term) });
+      return {
+        term,
+        monthly: r?.monthlyPayment ?? 0,
+        interest: r?.totalInterest ?? 0,
+        total: r?.totalCost ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.term === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "term", label: "Loan term", format: (v) => `${v} yr` },
+    { key: "monthly", label: "Monthly payment", align: "right", format: (v) => formatUSD2(Number(v)) },
+    { key: "interest", label: "Total interest", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "total", label: "Total cost", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you chose a different loan term?"
+      caption="Same car price, down payment and rate — only the term changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="car-loan-term-scenarios"
+    />
   );
 }
 

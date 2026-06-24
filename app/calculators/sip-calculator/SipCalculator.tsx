@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeSip,
   formatUSD,
@@ -34,30 +36,23 @@ function compute(f: FormState): SipResult | null {
 }
 
 export default function SipCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<SipResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a number of years greater than 0 and non-negative amounts."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a number of years greater than 0 and non-negative amounts.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -69,7 +64,7 @@ export default function SipCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your SIP plan</h2>
@@ -105,6 +100,10 @@ export default function SipCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -134,7 +133,52 @@ export default function SipCalculator() {
 
       {/* Growth chart */}
       {result && result.schedule.length > 1 && <GrowthChart result={result} />}
+
+      {/* What-if: how different monthly investments change the future value. */}
+      {result && <MonthlyInvestmentScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the monthly investment so the user sees the future value and estimated
+ *  returns at $100 / $250 / $500 / $1000 / $2000 plus their own value. */
+function MonthlyInvestmentScenarios({ form }: { form: FormState }) {
+  const base = num(form.monthlyInvestment) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const amounts = Array.from(new Set([100, 250, 500, 1000, 2000, base]))
+      .filter((a) => a >= 0)
+      .sort((a, b) => a - b);
+
+    const built = amounts.map((monthly) => {
+      const r = compute({ ...form, monthlyInvestment: String(monthly) });
+      return {
+        monthly,
+        invested: r?.totalInvested ?? 0,
+        returns: r?.estimatedReturns ?? 0,
+        futureValue: r?.futureValue ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.monthly === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "monthly", label: "Monthly investment", format: (v) => formatUSD(Number(v)) },
+    { key: "invested", label: "Total invested", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "returns", label: "Est. returns", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "futureValue", label: "Future value", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you invested more each month?"
+      caption="Same return and time period — only the monthly investment changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="sip-monthly-investment-scenarios"
+    />
   );
 }
 

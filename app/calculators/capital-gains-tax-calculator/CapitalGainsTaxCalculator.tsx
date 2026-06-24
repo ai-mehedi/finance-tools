@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeCapitalGains,
   formatUSD,
@@ -53,30 +55,20 @@ function compute(f: FormState): CapitalGainsResult | null {
 }
 
 export default function CapitalGainsTaxCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<CapitalGainsResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter non-negative purchase price, sale price and income." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter non-negative purchase price, sale price and income.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -89,7 +81,7 @@ export default function CapitalGainsTaxCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your sale details</h2>
@@ -150,6 +142,10 @@ export default function CapitalGainsTaxCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -186,7 +182,55 @@ export default function CapitalGainsTaxCalculator() {
 
       {/* Tier chart */}
       {result && !result.isLoss && result.tiers.length > 0 && <TierChart result={result} />}
+
+      {/* What-if: how different sale prices change the gain, tax and net proceeds. */}
+      {result && <SalePriceScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the sale price so the user sees how the gain, total tax and net
+ *  proceeds change at a spread of values around their own. */
+function SalePriceScenarios({ form }: { form: FormState }) {
+  const base = num(form.salePrice) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [base * 0.5, base * 0.75, base, base * 1.25, base * 1.5, base * 2].map((v) =>
+      Math.round(v)
+    );
+    const prices = Array.from(new Set(candidates))
+      .filter((p) => p >= 0)
+      .sort((a, b) => a - b);
+
+    const built = prices.map((salePrice) => {
+      const r = compute({ ...form, salePrice: String(salePrice) });
+      return {
+        salePrice,
+        gain: r?.gain ?? 0,
+        totalTax: r?.totalTax ?? 0,
+        netProceeds: r?.netProceeds ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.salePrice === Math.round(base)) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "salePrice", label: "Sale price", format: (v) => formatUSD(Number(v)) },
+    { key: "gain", label: "Capital gain", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "totalTax", label: "Total tax", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "netProceeds", label: "Net proceeds", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you sold at a different price?"
+      caption="Same basis, income and holding period — only the sale price changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="capital-gains-tax-sale-price-scenarios"
+    />
   );
 }
 

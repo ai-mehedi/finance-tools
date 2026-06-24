@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calculator, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeSnowball,
   formatUSD,
@@ -167,7 +168,52 @@ export default function DebtSnowballCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <BalanceChart result={result} />}
+
+      {/* What-if: how different extra monthly payments change payoff time + interest. */}
+      {result && <ExtraPaymentScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the extra monthly payment so the user sees how the payoff time and
+ *  total interest change at $0 / $100 / $200 / $400 / $600 plus their own value. */
+function ExtraPaymentScenarios({ form }: { form: FormState }) {
+  const base = num(form.extra) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const extras = Array.from(new Set([0, 100, 200, 400, 600, base]))
+      .filter((e) => e >= 0)
+      .sort((a, b) => a - b);
+
+    const built = extras.map((extra) => {
+      const r = compute({ ...form, extra: String(extra) });
+      return {
+        extra,
+        payoff: r ? formatMonths(r.months) : "—",
+        interest: r?.totalInterest ?? 0,
+        total: r?.totalPaid ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.extra === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "extra", label: "Extra / month", format: (v) => formatUSD(Number(v)) },
+    { key: "payoff", label: "Debt free in", align: "right" },
+    { key: "interest", label: "Total interest", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "total", label: "Total paid", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you paid extra each month?"
+      caption="Same debts — only the extra monthly payment changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="debt-snowball-extra-payment-scenarios"
+    />
   );
 }
 

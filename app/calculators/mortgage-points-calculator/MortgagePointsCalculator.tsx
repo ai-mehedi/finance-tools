@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeMortgagePoints,
   formatUSD,
@@ -40,30 +42,22 @@ function compute(f: FormState): MortgagePointsResult | null {
 }
 
 export default function MortgagePointsCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<MortgagePointsResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null
+    ? "Enter a loan amount and term greater than 0, with non-negative rate and points."
+    : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a loan amount and term greater than 0, with non-negative rate and points.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -76,7 +70,7 @@ export default function MortgagePointsCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Loan and points</h2>
@@ -122,6 +116,10 @@ export default function MortgagePointsCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -156,7 +154,53 @@ export default function MortgagePointsCalculator() {
 
       {/* Cumulative cost chart */}
       {result && result.schedule.length > 1 && <PointsChart result={result} />}
+
+      {/* What-if: how buying more or fewer points changes break-even and lifetime savings. */}
+      {result && <PointsScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the number of discount points so the user sees the upfront cost,
+ *  break-even time and net lifetime savings at several buy-down levels plus
+ *  their own value. */
+function PointsScenarios({ form }: { form: FormState }) {
+  const base = num(form.points) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const levels = Array.from(new Set([0, 1, 2, 3, 4, base]))
+      .filter((p) => p >= 0)
+      .sort((a, b) => a - b);
+
+    const built = levels.map((points) => {
+      const r = compute({ ...form, points: String(points) });
+      return {
+        points,
+        cost: r?.pointsCost ?? 0,
+        breakEven: r ? r.breakEvenLabel : "—",
+        lifetime: r?.lifetimeSavings ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.points === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "points", label: "Points", format: (v) => String(v) },
+    { key: "cost", label: "Upfront cost", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "breakEven", label: "Break-even", align: "right" },
+    { key: "lifetime", label: "Net lifetime saving", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you bought more or fewer points?"
+      caption="Same loan and rate cut per point — only the number of points changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="mortgage-points-scenarios"
+    />
   );
 }
 

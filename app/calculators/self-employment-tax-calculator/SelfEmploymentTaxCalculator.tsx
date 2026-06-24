@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeSelfEmploymentTax,
   formatUSD,
@@ -41,30 +43,20 @@ function compute(f: FormState): SelfEmploymentTaxResult | null {
 }
 
 export default function SelfEmploymentTaxCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<SelfEmploymentTaxResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a net profit of 0 or more and non-negative W-2 wages." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a net profit of 0 or more and non-negative W-2 wages.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -77,7 +69,7 @@ export default function SelfEmploymentTaxCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -120,6 +112,10 @@ export default function SelfEmploymentTaxCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -159,7 +155,54 @@ export default function SelfEmploymentTaxCalculator() {
 
       {/* Donut chart */}
       {result && result.totalSeTax > 0 && <TaxDonut result={result} />}
+
+      {/* What-if: how SE tax changes across different net profit levels. */}
+      {result && <NetProfitScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps net profit so the user sees how the SE tax and effective rate shift
+ *  across a range of incomes, with their own value highlighted. */
+function NetProfitScenarios({ form }: { form: FormState }) {
+  const base = num(form.netProfit);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const profits = Array.from(
+      new Set([30000, 60000, 100000, 150000, 200000, base])
+    )
+      .filter((p) => Number.isFinite(p) && p >= 0)
+      .sort((a, b) => a - b);
+
+    const built = profits.map((profit) => {
+      const r = compute({ ...form, netProfit: String(profit) });
+      return {
+        profit,
+        tax: r?.totalSeTax ?? 0,
+        rate: r ? `${r.effectiveRatePct.toFixed(1)}%` : "—",
+        deductible: r?.deductibleHalf ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.profit === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "profit", label: "Net profit", format: (v) => formatUSD(Number(v)) },
+    { key: "tax", label: "SE tax", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "rate", label: "Effective rate", align: "right" },
+    { key: "deductible", label: "Deductible half", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="How does SE tax change with income?"
+      caption="Same filing status & W-2 wages — only net self-employment profit changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="self-employment-tax-scenarios"
+    />
   );
 }
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeCardComparison,
   formatUSD,
@@ -104,35 +106,25 @@ function CardFields({
 }
 
 export default function CreditCardComparisonCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<ComparisonResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter non-negative values for balance, spend, APR, fees and rewards." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter non-negative values for balance, spend, APR, fees and rewards.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your usage</h2>
@@ -189,6 +181,10 @@ export default function CreditCardComparisonCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -223,7 +219,52 @@ export default function CreditCardComparisonCalculator() {
       </form>
 
       {result && <CompareChart result={result} />}
+
+      {/* What-if: how the average balance carried changes each card's net cost. */}
+      {result && <BalanceScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the average balance carried so the user sees how each card's net
+ *  annual cost (interest + fee - rewards) shifts as they carry more or less. */
+function BalanceScenarios({ form }: { form: FormState }) {
+  const base = num(form.avgBalance) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const balances = Array.from(new Set([0, 1000, 3000, 5000, 10000, base]))
+      .filter((b) => b >= 0)
+      .sort((a, b) => a - b);
+
+    const built = balances.map((avgBalance) => {
+      const r = compute({ ...form, avgBalance: String(avgBalance) });
+      return {
+        avgBalance,
+        costA: r?.a.netAnnualCost ?? 0,
+        costB: r?.b.netAnnualCost ?? 0,
+        cheaper: r?.cheaperName ?? "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.avgBalance === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "avgBalance", label: "Avg balance", format: (v) => formatUSD(Number(v)) },
+    { key: "costA", label: `${form.nameA.trim() || "Card A"} net cost`, align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "costB", label: `${form.nameB.trim() || "Card B"} net cost`, align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "cheaper", label: "Better value", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you carried a different balance?"
+      caption="Same cards — only the average balance carried changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="credit-card-comparison-scenarios"
+    />
   );
 }
 

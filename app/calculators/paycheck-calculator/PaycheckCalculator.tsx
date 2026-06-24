@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computePaycheck,
   formatUSD,
@@ -50,35 +52,28 @@ function compute(f: FormState): PaycheckResult | null {
 }
 
 export default function PaycheckCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<PaycheckResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a salary greater than 0, a pre-tax percent under 100 and non-negative tax rates."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a salary greater than 0, a pre-tax percent under 100 and non-negative tax rates.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -128,6 +123,10 @@ export default function PaycheckCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -162,7 +161,52 @@ export default function PaycheckCalculator() {
 
       {/* Allocation donut */}
       {result && <PaycheckDonut result={result} />}
+
+      {/* What-if: how different 401(k) contribution rates change take-home pay. */}
+      {result && <PreTaxScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the 401(k) contribution rate so the user sees how take-home pay per
+ *  paycheck (and yearly) shifts at 0% / 3% / 5% / 10% / 15% plus their own value. */
+function PreTaxScenarios({ form }: { form: FormState }) {
+  const base = num(form.preTaxPct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const pcts = Array.from(new Set([0, 3, 5, 10, 15, base]))
+      .filter((p) => p >= 0 && p < 100)
+      .sort((a, b) => a - b);
+
+    const built = pcts.map((pct) => {
+      const r = compute({ ...form, preTaxPct: String(pct) });
+      return {
+        pct,
+        net: r?.netPerPaycheck ?? 0,
+        annualNet: r?.annualNet ?? 0,
+        takeHomePct: r ? `${r.takeHomePct.toFixed(1)}%` : "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.pct === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "pct", label: "401(k) %", format: (v) => `${Number(v)}%` },
+    { key: "net", label: "Take-home / check", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "annualNet", label: "Take-home / year", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "takeHomePct", label: "Of gross", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you changed your 401(k) contribution?"
+      caption="Same salary and tax rates — only the pre-tax 401(k) percent changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="paycheck-401k-scenarios"
+    />
   );
 }
 

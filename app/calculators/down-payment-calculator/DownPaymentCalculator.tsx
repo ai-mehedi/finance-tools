@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeDownPayment,
   formatUSD,
@@ -34,30 +36,20 @@ function compute(f: FormState): DownPaymentResult | null {
 }
 
 export default function DownPaymentCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<DownPaymentResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a home price greater than 0 and a percentage between 0 and 100." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a home price greater than 0 and a percentage between 0 and 100.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const segments = result
@@ -70,7 +62,7 @@ export default function DownPaymentCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Purchase details</h2>
@@ -105,6 +97,10 @@ export default function DownPaymentCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -166,6 +162,53 @@ export default function DownPaymentCalculator() {
           </div>
         </div>
       )}
+
+      {/* What-if: how different down payment percentages change cash needed, loan size and PMI. */}
+      {result && <DownPaymentScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the down payment percentage so the user sees how cash needed, the loan
+ *  amount and PMI change at 5% / 10% / 15% / 20% / 25% plus their own value. */
+function DownPaymentScenarios({ form }: { form: FormState }) {
+  const base = num(form.downPaymentPct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const pcts = Array.from(new Set([5, 10, 15, 20, 25, base]))
+      .filter((p) => p >= 0 && p <= 100)
+      .sort((a, b) => a - b);
+
+    const built = pcts.map((pct) => {
+      const r = compute({ ...form, downPaymentPct: String(pct) });
+      return {
+        pct,
+        downPayment: r?.downPayment ?? 0,
+        loanAmount: r?.loanAmount ?? 0,
+        cashNeeded: r?.cashNeeded ?? 0,
+        pmi: r?.pmiLikely ? "Likely" : "Avoided",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.pct === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "pct", label: "Down payment", format: (v) => formatPct(Number(v)) },
+    { key: "downPayment", label: "Down payment", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "cashNeeded", label: "Cash needed", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "loanAmount", label: "Loan amount", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "pmi", label: "PMI", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you put more (or less) down?"
+      caption="Same home price — only the down payment percentage changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="down-payment-scenarios"
+    />
   );
 }

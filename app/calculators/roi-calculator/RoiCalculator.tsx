@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeRoi,
   formatUSD,
@@ -39,30 +41,23 @@ function compute(f: FormState): RoiResult | null {
 const pct = (n: number) => `${(Number.isFinite(n) ? n : 0).toFixed(1)}%`;
 
 export default function RoiCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<RoiResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter an initial investment greater than 0 and non-negative values."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter an initial investment greater than 0 and non-negative values.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const hasHorizon = (num(form.holdingYears) || 0) > 0;
@@ -75,7 +70,7 @@ export default function RoiCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -123,6 +118,10 @@ export default function RoiCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -158,7 +157,59 @@ export default function RoiCalculator() {
 
       {/* Growth chart */}
       {result && hasHorizon && result.schedule.length > 1 && <RoiChart result={result} />}
+
+      {/* What-if: how different exit values change ROI and net profit. */}
+      {result && <FinalValueScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the final (exit) value so the user sees how ROI and net profit shift
+ *  at a range of outcomes around their own assumed final value. */
+function FinalValueScenarios({ form }: { form: FormState }) {
+  const base = num(form.finalValue) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const cost = (num(form.initialInvestment) || 0) + (num(form.additionalCosts) || 0);
+    const candidates = [
+      cost, // break-even
+      cost * 1.25,
+      cost * 1.5,
+      cost * 2,
+      cost * 3,
+      base,
+    ];
+    const finals = Array.from(new Set(candidates.map((v) => Math.round(v))))
+      .filter((v) => v >= 0)
+      .sort((a, b) => a - b);
+
+    const built = finals.map((finalValue) => {
+      const r = compute({ ...form, finalValue: String(finalValue) });
+      return {
+        finalValue,
+        roiPct: r ? r.roiPct : 0,
+        netProfit: r ? r.netProfit : 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.finalValue === Math.round(base)) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "finalValue", label: "Final value", format: (v) => formatUSD(Number(v)) },
+    { key: "roiPct", label: "ROI", align: "right", format: (v) => `${Number(v).toFixed(1)}%` },
+    { key: "netProfit", label: "Net profit", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the final value were different?"
+      caption="Same cost basis — only the exit value changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="roi-final-value-scenarios"
+    />
   );
 }
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeCashAdvance,
   formatUSD2,
@@ -51,30 +53,20 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function CashAdvanceCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<CashAdvanceResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a cash advance amount greater than 0 and non-negative fees." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a cash advance amount greater than 0 and non-negative fees.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -86,7 +78,7 @@ export default function CashAdvanceCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Cash advance details</h2>
@@ -122,6 +114,10 @@ export default function CashAdvanceCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -160,6 +156,52 @@ export default function CashAdvanceCalculator() {
           )}
         </div>
       </form>
+
+      {/* What-if: how the cost scales with the amount you advance. */}
+      {result && <AmountScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the cash advance amount so the user sees how the fee, total cost and
+ *  effective cost percentage change at a few common borrowing levels plus their
+ *  own value. */
+function AmountScenarios({ form }: { form: FormState }) {
+  const base = num(form.amount) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const amounts = Array.from(new Set([100, 250, 500, 1000, 2000, base]))
+      .filter((a) => a > 0)
+      .sort((a, b) => a - b);
+
+    const built = amounts.map((amount) => {
+      const r = compute({ ...form, amount: String(amount) });
+      return {
+        amount,
+        totalCost: r?.totalCost ?? 0,
+        totalRepaid: r?.totalRepaid ?? 0,
+        effectiveCostPct: r ? `${r.effectiveCostPct.toFixed(1)}%` : "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.amount === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "amount", label: "Amount advanced", format: (v) => formatUSD2(Number(v)) },
+    { key: "totalCost", label: "Total cost", align: "right", format: (v) => formatUSD2(Number(v)) },
+    { key: "totalRepaid", label: "Total to repay", align: "right", format: (v) => formatUSD2(Number(v)) },
+    { key: "effectiveCostPct", label: "Cost of amount", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you advanced a different amount?"
+      caption="Same fee rate, APR and repayment window — only the amount borrowed changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="cash-advance-amount-scenarios"
+    />
   );
 }

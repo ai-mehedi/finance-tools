@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeCarLoanRefinance,
   formatUSD,
@@ -53,37 +55,27 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function CarLoanRefinanceCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<CarLoanRefinanceResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a balance, months remaining and a new term all greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a balance, months remaining and a new term all greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const saves = result ? result.totalSavings >= 0 : false;
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Loan details</h2>
@@ -122,6 +114,10 @@ export default function CarLoanRefinanceCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -162,7 +158,50 @@ export default function CarLoanRefinanceCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <BalanceChart result={result} />}
+
+      {/* What-if: how different new interest rates change the payment + lifetime savings. */}
+      {result && <NewRateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the new interest rate so the user sees the new monthly payment and
+ *  lifetime savings across a range of rates plus their own entered rate. */
+function NewRateScenarios({ form }: { form: FormState }) {
+  const base = num(form.newRatePct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([3, 4.5, 6, 7.5, 9, base]))
+      .filter((r) => r >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, newRatePct: String(rate) });
+      return {
+        rate,
+        payment: r?.newMonthlyPayment ?? 0,
+        savings: r?.totalSavings ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "New rate (%)", format: (v) => `${Number(v)}%` },
+    { key: "payment", label: "New monthly payment", align: "right", format: (v) => formatUSD2(Number(v)) },
+    { key: "savings", label: "Lifetime savings", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you locked a different rate?"
+      caption="Same balance and new term — only the refinanced interest rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="car-loan-refinance-rate-scenarios"
+    />
   );
 }
 

@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
+import AmortizationTable from "../../components/calc/AmortizationTable";
 import {
   computeCreditCard,
   formatUSD,
@@ -58,30 +61,23 @@ function monthsLabel(months: number): string {
 }
 
 export default function CreditCardInterestCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<CreditCardResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a balance over 0, a non-negative APR and a positive payment."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a balance over 0, a non-negative APR and a positive payment.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const never = result?.neverPaysOff ?? false;
@@ -96,7 +92,7 @@ export default function CreditCardInterestCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your card</h2>
@@ -160,6 +156,10 @@ export default function CreditCardInterestCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -198,7 +198,72 @@ export default function CreditCardInterestCalculator() {
 
       {/* Payoff chart */}
       {result && !never && result.schedule.length > 1 && <PayoffChart result={result} />}
+
+      {/* What-if: how different monthly payments change interest + payoff time. */}
+      {result && form.payMode === "fixed" && <MonthlyPaymentScenarios form={form} />}
+
+      {/* Full month-by-month amortization schedule with CSV export. */}
+      {result && !never && result.schedule.length > 1 && (
+        <AmortizationTable
+          rows={result.schedule
+            .filter((p) => p.month >= 1)
+            .map((p) => ({
+              month: p.month,
+              payment: p.principal + p.interest,
+              principal: p.principal,
+              interest: p.interest,
+              balance: p.balance,
+            }))}
+          format={formatUSD}
+          csvName="credit-card-interest-calculator"
+        />
+      )}
     </div>
+  );
+}
+
+/** Sweeps the fixed monthly payment so the user sees how a higher payment cuts
+ *  total interest and payoff time, plus their own current payment. */
+function MonthlyPaymentScenarios({ form }: { form: FormState }) {
+  const base = num(form.fixedPayment) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const payments = Array.from(new Set([100, 150, 250, 400, 600, base]))
+      .filter((p) => p > 0)
+      .sort((a, b) => a - b);
+
+    const built = payments.map((payment) => {
+      const r = compute({ ...form, payMode: "fixed", fixedPayment: String(payment) });
+      return {
+        payment,
+        payoff: r ? monthsLabel(r.monthsToPayoff) : "Never",
+        interest: r && Number.isFinite(r.totalInterest) ? r.totalInterest : NaN,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.payment === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "payment", label: "Monthly payment", format: (v) => formatUSD(Number(v)) },
+    { key: "payoff", label: "Paid off in", align: "right" },
+    {
+      key: "interest",
+      label: "Total interest",
+      align: "right",
+      format: (v) => (Number.isFinite(Number(v)) ? formatUSD(Number(v)) : "Never"),
+    },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you paid more each month?"
+      caption="Same balance and APR — only the fixed monthly payment changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="credit-card-interest-payment-scenarios"
+    />
   );
 }
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeDividendYield,
   formatUSD,
@@ -49,34 +51,25 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function DividendYieldCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<DividendYieldResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a share price greater than 0 and non-negative amounts." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a share price greater than 0 and non-negative amounts.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+    <div className="space-y-6">
+    <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
       {/* Inputs */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
         <h2 className="text-base font-extrabold text-zinc-900">Stock details</h2>
@@ -105,6 +98,10 @@ export default function DividendYieldCalculator() {
               <RotateCcw /> Reset
             </Button>
           </div>
+          <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+            {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+            {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+          </Button>
         </div>
       </div>
 
@@ -140,5 +137,52 @@ export default function DividendYieldCalculator() {
         </div>
       </div>
     </form>
+
+      {/* What-if: how the dividend yield and income change at different share prices. */}
+      {result && <SharePriceScenarios form={form} />}
+    </div>
+  );
+}
+
+/** Sweeps the share price so the user sees how dividend yield and annual income
+ *  shift as the stock's price moves, around their own entered price. */
+function SharePriceScenarios({ form }: { form: FormState }) {
+  const base = num(form.sharePrice) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [base * 0.75, base * 0.9, base, base * 1.1, base * 1.25, base * 1.5]
+      .map((p) => Math.round(p * 100) / 100)
+      .filter((p) => p > 0);
+    const prices = Array.from(new Set(candidates)).sort((a, b) => a - b);
+
+    const built = prices.map((price) => {
+      const r = compute({ ...form, sharePrice: String(price) });
+      return {
+        price,
+        yield: r?.dividendYieldPct ?? 0,
+        annualIncome: r?.annualIncome ?? 0,
+        positionValue: r?.positionValue ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.price === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "price", label: "Share price", format: (v) => formatUSD(Number(v)) },
+    { key: "yield", label: "Dividend yield", align: "right", format: (v) => formatPct(Number(v)) },
+    { key: "annualIncome", label: "Annual income", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "positionValue", label: "Position value", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the share price moves?"
+      caption="Same dividend & shares — only the share price changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="dividend-yield-share-price-scenarios"
+    />
   );
 }

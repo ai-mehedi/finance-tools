@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeGst,
   formatUSD,
@@ -39,30 +41,20 @@ function compute(f: FormState): GstResult | null {
 }
 
 export default function GstCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<GstResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a non-negative amount and a valid GST rate." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a non-negative amount and a valid GST rate.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -79,7 +71,7 @@ export default function GstCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -131,6 +123,10 @@ export default function GstCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -165,7 +161,50 @@ export default function GstCalculator() {
 
       {/* Split donut */}
       {result && result.gstAmount > 0 && <SplitDonut result={result} />}
+
+      {/* What-if: how the GST amount and total change across the standard rate slabs. */}
+      {result && <RateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the GST rate across the standard slabs (plus the user's chosen rate)
+ *  so they can compare the GST charged and the gross total at each rate. */
+function RateScenarios({ form }: { form: FormState }) {
+  const base = num(form.ratePct);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([...GST_SLABS, Number.isFinite(base) ? base : 18]))
+      .filter((r) => r >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, ratePct: String(rate) });
+      return {
+        rate,
+        gst: r?.gstAmount ?? 0,
+        total: r?.totalAmount ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "GST rate", format: (v) => `${Number(v)}%` },
+    { key: "gst", label: "GST amount", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "total", label: "Total with GST", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the GST rate were different?"
+      caption="Same amount and supply type — only the GST rate slab changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="gst-rate-scenarios"
+    />
   );
 }
 

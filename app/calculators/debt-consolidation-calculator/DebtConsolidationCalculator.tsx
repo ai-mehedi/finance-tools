@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calculator, RotateCcw, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeDebtConsolidation,
   formatUSD,
@@ -210,7 +211,52 @@ export default function DebtConsolidationCalculator() {
 
       {/* Payoff chart */}
       {result && result.schedule.length > 1 && <PayoffChart result={result} />}
+
+      {/* What-if: how different consolidation rates change interest + payment. */}
+      {result && <NewRateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the new consolidation rate so the user sees how the lifetime interest,
+ *  monthly payment and overall savings change at a range of rates plus their own. */
+function NewRateScenarios({ form }: { form: FormState }) {
+  const base = num(form.newRate) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([5, 8, 11, 14, 18, base]))
+      .filter((r) => r >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, newRate: String(rate) });
+      return {
+        rate,
+        payment: r?.newMonthlyPayment ?? 0,
+        interest: r?.newTotalInterest ?? 0,
+        savings: r?.interestSavings ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "New rate", format: (v) => `${Number(v)}%` },
+    { key: "payment", label: "Monthly payment", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "interest", label: "Total interest", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "savings", label: "Interest saved", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your consolidation rate were different?"
+      caption="Same debts, fees and term — only the new loan's interest rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="debt-consolidation-rate-scenarios"
+    />
   );
 }
 

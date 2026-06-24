@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calculator, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeCreditUtilization,
   formatUSD,
@@ -164,7 +165,62 @@ export default function CreditUtilizationCalculator() {
       </form>
 
       {result && <UtilizationGauge result={result} />}
+
+      {/* What-if: how paying down balances lowers your overall utilization. */}
+      {result && <PayDownScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps a paydown applied to total balances (distributed proportionally
+ *  across cards) so the user sees how their overall utilization drops at
+ *  $0 / $250 / $500 / $1,000 / $2,000 paid down, plus the amount that reaches
+ *  the 30% guideline. */
+function PayDownScenarios({ form }: { form: FormState }) {
+  const { rows, highlightIndex } = useMemo(() => {
+    const cards = form.cards.map((c) => ({ balance: num(c.balance) || 0, limit: num(c.limit) || 0 }));
+    const totalBalance = cards.reduce((s, c) => s + c.balance, 0);
+    const base = computeCreditUtilization({ cards });
+
+    const paydowns = Array.from(
+      new Set([0, 250, 500, 1000, 2000, Math.round(base?.payDownTo30 ?? 0)])
+    )
+      .filter((p) => p >= 0 && p <= totalBalance)
+      .sort((a, b) => a - b);
+
+    const built = paydowns.map((paydown) => {
+      // Spread the paydown across cards in proportion to their balances.
+      const factor = totalBalance > 0 ? Math.max(0, totalBalance - paydown) / totalBalance : 0;
+      const r = computeCreditUtilization({
+        cards: cards.map((c) => ({ balance: c.balance * factor, limit: c.limit })),
+      });
+      return {
+        paydown,
+        balance: r?.totalBalance ?? 0,
+        utilization: r?.overallUtilizationPct ?? 0,
+        band: r?.band ?? "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.paydown === 0) };
+  }, [form]);
+
+  const columns: GridColumn[] = [
+    { key: "paydown", label: "Pay down", format: (v) => formatUSD(Number(v)) },
+    { key: "balance", label: "New balance", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "utilization", label: "Utilization", align: "right", format: (v) => formatPct(Number(v)) },
+    { key: "band", label: "Rating", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you paid down your balances?"
+      caption="Same limits — only the total balance changes, spread across your cards."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="credit-utilization-paydown-scenarios"
+    />
   );
 }
 

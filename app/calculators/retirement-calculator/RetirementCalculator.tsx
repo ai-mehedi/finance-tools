@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeRetirement,
   formatUSD,
@@ -46,30 +48,23 @@ function compute(f: FormState): RetirementResult | null {
 }
 
 export default function RetirementCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<RetirementResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Retirement age must be above your current age, and the withdrawal rate must be above 0."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Retirement age must be above your current age, and the withdrawal rate must be above 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const startNum = num(form.currentSavings) || 0;
@@ -83,7 +78,7 @@ export default function RetirementCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -140,6 +135,10 @@ export default function RetirementCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -181,7 +180,53 @@ export default function RetirementCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <AccumulationChart result={result} />}
+
+      {/* What-if: how different monthly contributions change the nest egg + income. */}
+      {result && <ContributionScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the monthly contribution so the user sees how saving more each month
+ *  changes their projected nest egg and the income it can sustain, alongside
+ *  their own current contribution. */
+function ContributionScenarios({ form }: { form: FormState }) {
+  const base = num(form.monthlyContribution) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const amounts = Array.from(new Set([0, 250, 500, 1000, 1500, 2000, base]))
+      .filter((a) => a >= 0)
+      .sort((a, b) => a - b);
+
+    const built = amounts.map((contribution) => {
+      const r = compute({ ...form, monthlyContribution: String(contribution) });
+      return {
+        contribution,
+        nestEgg: r?.nestEgg ?? 0,
+        income: r?.sustainableIncome ?? 0,
+        status: r ? (r.onTrack ? "On track" : "Short") : "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.contribution === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "contribution", label: "Monthly contribution", format: (v) => formatUSD(Number(v)) },
+    { key: "nestEgg", label: "Nest egg", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "income", label: "Income / yr", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "status", label: "Goal", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you contributed more each month?"
+      caption="Same plan — only the monthly contribution changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="retirement-contribution-scenarios"
+    />
   );
 }
 

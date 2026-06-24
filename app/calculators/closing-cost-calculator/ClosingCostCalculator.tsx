@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeClosingCost,
   formatUSD,
@@ -61,35 +63,28 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function ClosingCostCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<ClosingCostResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a home price above 0 and a down payment no larger than the price."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a home price above 0 and a down payment no larger than the price.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Purchase details</h2>
@@ -127,6 +122,10 @@ export default function ClosingCostCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -166,7 +165,58 @@ export default function ClosingCostCalculator() {
       </form>
 
       {result && result.totalClosingCost > 0 && <BreakdownChart result={result} />}
+
+      {/* What-if: how the home price changes loan amount, closing costs and cash to close. */}
+      {result && <HomePriceScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the home price so the buyer sees how total closing costs and cash to
+ *  close scale across price points, plus their own value. Down payment is kept
+ *  capped at the price so each scenario stays valid. */
+function HomePriceScenarios({ form }: { form: FormState }) {
+  const base = num(form.homePrice) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const prices = Array.from(new Set([250000, 350000, 450000, 600000, 750000, base]))
+      .filter((p) => p > 0)
+      .sort((a, b) => a - b);
+
+    const down = num(form.downPayment) || 0;
+    const built = prices.map((price) => {
+      const r = compute({
+        ...form,
+        homePrice: String(price),
+        downPayment: String(Math.min(down, price)),
+      });
+      return {
+        price,
+        closing: r?.totalClosingCost ?? 0,
+        percent: r ? `${r.percentOfPrice.toFixed(2)}%` : "—",
+        cash: r?.cashToClose ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.price === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "price", label: "Home price", format: (v) => formatUSD(Number(v)) },
+    { key: "closing", label: "Closing costs", align: "right", format: (v) => formatUSD2(Number(v)) },
+    { key: "percent", label: "% of price", align: "right" },
+    { key: "cash", label: "Cash to close", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the home price changed?"
+      caption="Same fees and down payment — only the purchase price varies."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="closing-cost-home-price-scenarios"
+    />
   );
 }
 

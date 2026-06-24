@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeStampDuty,
   formatINR,
@@ -56,50 +58,35 @@ function compute(f: FormState): StampDutyResult | null {
 }
 
 export default function StampDutyCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<StampDutyResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a property value greater than 0 and non-negative rates." : null;
 
   function onPreset(key: string) {
+    set("preset", key);
     const p = PRESETS[key];
-    setForm((f) => ({
-      ...f,
-      preset: key,
-      ...(p
-        ? {
-            stampDutyPct: String(p.stamp),
-            registrationPct: String(p.registration),
-            registrationCap: p.regCap ? String(p.regCap) : "",
-          }
-        : {}),
-    }));
-  }
-
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a property value greater than 0 and non-negative rates.");
-      setResult(null);
-      return;
+    if (p) {
+      set("stampDutyPct", String(p.stamp));
+      set("registrationPct", String(p.registration));
+      set("registrationCap", p.regCap ? String(p.regCap) : "");
     }
-    setError(null);
-    setResult(r);
   }
 
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
+    }
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -157,6 +144,10 @@ export default function StampDutyCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -202,7 +193,50 @@ export default function StampDutyCalculator() {
 
       {/* Cost breakdown donut */}
       {result && <CostDonut result={result} />}
+
+      {/* What-if: how total charges scale with the stamp duty rate. */}
+      {result && <StampDutyRateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the stamp duty rate so the user sees how total charges and the
+ *  effective cost change across a range of state rates plus their own value. */
+function StampDutyRateScenarios({ form }: { form: FormState }) {
+  const base = num(form.stampDutyPct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([2, 4, 5, 6, 7, base]))
+      .filter((r) => r >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, stampDutyPct: String(rate) });
+      return {
+        rate,
+        charges: r?.totalCharges ?? 0,
+        total: r?.totalCost ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Stamp duty rate", format: (v) => `${Number(v)}%` },
+    { key: "charges", label: "Total charges", align: "right", format: (v) => formatINR(Number(v)) },
+    { key: "total", label: "All-in cost", align: "right", format: (v) => formatINR(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the stamp duty rate were different?"
+      caption="Same property — only the stamp duty rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="stamp-duty-rate-scenarios"
+    />
   );
 }
 

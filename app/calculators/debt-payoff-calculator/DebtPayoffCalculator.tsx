@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeDebtPayoff,
   formatUSD,
@@ -47,36 +49,25 @@ function paymentTooLow(f: FormState): boolean {
 }
 
 export default function DebtPayoffCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<DebtPayoffResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? paymentTooLow(form)
+        ? "Your monthly payment is too low to cover the interest, so the balance never clears. Increase the payment above the first month's interest charge."
+        : "Enter a balance above 0, a valid APR, and a monthly payment above 0."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      if (paymentTooLow(form)) {
-        setError(
-          "Your monthly payment is too low to cover the interest, so the balance never clears. Increase the payment above the first month's interest charge.",
-        );
-      } else {
-        setError("Enter a balance above 0, a valid APR, and a monthly payment above 0.");
-      }
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -89,7 +80,7 @@ export default function DebtPayoffCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Debt details</h2>
@@ -130,6 +121,10 @@ export default function DebtPayoffCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -164,7 +159,51 @@ export default function DebtPayoffCalculator() {
 
       {/* Payoff chart */}
       {result && result.schedule.length > 1 && <PayoffChart result={result} />}
+
+      {/* What-if: how different monthly payments change payoff time + interest. */}
+      {result && <PaymentScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the monthly payment so the user sees how payoff time and total
+ *  interest change as they pay more or less each month. Includes their value. */
+function PaymentScenarios({ form }: { form: FormState }) {
+  const base = num(form.payment) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [base, base * 1.25, base * 1.5, base * 2, base * 0.75, base + 100];
+    const payments = Array.from(
+      new Set(candidates.map((p) => Math.round(p)).filter((p) => p > 0)),
+    ).sort((a, b) => a - b);
+
+    const built = payments.map((payment) => {
+      const r = compute({ ...form, payment: String(payment) });
+      return {
+        payment,
+        payoff: r ? formatDuration(r.years, r.monthsRemainder) : "Never clears",
+        interest: r ? formatUSD(r.totalInterest) : "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.payment === Math.round(base)) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "payment", label: "Monthly payment", format: (v) => formatUSD(Number(v)) },
+    { key: "payoff", label: "Paid off in", align: "right" },
+    { key: "interest", label: "Total interest", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you changed your monthly payment?"
+      caption="Same balance and APR — only the monthly payment changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="debt-payoff-payment-scenarios"
+    />
   );
 }
 

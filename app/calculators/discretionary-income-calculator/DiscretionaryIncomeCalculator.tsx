@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeDiscretionaryIncome,
   formatUSD,
@@ -42,34 +44,25 @@ function compute(f: FormState): DiscretionaryIncomeResult | null {
 }
 
 export default function DiscretionaryIncomeCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<DiscretionaryIncomeResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a non-negative income and a household size of at least 1." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a non-negative income and a household size of at least 1.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+    <div className="space-y-6">
+    <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
       {/* Inputs */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
         <h2 className="text-base font-extrabold text-zinc-900">Your situation</h2>
@@ -114,6 +107,10 @@ export default function DiscretionaryIncomeCalculator() {
               <RotateCcw /> Reset
             </Button>
           </div>
+          <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+            {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+            {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+          </Button>
         </div>
       </div>
 
@@ -150,5 +147,51 @@ export default function DiscretionaryIncomeCalculator() {
         )}
       </div>
     </form>
+
+      {/* What-if: how different income levels change discretionary income and payment. */}
+      {result && <IncomeScenarios form={form} />}
+    </div>
+  );
+}
+
+/** Sweeps adjusted gross income so the user sees how discretionary income and the
+ *  estimated monthly payment shift across nearby income levels plus their own value. */
+function IncomeScenarios({ form }: { form: FormState }) {
+  const base = num(form.annualIncome) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const incomes = Array.from(
+      new Set([40000, 60000, 80000, 100000, 120000, base])
+    )
+      .filter((v) => v >= 0)
+      .sort((a, b) => a - b);
+
+    const built = incomes.map((income) => {
+      const r = compute({ ...form, annualIncome: String(income) });
+      return {
+        income,
+        discretionary: r?.discretionaryIncome ?? 0,
+        monthly: r?.monthlyPayment ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.income === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "income", label: "Annual income", format: (v) => formatUSD(Number(v)) },
+    { key: "discretionary", label: "Discretionary income", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "monthly", label: "Est. monthly payment", align: "right", format: (v) => formatUSD2(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your income were different?"
+      caption="Same household size and plan — only your adjusted gross income changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="discretionary-income-scenarios"
+    />
   );
 }

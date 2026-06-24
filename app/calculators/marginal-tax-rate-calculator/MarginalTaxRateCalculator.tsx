@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeMarginalTaxRate,
   formatUSD,
@@ -38,30 +40,20 @@ function compute(f: FormState): MarginalTaxRateResult | null {
 }
 
 export default function MarginalTaxRateCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<MarginalTaxRateResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a taxable income of 0 or more." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a taxable income of 0 or more.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -73,7 +65,7 @@ export default function MarginalTaxRateCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -107,6 +99,10 @@ export default function MarginalTaxRateCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -142,7 +138,54 @@ export default function MarginalTaxRateCalculator() {
 
       {/* Bracket chart */}
       {result && result.schedule.length > 0 && <BracketChart result={result} />}
+
+      {/* What-if: how marginal/effective rate and tax change with taxable income. */}
+      {result && <IncomeScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps taxable income so the user sees how the marginal rate, effective rate
+ *  and total tax change at a spread of income levels plus their own value. */
+function IncomeScenarios({ form }: { form: FormState }) {
+  const base = num(form.taxableIncome) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const incomes = Array.from(
+      new Set([40000, 85000, 150000, 250000, 400000, base]),
+    )
+      .filter((v) => v >= 0)
+      .sort((a, b) => a - b);
+
+    const built = incomes.map((income) => {
+      const r = compute({ ...form, taxableIncome: String(income) });
+      return {
+        income,
+        marginal: r ? `${r.marginalRatePct.toFixed(0)}%` : "—",
+        effective: r ? `${r.effectiveRatePct.toFixed(1)}%` : "—",
+        tax: r?.totalTax ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.income === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "income", label: "Taxable income", format: (v) => formatUSD(Number(v)) },
+    { key: "marginal", label: "Marginal rate", align: "right" },
+    { key: "effective", label: "Effective rate", align: "right" },
+    { key: "tax", label: "Total tax", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="How does your rate change with income?"
+      caption="Same filing status — only taxable income changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="marginal-tax-rate-income-scenarios"
+    />
   );
 }
 

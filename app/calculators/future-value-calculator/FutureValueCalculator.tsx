@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeFutureValue,
   formatUSD,
@@ -49,30 +51,20 @@ function compute(f: FormState): FutureValueResult | null {
 }
 
 export default function FutureValueCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<FutureValueResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a number of years greater than 0 and non-negative amounts." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a number of years greater than 0 and non-negative amounts.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const presentNum = num(form.presentValue) || 0;
@@ -86,7 +78,7 @@ export default function FutureValueCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -139,6 +131,10 @@ export default function FutureValueCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -168,7 +164,50 @@ export default function FutureValueCalculator() {
 
       {/* Growth chart */}
       {result && result.schedule.length > 1 && <GrowthChart result={result} />}
+
+      {/* What-if: how different annual return rates change the future value. */}
+      {result && <RateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the annual return rate so the user sees how the future value and
+ *  total interest change at 4% / 6% / 8% / 10% / 12% plus their own rate. */
+function RateScenarios({ form }: { form: FormState }) {
+  const base = num(form.annualRatePct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([4, 6, 8, 10, 12, base]))
+      .filter((rate) => Number.isFinite(rate))
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, annualRatePct: String(rate) });
+      return {
+        rate,
+        futureValue: r?.futureValue ?? 0,
+        interest: r?.totalInterest ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Annual return", format: (v) => `${Number(v)}%` },
+    { key: "futureValue", label: "Future value", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "interest", label: "Total interest", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your return rate were different?"
+      caption="Same contributions and timeline — only the annual return rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="future-value-rate-scenarios"
+    />
   );
 }
 

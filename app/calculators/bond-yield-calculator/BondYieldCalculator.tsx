@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeBondYield,
   formatUSD,
@@ -47,34 +49,25 @@ function compute(f: FormState): BondYieldResult | null {
 }
 
 export default function BondYieldCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<BondYieldResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a face value, price, term and frequency greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a face value, price, term and frequency greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+    <div className="space-y-6">
+    <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
       {/* Inputs */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
         <h2 className="text-base font-extrabold text-zinc-900">Bond details</h2>
@@ -127,6 +120,10 @@ export default function BondYieldCalculator() {
               <RotateCcw /> Reset
             </Button>
           </div>
+          <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+            {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+            {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+          </Button>
         </div>
       </div>
 
@@ -168,5 +165,60 @@ export default function BondYieldCalculator() {
         )}
       </div>
     </form>
+
+      {/* What-if: how the market price you pay changes yield to maturity. */}
+      {result && <PriceScenarios form={form} />}
+    </div>
+  );
+}
+
+/** Sweeps the market price you pay so you can see how it moves yield to maturity,
+ *  current yield and total return — same bond, only the price changes. */
+function PriceScenarios({ form }: { form: FormState }) {
+  const base = num(form.price) || 0;
+  const face = num(form.faceValue) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [
+      face * 0.8,
+      face * 0.9,
+      face,
+      face * 1.1,
+      face * 1.2,
+      base,
+    ];
+    const prices = Array.from(new Set(candidates.map((p) => Math.round(p))))
+      .filter((p) => p > 0)
+      .sort((a, b) => a - b);
+
+    const built = prices.map((price) => {
+      const r = compute({ ...form, price: String(price) });
+      return {
+        price,
+        ytm: r?.ytmPct ?? 0,
+        current: r?.currentYieldPct ?? 0,
+        totalReturn: r?.totalReturn ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.price === Math.round(base)) };
+  }, [form, base, face]);
+
+  const columns: GridColumn[] = [
+    { key: "price", label: "Price paid", format: (v) => formatUSD(Number(v)) },
+    { key: "ytm", label: "Yield to maturity", align: "right", format: (v) => formatPct(Number(v)) },
+    { key: "current", label: "Current yield", align: "right", format: (v) => formatPct(Number(v)) },
+    { key: "totalReturn", label: "Total return", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you paid a different price?"
+      caption="Same bond — only the market price you pay changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="bond-yield-price-scenarios"
+    />
   );
 }

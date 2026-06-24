@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeMinimumWage,
   formatUSD,
@@ -40,30 +42,22 @@ function compute(f: FormState): MinimumWageResult | null {
 }
 
 export default function MinimumWageCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<MinimumWageResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null
+    ? "Enter a non-negative wage, positive weekly hours, weeks between 1 and 53, and an overtime multiplier of at least 1."
+    : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a non-negative wage, positive weekly hours, weeks between 1 and 53, and an overtime multiplier of at least 1.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -76,7 +70,7 @@ export default function MinimumWageCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -122,6 +116,10 @@ export default function MinimumWageCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -151,7 +149,50 @@ export default function MinimumWageCalculator() {
 
       {/* Earnings by pay period */}
       {result && <PeriodChart result={result} />}
+
+      {/* What-if: how different hourly wages change weekly and annual gross pay. */}
+      {result && <WageScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the hourly wage so the user sees how weekly and annual gross pay
+ *  change across common wage levels plus their own value. */
+function WageScenarios({ form }: { form: FormState }) {
+  const base = num(form.hourlyWage);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const wages = Array.from(new Set([7.25, 10, 12, 15, 20, Number.isFinite(base) ? base : 7.25]))
+      .filter((w) => w >= 0)
+      .sort((a, b) => a - b);
+
+    const built = wages.map((wage) => {
+      const r = compute({ ...form, hourlyWage: String(wage) });
+      return {
+        wage,
+        weekly: r?.weeklyGross ?? 0,
+        annual: r?.annualGross ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.wage === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "wage", label: "Hourly wage", format: (v) => formatUSD(Number(v)) },
+    { key: "weekly", label: "Weekly gross", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "annual", label: "Annual gross", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your hourly wage changed?"
+      caption="Same schedule — only the hourly wage changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="minimum-wage-scenarios"
+    />
   );
 }
 

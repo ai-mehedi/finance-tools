@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calculator, RotateCcw, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeDebtAvalanche,
   formatUSD,
@@ -193,7 +194,51 @@ export default function DebtAvalancheCalculator() {
 
       {/* Balance chart */}
       {result && result.schedule.length > 1 && <PayoffChart result={result} />}
+
+      {/* What-if: how different extra monthly payments change payoff time + interest. */}
+      {result && <ExtraPaymentScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the extra monthly payment so the user sees how much faster they get
+ *  debt-free — and how much interest they save — at a range of extra amounts
+ *  plus their own value. Uses the existing compute() with everything else fixed. */
+function ExtraPaymentScenarios({ form }: { form: FormState }) {
+  const base = num(form.extra) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const extras = Array.from(new Set([0, 100, 200, 300, 500, 1000, base]))
+      .filter((e) => e >= 0)
+      .sort((a, b) => a - b);
+
+    const built = extras.map((extra) => {
+      const r = compute({ ...form, extra: String(extra) });
+      return {
+        extra,
+        payoff: r ? formatMonths(r.months) : "—",
+        interest: r?.totalInterest ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.extra === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "extra", label: "Extra / month", format: (v) => formatUSD(Number(v)) },
+    { key: "payoff", label: "Debt-free in", align: "right" },
+    { key: "interest", label: "Total interest", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you paid extra each month?"
+      caption="Same debts — only the extra monthly amount changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="debt-avalanche-extra-payment-scenarios"
+    />
   );
 }
 

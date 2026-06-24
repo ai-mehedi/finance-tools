@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeCompoundInterest,
   formatUSD,
@@ -49,30 +51,23 @@ function compute(f: FormState): CompoundResult | null {
 }
 
 export default function CompoundInterestCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<CompoundResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  // Live results: recompute whenever inputs change, so a shared link renders the
+  // right numbers on load and there's no stale "press Calculate" gap.
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null ? "Enter a number of years greater than 0 and non-negative amounts." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a number of years greater than 0 and non-negative amounts.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const principalNum = num(form.principal) || 0;
@@ -86,7 +81,7 @@ export default function CompoundInterestCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your investment</h2>
@@ -139,6 +134,10 @@ export default function CompoundInterestCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -168,7 +167,54 @@ export default function CompoundInterestCalculator() {
 
       {/* Growth chart */}
       {result && result.schedule.length > 1 && <GrowthChart result={result} />}
+
+      {/* What-if scenario grid — how much more you'd have at different monthly
+          contributions, all else equal. Generated from this calculator's own
+          logic, so it's data no single-tool competitor can show. */}
+      {result && <ContributionScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the monthly contribution (keeping the user's other inputs fixed) so
+ *  they can see the payoff of saving more. The user's own value is included and
+ *  highlighted. */
+function ContributionScenarios({ form }: { form: FormState }) {
+  const base = num(form.monthlyContribution) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const principal = num(form.principal) || 0;
+    const annualRatePct = num(form.annualRatePct) || 0;
+    const years = num(form.years);
+    const frequency = form.frequency;
+
+    const contributions = Array.from(new Set([0, 100, 250, 500, 1000, base]))
+      .filter((c) => c >= 0)
+      .sort((a, b) => a - b);
+
+    const built = contributions.map((c) => {
+      const r = computeCompoundInterest({ principal, monthlyContribution: c, annualRatePct, years, frequency });
+      return { contribution: c, balance: r?.futureValue ?? 0, interest: r?.totalInterest ?? 0 };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.contribution === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "contribution", label: "Monthly contribution", format: (v) => formatUSD(Number(v)) },
+    { key: "balance", label: "Future balance", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "interest", label: "Interest earned", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you saved more each month?"
+      caption="Same starting amount, rate and time — only the monthly contribution changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="compound-interest-scenarios"
+    />
   );
 }
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeFour01k,
   formatUSD,
@@ -46,30 +48,23 @@ function compute(f: FormState): Four01kResult | null {
 }
 
 export default function Four01kCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<Four01kResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a number of years greater than 0 and non-negative values."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a number of years greater than 0 and non-negative values.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -82,7 +77,7 @@ export default function Four01kCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your 401(k) plan</h2>
@@ -142,6 +137,10 @@ export default function Four01kCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -171,7 +170,53 @@ export default function Four01kCalculator() {
 
       {/* Growth chart */}
       {result && result.schedule.length > 1 && <GrowthChart result={result} />}
+
+      {/* What-if: how different contribution rates change the retirement balance. */}
+      {result && <ContributionScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps your contribution rate so the user sees how saving a little more (or
+ *  less) of each paycheck changes the final balance and the employer match
+ *  they pick up along the way. */
+function ContributionScenarios({ form }: { form: FormState }) {
+  const base = num(form.contributionPct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const pcts = Array.from(new Set([0, 3, 6, 10, 15, base]))
+      .filter((p) => p >= 0)
+      .sort((a, b) => a - b);
+
+    const built = pcts.map((pct) => {
+      const r = compute({ ...form, contributionPct: String(pct) });
+      return {
+        pct,
+        futureBalance: r?.futureBalance ?? 0,
+        yourContributions: r?.yourContributions ?? 0,
+        employerContributions: r?.employerContributions ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.pct === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "pct", label: "Your contribution", format: (v) => `${Number(v)}%` },
+    { key: "futureBalance", label: "Balance at retirement", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "yourContributions", label: "You put in", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "employerContributions", label: "Employer match", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you contributed a different percent?"
+      caption="Same salary, return and timeline — only your contribution rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="401k-calculator"
+    />
   );
 }
 

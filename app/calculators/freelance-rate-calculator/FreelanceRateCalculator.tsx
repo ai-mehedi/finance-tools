@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeFreelanceRate,
   formatUSD,
@@ -52,30 +54,20 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function FreelanceRateCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<FreelanceRateResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter billable hours and weeks above 0 and a tax rate below 100%." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter billable hours and weeks above 0 and a tax rate below 100%.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const targetNum = num(form.targetIncome) || 0;
@@ -90,7 +82,7 @@ export default function FreelanceRateCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your numbers</h2>
@@ -126,6 +118,10 @@ export default function FreelanceRateCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -159,7 +155,50 @@ export default function FreelanceRateCalculator() {
       </form>
 
       {result && breakdown.length > 0 && <RevenueBar breakdown={breakdown} total={result.grossRevenueNeeded} />}
+
+      {/* What-if: how billable hours per week change the rate you must charge. */}
+      {result && <BillableHoursScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps billable hours per week so the user sees how booking more (or fewer)
+ *  hours changes the hourly and day rate they need to hit the same take-home. */
+function BillableHoursScenarios({ form }: { form: FormState }) {
+  const base = num(form.billableHoursPerWeek) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const hours = Array.from(new Set([10, 15, 20, 25, 30, 35, base]))
+      .filter((h) => h > 0)
+      .sort((a, b) => a - b);
+
+    const built = hours.map((h) => {
+      const r = compute({ ...form, billableHoursPerWeek: String(h) });
+      return {
+        hours: h,
+        hourly: r?.hourlyRate ?? 0,
+        day: r?.dayRate ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.hours === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "hours", label: "Billable hrs / wk", format: (v) => `${Number(v)} hrs` },
+    { key: "hourly", label: "Hourly rate", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "day", label: "Day rate", align: "right", format: (v) => formatUSD0(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you billed more (or fewer) hours each week?"
+      caption="Same take-home target — only your billable hours change."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="freelance-rate-billable-hours-scenarios"
+    />
   );
 }
 

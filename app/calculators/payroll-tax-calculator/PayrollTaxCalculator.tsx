@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computePayrollTax,
   formatUSD,
@@ -26,30 +28,20 @@ function compute(f: FormState): PayrollTaxResult | null {
 }
 
 export default function PayrollTaxCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<PayrollTaxResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter annual wages greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter annual wages greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const summary = result
@@ -61,7 +53,7 @@ export default function PayrollTaxCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -89,6 +81,10 @@ export default function PayrollTaxCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -123,7 +119,53 @@ export default function PayrollTaxCalculator() {
 
       {/* Employee vs employer chart */}
       {result && <PayrollChart result={result} />}
+
+      {/* What-if: how the payroll tax burden scales across wage levels. */}
+      {result && <WageScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps annual wages so the user sees how their FICA burden scales — including
+ *  the Social Security wage-base cap and the high-earner Medicare surtax — across
+ *  a spread of incomes plus their own value. */
+function WageScenarios({ form }: { form: FormState }) {
+  const base = num(form.annualWages);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const wages = Array.from(new Set([50_000, 90_000, 168_600, 200_000, 300_000, base]))
+      .filter((w) => Number.isFinite(w) && w > 0)
+      .sort((a, b) => a - b);
+
+    const built = wages.map((wage) => {
+      const r = compute({ ...form, annualWages: String(wage) });
+      return {
+        wage,
+        employee: r?.employeeTotal ?? 0,
+        combined: r?.combinedTotal ?? 0,
+        rate: r ? `${r.effectiveRatePct.toFixed(2)}%` : "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.wage === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "wage", label: "Annual wages", format: (v) => formatUSD(Number(v)) },
+    { key: "employee", label: "Employee FICA", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "combined", label: "Combined FICA", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "rate", label: "Effective rate", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="How payroll tax scales with wages"
+      caption="Same FICA rules — only the annual wage level changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="payroll-tax-wage-scenarios"
+    />
   );
 }
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computePresentValue,
   formatUSD,
@@ -48,30 +50,20 @@ function compute(f: FormState): PresentValueResult | null {
 }
 
 export default function PresentValueCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<PresentValueResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a number of years greater than 0 and a non-negative discount rate." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a number of years greater than 0 and a non-negative discount rate.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const discount = result ? result.totalFutureCash - result.presentValue : 0;
@@ -85,7 +77,7 @@ export default function PresentValueCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -138,6 +130,10 @@ export default function PresentValueCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -169,7 +165,50 @@ export default function PresentValueCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <DiscountChart result={result} />}
+
+      {/* What-if: how different discount rates change today's value. */}
+      {result && <DiscountRateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the discount rate so the user sees how today's value shrinks as the
+ *  rate rises — at 2/4/6/8/10% plus their own rate. */
+function DiscountRateScenarios({ form }: { form: FormState }) {
+  const base = num(form.annualRatePct);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([2, 4, 6, 8, 10, base]))
+      .filter((r) => Number.isFinite(r) && r >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, annualRatePct: String(rate) });
+      return {
+        rate,
+        presentValue: r?.presentValue ?? 0,
+        discount: r ? r.totalFutureCash - r.presentValue : 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Discount rate", format: (v) => `${Number(v)}%` },
+    { key: "presentValue", label: "Present value", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "discount", label: "Discount given up", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the discount rate changed?"
+      caption="Same future cash — only the discount rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="present-value-discount-rate-scenarios"
+    />
   );
 }
 

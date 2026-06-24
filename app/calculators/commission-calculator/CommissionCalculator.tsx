@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeCommission,
   formatUSD,
@@ -51,30 +53,20 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function CommissionCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<CommissionResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a sales amount and rate that are zero or greater." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a sales amount and rate that are zero or greater.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -89,7 +81,7 @@ export default function CommissionCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Sales details</h2>
@@ -131,6 +123,10 @@ export default function CommissionCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -182,6 +178,51 @@ export default function CommissionCalculator() {
           </div>
         </div>
       )}
+
+      {/* What-if: how different sales amounts change commission earned and total pay. */}
+      {result && <SalesScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the sales amount so the user sees how commission and total pay scale
+ *  at a few representative sales figures plus their own value. */
+function SalesScenarios({ form }: { form: FormState }) {
+  const base = num(form.salesAmount) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const amounts = Array.from(
+      new Set([25000, 50000, 75000, 100000, 150000, base]),
+    )
+      .filter((a) => a >= 0)
+      .sort((a, b) => a - b);
+
+    const built = amounts.map((salesAmount) => {
+      const r = compute({ ...form, salesAmount: String(salesAmount) });
+      return {
+        salesAmount,
+        commission: r?.totalCommission ?? 0,
+        totalPay: r?.totalPay ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.salesAmount === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "salesAmount", label: "Sales amount", format: (v) => formatUSD(Number(v)) },
+    { key: "commission", label: "Total commission", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "totalPay", label: "Total pay", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you sold more (or less)?"
+      caption="Same rate and base salary — only the sales amount changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="commission-sales-scenarios"
+    />
   );
 }

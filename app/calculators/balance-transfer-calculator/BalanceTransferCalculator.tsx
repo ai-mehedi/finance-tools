@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeBalanceTransfer,
   formatUSD,
@@ -67,37 +69,27 @@ function Pct({ id, label, value, onChange }: { id: string; label: string; value:
 }
 
 export default function BalanceTransferCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<BalanceTransferResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a balance and monthly payment greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a balance and monthly payment greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const saves = result ? result.savings > 0 : false;
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your card and offer</h2>
@@ -135,6 +127,10 @@ export default function BalanceTransferCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -175,7 +171,50 @@ export default function BalanceTransferCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <PayoffChart result={result} />}
+
+      {/* What-if: how a longer or shorter intro 0% window changes your savings. */}
+      {result && <IntroPeriodScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the intro promo length so the user sees how savings change at
+ *  6 / 12 / 15 / 18 / 21 / 24 months plus their own value. */
+function IntroPeriodScenarios({ form }: { form: FormState }) {
+  const base = num(form.introMonths) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const periods = Array.from(new Set([6, 12, 15, 18, 21, 24, base]))
+      .filter((m) => m >= 0)
+      .sort((a, b) => a - b);
+
+    const built = periods.map((months) => {
+      const r = compute({ ...form, introMonths: String(months) });
+      return {
+        months,
+        savings: r?.savings ?? 0,
+        transferInterest: r?.transferInterest ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.months === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "months", label: "Intro period", format: (v) => `${Number(v)} mo` },
+    { key: "savings", label: "You save", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "transferInterest", label: "Transfer cost", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the 0% intro period were longer?"
+      caption="Same balance, payment, and fee — only the intro window length changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="balance-transfer-intro-period-scenarios"
+    />
   );
 }
 

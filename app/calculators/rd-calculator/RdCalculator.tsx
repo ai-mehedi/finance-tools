@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeRd,
   formatUSD,
@@ -34,30 +36,23 @@ function compute(f: FormState): RdResult | null {
 }
 
 export default function RdCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<RdResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a monthly deposit above 0, a non-negative rate and a number of years greater than 0."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a monthly deposit above 0, a non-negative rate and a number of years greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -70,7 +65,7 @@ export default function RdCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -106,6 +101,10 @@ export default function RdCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -137,7 +136,53 @@ export default function RdCalculator() {
 
       {/* Growth chart */}
       {result && result.schedule.length > 1 && <RdChart result={result} />}
+
+      {/* What-if: how different monthly deposits change maturity + interest earned. */}
+      {result && <DepositScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the monthly deposit so the user sees how maturity value and interest
+ *  earned scale at common amounts plus their own value. Same rate and tenure. */
+function DepositScenarios({ form }: { form: FormState }) {
+  const base = num(form.monthlyDeposit);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [1000, 2500, 5000, 10000, 25000];
+    const deposits = Array.from(new Set([...candidates, base]))
+      .filter((d) => Number.isFinite(d) && d > 0)
+      .sort((a, b) => a - b);
+
+    const built = deposits.map((deposit) => {
+      const r = compute({ ...form, monthlyDeposit: String(deposit) });
+      return {
+        deposit,
+        maturity: r?.maturityValue ?? 0,
+        deposited: r?.totalDeposited ?? 0,
+        interest: r?.totalInterest ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.deposit === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "deposit", label: "Monthly deposit", format: (v) => formatUSD(Number(v)) },
+    { key: "deposited", label: "Total deposited", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "interest", label: "Interest earned", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "maturity", label: "Maturity value", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you deposited more each month?"
+      caption="Same interest rate and tenure — only the monthly deposit changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="rd-deposit-scenarios"
+    />
   );
 }
 

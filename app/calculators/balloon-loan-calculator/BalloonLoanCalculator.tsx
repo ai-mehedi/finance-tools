@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeBalloonLoan,
   formatUSD,
@@ -50,35 +52,28 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function BalloonLoanCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<BalloonLoanResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a loan amount, and a balloon term no longer than the amortization term."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a loan amount, and a balloon term no longer than the amortization term.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Loan details</h2>
@@ -116,6 +111,10 @@ export default function BalloonLoanCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -158,7 +157,52 @@ export default function BalloonLoanCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <BalanceChart result={result} />}
+
+      {/* What-if: how the balloon due date changes the lump sum and interest paid. */}
+      {result && <BalloonTermScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the balloon due year so the user sees how the lump-sum balloon payment
+ *  and interest paid before it shrink the longer the loan runs. */
+function BalloonTermScenarios({ form }: { form: FormState }) {
+  const amort = num(form.amortYears);
+  const base = num(form.balloonYears);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [3, 5, 7, 10, 15, base].filter(
+      (b) => Number.isFinite(b) && b > 0 && (!Number.isFinite(amort) || b <= amort)
+    );
+    const years = Array.from(new Set(candidates)).sort((a, b) => a - b);
+
+    const built = years.map((balloonYears) => {
+      const r = compute({ ...form, balloonYears: String(balloonYears) });
+      return {
+        balloonYears,
+        balloon: r?.balloonPayment ?? 0,
+        interest: r?.totalInterest ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.balloonYears === base) };
+  }, [form, base, amort]);
+
+  const columns: GridColumn[] = [
+    { key: "balloonYears", label: "Balloon due (yr)", format: (v) => `${v} yr` },
+    { key: "balloon", label: "Balloon payment", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "interest", label: "Interest before balloon", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the balloon came due sooner or later?"
+      caption="Same loan amount, rate and amortization — only the balloon due date changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="balloon-loan-term-scenarios"
+    />
   );
 }
 

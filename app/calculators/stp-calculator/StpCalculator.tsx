@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeStp,
   formatUSD,
@@ -40,30 +42,23 @@ function compute(f: FormState): StpResult | null {
 }
 
 export default function StpCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<StpResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a source lump sum above 0, a horizon above 0 and non-negative rates."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a source lump sum above 0, a horizon above 0 and non-negative rates.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -77,7 +72,7 @@ export default function StpCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -126,6 +121,10 @@ export default function StpCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -160,7 +159,50 @@ export default function StpCalculator() {
 
       {/* Transfer chart */}
       {result && result.schedule.length > 1 && <TransferChart result={result} />}
+
+      {/* What-if: how different monthly transfers change the target fund and total. */}
+      {result && <TransferScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the monthly transfer so the user sees how the target fund and total
+ *  value shift at a range of transfer amounts plus their own value. */
+function TransferScenarios({ form }: { form: FormState }) {
+  const base = num(form.monthlyTransfer) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const transfers = Array.from(new Set([0, 5000, 10000, 20000, 30000, base]))
+      .filter((t) => t >= 0)
+      .sort((a, b) => a - b);
+
+    const built = transfers.map((transfer) => {
+      const r = compute({ ...form, monthlyTransfer: String(transfer) });
+      return {
+        transfer,
+        target: r?.targetBalance ?? 0,
+        total: r?.totalValue ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.transfer === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "transfer", label: "Monthly transfer", format: (v) => formatUSD(Number(v)) },
+    { key: "target", label: "Target fund value", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "total", label: "Total value", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you transferred more each month?"
+      caption="Same source, rates and horizon — only the monthly transfer changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="stp-transfer-scenarios"
+    />
   );
 }
 

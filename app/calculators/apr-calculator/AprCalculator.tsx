@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeApr,
   formatUSD,
@@ -37,34 +39,25 @@ function compute(f: FormState): AprResult | null {
 }
 
 export default function AprCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<AprResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a loan amount and term greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a loan amount and term greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+    <div className="space-y-6">
+    <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
       {/* Inputs */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
         <h2 className="text-base font-extrabold text-zinc-900">Loan details</h2>
@@ -108,6 +101,10 @@ export default function AprCalculator() {
               <RotateCcw /> Reset
             </Button>
           </div>
+          <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+            {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+            {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+          </Button>
         </div>
       </div>
 
@@ -144,5 +141,49 @@ export default function AprCalculator() {
         )}
       </div>
     </form>
+
+      {/* What-if: how different upfront fees change the effective APR and total cost. */}
+      {result && <FeeScenarios form={form} />}
+    </div>
+  );
+}
+
+/** Sweeps the upfront fees so the user sees how APR and total cost of credit
+ *  climb above the stated rate as fees grow, plus their own value. */
+function FeeScenarios({ form }: { form: FormState }) {
+  const base = num(form.fees) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const feeOptions = Array.from(new Set([0, 250, 500, 1000, 2000, base]))
+      .filter((f) => f >= 0)
+      .sort((a, b) => a - b);
+
+    const built = feeOptions.map((fees) => {
+      const r = compute({ ...form, fees: String(fees) });
+      return {
+        fees,
+        apr: r?.aprPct ?? 0,
+        totalCost: r?.totalCost ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.fees === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "fees", label: "Upfront fees", format: (v) => formatUSD(Number(v)) },
+    { key: "apr", label: "Effective APR", align: "right", format: (v) => formatPct(Number(v)) },
+    { key: "totalCost", label: "Total cost of credit", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your fees were different?"
+      caption="Same loan & rate — only the upfront fees change."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="apr-fee-scenarios"
+    />
   );
 }

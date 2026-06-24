@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calculator, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeIrr,
   formatUSD,
@@ -160,7 +161,51 @@ export default function IrrCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <CashFlowChart result={result} />}
+
+      {/* What-if: how a different upfront cost changes the IRR and net profit. */}
+      {result && <InitialInvestmentScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the initial investment so the user sees how the upfront cost moves the
+ *  IRR and net profit, keeping the same projected cash flows. */
+function InitialInvestmentScenarios({ form }: { form: FormState }) {
+  const base = num(form.initialInvestment) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [base * 0.5, base * 0.75, base, base * 1.25, base * 1.5, base * 2]
+      .map((v) => Math.round(v))
+      .filter((v) => v > 0);
+    const amounts = Array.from(new Set(candidates)).sort((a, b) => a - b);
+
+    const built = amounts.map((amount) => {
+      const r = compute({ ...form, initialInvestment: String(amount) });
+      return {
+        investment: amount,
+        irr: r && r.irrPct !== null ? `${r.irrPct.toFixed(2)}%` : "—",
+        netProfit: r?.netProfit ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.investment === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "investment", label: "Initial investment", format: (v) => formatUSD(Number(v)) },
+    { key: "irr", label: "IRR", align: "right" },
+    { key: "netProfit", label: "Net profit", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the upfront cost changed?"
+      caption="Same projected cash flows — only the initial investment changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="irr-initial-investment-scenarios"
+    />
   );
 }
 

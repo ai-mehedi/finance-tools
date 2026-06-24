@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeStockProfit,
   formatUSD,
@@ -41,30 +43,22 @@ function compute(f: FormState): StockProfitResult | null {
 }
 
 export default function StockProfitCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<StockProfitResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null
+    ? "Enter a positive share count with non-negative prices and commissions."
+    : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a positive share count with non-negative prices and commissions.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const isProfit = result ? result.netProfit >= 0 : true;
@@ -81,7 +75,7 @@ export default function StockProfitCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Trade details</h2>
@@ -137,6 +131,10 @@ export default function StockProfitCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -163,7 +161,62 @@ export default function StockProfitCalculator() {
 
       {/* Cost vs proceeds chart */}
       {result && <ProfitChart result={result} />}
+
+      {/* What-if: how different sell prices change net profit and return. */}
+      {result && <SellPriceScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the sell price so the user sees how net profit and return on cost
+ *  move at a spread of exit prices, plus their own value highlighted. */
+function SellPriceScenarios({ form }: { form: FormState }) {
+  const base = num(form.sellPrice);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const buy = num(form.buyPrice) || 0;
+    // Spread of plausible exit prices anchored to the buy price plus the user's own.
+    const candidates = [
+      buy * 0.75,
+      buy,
+      buy * 1.1,
+      buy * 1.25,
+      buy * 1.5,
+      Number.isFinite(base) ? base : buy,
+    ];
+    const prices = Array.from(new Set(candidates.map((p) => Math.max(0, Math.round(p * 100) / 100))))
+      .sort((a, b) => a - b);
+
+    const built = prices.map((sellPrice) => {
+      const r = compute({ ...form, sellPrice: String(sellPrice) });
+      return {
+        sellPrice,
+        netProfit: r?.netProfit ?? 0,
+        returnPct: r ? `${r.returnPct.toFixed(2)}%` : "—",
+      };
+    });
+
+    return {
+      rows: built,
+      highlightIndex: built.findIndex((r) => r.sellPrice === (Number.isFinite(base) ? Math.round(base * 100) / 100 : -1)),
+    };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "sellPrice", label: "Sell price / share", format: (v) => formatUSD2(Number(v)) },
+    { key: "netProfit", label: "Net profit", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "returnPct", label: "Return on cost", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you sold at a different price?"
+      caption="Same shares and fees — only the sell price per share changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="stock-profit-sell-price-scenarios"
+    />
   );
 }
 

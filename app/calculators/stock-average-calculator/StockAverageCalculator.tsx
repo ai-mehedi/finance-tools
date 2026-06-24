@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calculator, RotateCcw, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeStockAverage,
   formatUSD,
@@ -30,8 +31,9 @@ function compute(lots: LotState[]): StockAverageResult | null {
 
 export default function StockAverageCalculator() {
   const [lots, setLots] = useState<LotState[]>(DEFAULTS);
-  const [result, setResult] = useState<StockAverageResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+
+  const result = useMemo(() => compute(lots), [lots]);
+  const error = result === null ? "Add at least one lot with a positive share count and a price of zero or more." : null;
 
   function setLot(i: number, k: keyof LotState, v: string) {
     setLots((ls) => ls.map((l, idx) => (idx === i ? { ...l, [k]: v } : l)));
@@ -45,22 +47,8 @@ export default function StockAverageCalculator() {
     setLots((ls) => (ls.length <= 1 ? ls : ls.filter((_, idx) => idx !== i)));
   }
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(lots);
-    if (!r) {
-      setError("Add at least one lot with a positive share count and a price of zero or more.");
-      setResult(null);
-      return;
-    }
-    setError(null);
-    setResult(r);
-  }
-
   function reset() {
     setLots(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -73,7 +61,7 @@ export default function StockAverageCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your buy lots</h2>
@@ -177,7 +165,56 @@ export default function StockAverageCalculator() {
 
       {/* Average chart */}
       {result && result.schedule.length > 1 && <AverageChart result={result} />}
+
+      {/* What-if: how buying more shares at different prices moves your average. */}
+      {result && <NextBuyScenarios lots={lots} result={result} />}
     </div>
+  );
+}
+
+/** Sweeps the price of one more buy lot (sized to the position so far) so the
+ *  user sees how averaging down/up at different prices moves their cost basis. */
+function NextBuyScenarios({ lots, result }: { lots: LotState[]; result: StockAverageResult }) {
+  const { rows, highlightIndex } = useMemo(() => {
+    // Buy roughly as many shares as the average existing lot, so the move is meaningful.
+    const buyShares = Math.max(1, Math.round(result.totalShares / Math.max(1, result.schedule.length)));
+    const base = result.averagePrice;
+    const candidates = [base * 0.5, base * 0.75, base, base * 1.25, base * 1.5, base * 2];
+    const prices = Array.from(new Set(candidates.map((p) => Math.round(p * 100) / 100)))
+      .filter((p) => p >= 0)
+      .sort((a, b) => a - b);
+
+    const built = prices.map((price) => {
+      const r = compute([...lots, { shares: String(buyShares), price: String(price) }]);
+      return {
+        price,
+        newAverage: r?.averagePrice ?? 0,
+        newShares: r?.totalShares ?? 0,
+        newInvested: r?.totalCost ?? 0,
+      };
+    });
+
+    // Highlight the row closest to the current average (the "no change in price" buy).
+    const target = Math.round(base * 100) / 100;
+    return { rows: built, highlightIndex: built.findIndex((r) => r.price === target) };
+  }, [lots, result]);
+
+  const columns: GridColumn[] = [
+    { key: "price", label: "Buy price / share", format: (v) => formatUSD2(Number(v)) },
+    { key: "newAverage", label: "New average", align: "right", format: (v) => formatUSD2(Number(v)) },
+    { key: "newShares", label: "Total shares", align: "right", format: (v) => Number(v).toLocaleString("en-US", { maximumFractionDigits: 2 }) },
+    { key: "newInvested", label: "Total invested", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you bought more at a different price?"
+      caption="Adds one more lot to your current position to show how the price you pay moves your average cost."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="stock-average-next-buy-scenarios"
+    />
   );
 }
 

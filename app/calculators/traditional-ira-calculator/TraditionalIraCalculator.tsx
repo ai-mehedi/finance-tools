@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeTraditionalIra,
   formatUSD,
@@ -46,30 +48,23 @@ function compute(f: FormState): TraditionalIraResult | null {
 }
 
 export default function TraditionalIraCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<TraditionalIraResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Retirement age must be greater than current age, and amounts cannot be negative."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Retirement age must be greater than current age, and amounts cannot be negative.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -84,7 +79,7 @@ export default function TraditionalIraCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
           <p className="mt-0.5 text-sm text-zinc-500">Describe your IRA and plan, then press Calculate.</p>
@@ -143,6 +138,10 @@ export default function TraditionalIraCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -175,7 +174,51 @@ export default function TraditionalIraCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <IraChart result={result} />}
+
+      {/* What-if: how different annual returns change the balance at retirement. */}
+      {result && <ReturnScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the expected annual return so the user sees the pre- and after-tax
+ *  balance at retirement across a range of returns plus their own value. */
+function ReturnScenarios({ form }: { form: FormState }) {
+  const base = num(form.annualReturnPct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([3, 5, 6, 7, 8, 10, base]))
+      .filter((r) => Number.isFinite(r))
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, annualReturnPct: String(rate) });
+      return {
+        rate: `${rate}%`,
+        rateNum: rate,
+        preTax: r?.preTaxBalance ?? 0,
+        afterTax: r?.afterTaxBalance ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rateNum === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Annual return" },
+    { key: "preTax", label: "Balance at retirement", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "afterTax", label: "After-tax value", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your return is different?"
+      caption="Same plan — only the expected annual return changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="traditional-ira-return-scenarios"
+    />
   );
 }
 

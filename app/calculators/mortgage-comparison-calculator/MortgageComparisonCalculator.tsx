@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calculator, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeComparison,
   formatUSD,
@@ -153,7 +154,54 @@ export default function MortgageComparisonCalculator() {
 
       {/* Chart */}
       {result && <CompareChart result={result} />}
+
+      {/* What-if: how Offer B's rate changes which offer wins on total cost. */}
+      {result && <RateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps Offer B's interest rate so the user sees how its total cost and the
+ *  gap versus Offer A move at a spread of rates plus their own entered rate. */
+function RateScenarios({ form }: { form: FormState }) {
+  const base = num(form.b.rate) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(
+      new Set([base - 0.5, base - 0.25, base, base + 0.25, base + 0.5, base + 1].map((r) => Number(r.toFixed(3)))),
+    )
+      .filter((r) => r >= 0)
+      .sort((x, y) => x - y);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, b: { ...form.b, rate: String(rate) } });
+      return {
+        rate,
+        totalCostB: r?.b.totalCost ?? 0,
+        gap: r?.totalCostGap ?? 0,
+        winner: r ? (r.cheaperByTotalCost === "tie" ? "Tie" : `Offer ${r.cheaperByTotalCost}`) : "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Offer B rate", format: (v) => `${Number(v)}%` },
+    { key: "totalCostB", label: "Offer B total cost", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "gap", label: "Total cost gap", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "winner", label: "Lower cost", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if Offer B's rate were different?"
+      caption="Same loan and Offer A — only Offer B's interest rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="mortgage-comparison-rate-scenarios"
+    />
   );
 }
 

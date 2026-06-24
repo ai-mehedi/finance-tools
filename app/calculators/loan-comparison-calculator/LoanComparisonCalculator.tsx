@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calculator, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeLoanComparison,
   formatUSD,
@@ -166,7 +167,51 @@ export default function LoanComparisonCalculator() {
       </div>
 
       {result && <BalanceChart result={result} />}
+
+      {/* What-if: how Loan A's interest rate changes its monthly payment and total cost. */}
+      {result && <RateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps Loan A's interest rate so the user sees how the rate they're offered
+ *  moves the monthly payment and the true total cost (with fees), keeping every
+ *  other Loan A input — and Loan B — fixed. */
+function RateScenarios({ form }: { form: FormState }) {
+  const base = num(form.a.annualRatePct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([3, 4, 5, 6, 7, 8, base]))
+      .filter((r) => Number.isFinite(r) && r >= 0)
+      .sort((x, y) => x - y);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, a: { ...form.a, annualRatePct: String(rate) } });
+      return {
+        rate: `${rate}%`,
+        monthly: r?.a.monthlyPayment ?? 0,
+        totalCost: r?.a.totalCost ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === `${base}%`) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Loan A rate" },
+    { key: "monthly", label: "Monthly payment", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "totalCost", label: "Total cost (with fees)", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if Loan A's rate were different?"
+      caption="Only Loan A's interest rate changes — every other input stays the same."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="loan-comparison-rate-scenarios"
+    />
   );
 }
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeCapitalGains,
   formatUSD,
@@ -52,36 +54,27 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function CapitalGainsCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<CapitalGainsResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter non-negative amounts and a valid tax rate." : null;
 
   function onTermChange(t: Term) {
     // Suggest a typical default rate for the chosen holding period.
     const rate = t === "long" ? "15" : "24";
-    setForm((f) => ({ ...f, term: t, taxRatePct: rate }));
+    set("term", t);
+    set("taxRatePct", rate);
   }
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter non-negative amounts and a valid tax rate.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result && result.isGain
@@ -94,7 +87,7 @@ export default function CapitalGainsCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Sale details</h2>
@@ -130,6 +123,10 @@ export default function CapitalGainsCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -167,7 +164,50 @@ export default function CapitalGainsCalculator() {
       </form>
 
       {breakdown.length > 0 && <GainSplitChart breakdown={breakdown} total={breakdownTotal} />}
+
+      {/* What-if: how different capital gains tax rates change the tax and your take-home. */}
+      {result && <TaxRateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the capital gains tax rate so the user sees the tax owed and
+ *  after-tax profit at 0% / 10% / 15% / 20% / 24% / 37% plus their own rate. */
+function TaxRateScenarios({ form }: { form: FormState }) {
+  const base = num(form.taxRatePct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([0, 10, 15, 20, 24, 37, base]))
+      .filter((r) => r >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, taxRatePct: String(rate) });
+      return {
+        rate,
+        taxOwed: r?.taxOwed ?? 0,
+        afterTaxProfit: r?.afterTaxProfit ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Tax rate", format: (v) => `${Number(v)}%` },
+    { key: "taxOwed", label: "Tax owed", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "afterTaxProfit", label: "After-tax profit", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your tax rate were different?"
+      caption="Same sale — only the capital gains tax rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="capital-gains-tax-rate-scenarios"
+    />
   );
 }
 

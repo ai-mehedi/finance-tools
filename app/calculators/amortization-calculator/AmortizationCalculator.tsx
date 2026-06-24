@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
+import AmortizationTable from "../../components/calc/AmortizationTable";
 import {
   computeAmortization,
   formatUSD,
@@ -35,40 +38,28 @@ function compute(f: FormState): AmortizationResult | null {
 }
 
 export default function AmortizationCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<AmortizationResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a loan amount and term greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a loan amount and term greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-    setShowAll(false);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
-    setShowAll(false);
   }
 
   const visibleRows = result ? (showAll ? result.rows : result.rows.slice(0, 12)) : [];
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Loan details</h2>
@@ -103,6 +94,10 @@ export default function AmortizationCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -175,7 +170,67 @@ export default function AmortizationCalculator() {
           )}
         </div>
       )}
+
+      {/* What-if: how different interest rates change monthly payment + lifetime interest. */}
+      {result && <RateScenarios form={form} />}
+
+      {/* Full month-by-month amortization schedule grouped by year, with CSV export. */}
+      {result && (
+        <AmortizationTable
+          rows={result.rows.map((r) => ({
+            month: r.period,
+            payment: r.payment,
+            principal: r.principal,
+            interest: r.interest,
+            balance: r.balance,
+          }))}
+          format={formatUSD}
+          csvName="amortization-calculator"
+        />
+      )}
     </div>
+  );
+}
+
+/** Sweeps the annual interest rate so the user sees how the monthly payment and
+ *  lifetime interest move at several rates, plus their own value. */
+function RateScenarios({ form }: { form: FormState }) {
+  const base = num(form.annualRatePct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([3, 4, 5, 6, 7, 8, base]))
+      .filter((r) => r >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, annualRatePct: String(rate) });
+      return {
+        rate,
+        monthly: r?.monthlyPayment ?? 0,
+        interest: r?.totalInterest ?? 0,
+        totalPaid: r?.totalPaid ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Interest rate", format: (v) => `${Number(v)}%` },
+    { key: "monthly", label: "Monthly payment", align: "right", format: (v) => formatUSD2(Number(v)) },
+    { key: "interest", label: "Total interest", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "totalPaid", label: "Total paid", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the interest rate were different?"
+      caption="Same loan amount and term — only the annual rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="amortization-rate-scenarios"
+    />
   );
 }
 

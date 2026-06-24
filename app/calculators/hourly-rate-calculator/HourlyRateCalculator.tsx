@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeHourlyRate,
   formatUSD,
@@ -49,30 +51,21 @@ function compute(f: FormState): HourlyRateResult | null {
 }
 
 export default function HourlyRateCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<HourlyRateResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null ? "Hours/week, days/week and weeks/year must all be greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Hours/week, days/week and weeks/year must all be greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -85,8 +78,9 @@ export default function HourlyRateCalculator() {
     : [];
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
-      {/* Inputs */}
+    <div className="space-y-6">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
+        {/* Inputs */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
         <h2 className="text-base font-extrabold text-zinc-900">Enter your pay</h2>
         <p className="mt-0.5 text-sm text-zinc-500">Fill in the details, then press Calculate.</p>
@@ -146,6 +140,10 @@ export default function HourlyRateCalculator() {
               <RotateCcw /> Reset
             </Button>
           </div>
+          <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+            {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+            {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+          </Button>
         </div>
       </div>
 
@@ -177,6 +175,51 @@ export default function HourlyRateCalculator() {
           </p>
         )}
       </div>
-    </form>
+      </form>
+
+      {/* What-if: how working different hours per week changes your pay. */}
+      {result && <HoursPerWeekScenarios form={form} />}
+    </div>
+  );
+}
+
+/** Sweeps hours worked per week so the user sees how their hourly rate and
+ *  annual pay shift at 20/30/35/40/45/50 hrs plus their own value. */
+function HoursPerWeekScenarios({ form }: { form: FormState }) {
+  const base = num(form.hoursPerWeek);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [20, 30, 35, 40, 45, 50, base];
+    const hours = Array.from(new Set(candidates))
+      .filter((h) => Number.isFinite(h) && h > 0)
+      .sort((a, b) => a - b);
+
+    const built = hours.map((h) => {
+      const r = compute({ ...form, hoursPerWeek: String(h) });
+      return {
+        hours: h,
+        hourly: r?.hourly ?? 0,
+        yearly: r?.yearly ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.hours === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "hours", label: "Hours / week", format: (v) => `${Number(v)} hrs` },
+    { key: "hourly", label: "Hourly rate", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "yearly", label: "Per year", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you worked different hours?"
+      caption="Same pay setup — only the hours worked per week changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="hourly-rate-hours-scenarios"
+    />
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeAnnualizedReturn,
   formatUSD,
@@ -26,36 +28,27 @@ function compute(f: FormState): AnnualizedReturnResult | null {
 }
 
 export default function AnnualizedReturnCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<AnnualizedReturnResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a starting value and number of years greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a starting value and number of years greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const gainPositive = result ? result.totalGain >= 0 : true;
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+    <div className="space-y-6">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
       {/* Inputs */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
         <h2 className="text-base font-extrabold text-zinc-900">Investment values</h2>
@@ -93,6 +86,10 @@ export default function AnnualizedReturnCalculator() {
               <RotateCcw /> Reset
             </Button>
           </div>
+          <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+            {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+            {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+          </Button>
         </div>
       </div>
 
@@ -124,6 +121,51 @@ export default function AnnualizedReturnCalculator() {
           </p>
         )}
       </div>
-    </form>
+      </form>
+
+      {/* What-if: how the annualized rate changes across different holding periods. */}
+      {result && <HoldingPeriodScenarios form={form} />}
+    </div>
+  );
+}
+
+/** Sweeps the holding period so the user sees how the same total gain spreads
+ *  into different annualized (CAGR) rates over 1 / 3 / 5 / 10 / 20 years plus
+ *  their own value. */
+function HoldingPeriodScenarios({ form }: { form: FormState }) {
+  const base = num(form.years);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const periods = Array.from(new Set([1, 3, 5, 10, 20, base]))
+      .filter((y) => Number.isFinite(y) && y > 0)
+      .sort((a, b) => a - b);
+
+    const built = periods.map((years) => {
+      const r = compute({ ...form, years: String(years) });
+      return {
+        years,
+        annualized: r?.annualizedPct ?? 0,
+        gain: r?.totalGain ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.years === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "years", label: "Holding period (yr)", format: (v) => String(v) },
+    { key: "annualized", label: "Annualized (CAGR)", align: "right", format: (v) => formatPct(Number(v)) },
+    { key: "gain", label: "Total gain", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the holding period were different?"
+      caption="Same beginning and ending values — only the number of years changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="annualized-return-scenarios"
+    />
   );
 }

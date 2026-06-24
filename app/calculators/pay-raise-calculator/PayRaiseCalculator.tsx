@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computePayRaise,
   formatUSD,
@@ -50,30 +52,23 @@ function compute(f: FormState): PayRaiseResult | null {
 }
 
 export default function PayRaiseCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<PayRaiseResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a current pay greater than 0 and valid raise and inflation values."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a current pay greater than 0 and valid raise and inflation values.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -87,7 +82,7 @@ export default function PayRaiseCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your pay details</h2>
@@ -141,6 +136,10 @@ export default function PayRaiseCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -175,7 +174,58 @@ export default function PayRaiseCalculator() {
 
       {/* Projection chart */}
       {result && result.schedule.length > 1 && <RaiseChart result={result} />}
+
+      {/* What-if: how different raise sizes change new pay and the real gain. */}
+      {result && <RaiseScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the raise value so the user can compare new pay and the real
+ *  (inflation-adjusted) gain across a range of raise sizes plus their own. */
+function RaiseScenarios({ form }: { form: FormState }) {
+  const isPercent = form.raiseMode === "percent";
+  const base = num(form.raiseValue) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const presets = isPercent ? [0, 2, 3, 5, 7, 10] : [0, 1000, 2500, 5000, 7500, 10000];
+    const values = Array.from(new Set([...presets, base]))
+      .filter((v) => v >= 0)
+      .sort((a, b) => a - b);
+
+    const built = values.map((value) => {
+      const r = compute({ ...form, raiseValue: String(value) });
+      return {
+        raise: value,
+        newAnnual: r?.newAnnual ?? 0,
+        annualIncrease: r?.annualIncrease ?? 0,
+        realNewAnnual: r?.realNewAnnual ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.raise === base) };
+  }, [form, base, isPercent]);
+
+  const columns: GridColumn[] = [
+    {
+      key: "raise",
+      label: isPercent ? "Raise (%)" : "Raise ($)",
+      format: (v) => (isPercent ? `${Number(v)}%` : formatUSD(Number(v))),
+    },
+    { key: "newAnnual", label: "New annual pay", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "annualIncrease", label: "Annual increase", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "realNewAnnual", label: "Real new pay", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the raise were bigger or smaller?"
+      caption="Same pay basis and inflation — only the raise changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="pay-raise-scenarios"
+    />
   );
 }
 

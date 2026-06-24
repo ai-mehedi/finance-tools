@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computePpf,
   formatUSD,
@@ -34,36 +36,26 @@ function compute(f: FormState): PpfResult | null {
 }
 
 export default function PpfCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<PpfResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const yearly = num(form.yearlyDeposit);
+  const depositOutOfRange = Number.isFinite(yearly) && (yearly < 500 || yearly > 150000);
+  const error = depositOutOfRange
+    ? "A PPF account allows yearly deposits between 500 and 150000 rupees."
+    : result === null
+      ? "Enter a tenure greater than 0 and a non-negative deposit and rate."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const yearly = num(form.yearlyDeposit);
-    if (Number.isFinite(yearly) && (yearly < 500 || yearly > 150000)) {
-      setError("A PPF account allows yearly deposits between 500 and 150000 rupees.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a tenure greater than 0 and a non-negative deposit and rate.");
-      setResult(null);
-      return;
-    }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -75,7 +67,7 @@ export default function PpfCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your PPF plan</h2>
@@ -111,6 +103,10 @@ export default function PpfCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -140,7 +136,52 @@ export default function PpfCalculator() {
 
       {/* Growth chart */}
       {result && result.schedule.length > 1 && <GrowthChart result={result} />}
+
+      {/* What-if: how different yearly deposits change maturity value + interest. */}
+      {result && <DepositScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the yearly deposit across common PPF amounts (within the 500–150000
+ *  limit) so the user sees how maturity value and total interest respond. */
+function DepositScenarios({ form }: { form: FormState }) {
+  const base = num(form.yearlyDeposit) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const deposits = Array.from(
+      new Set([12500, 50000, 100000, 125000, 150000, base]),
+    )
+      .filter((d) => d >= 0)
+      .sort((a, b) => a - b);
+
+    const built = deposits.map((deposit) => {
+      const r = compute({ ...form, yearlyDeposit: String(deposit) });
+      return {
+        deposit,
+        maturity: r?.maturityValue ?? 0,
+        interest: r?.totalInterest ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.deposit === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "deposit", label: "Yearly deposit", format: (v) => formatUSD(Number(v)) },
+    { key: "maturity", label: "Maturity value", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "interest", label: "Total interest", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you deposited a different amount each year?"
+      caption="Same rate and tenure — only the yearly deposit changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="ppf-deposit-scenarios"
+    />
   );
 }
 

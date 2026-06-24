@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeLoanToValue,
   formatUSD,
@@ -31,35 +33,25 @@ function compute(f: FormState): LoanToValueResult | null {
 }
 
 export default function LoanToValueCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<LoanToValueResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a property value above 0 and a loan amount of 0 or more." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a property value above 0 and a loan amount of 0 or more.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Property and loan</h2>
@@ -91,6 +83,10 @@ export default function LoanToValueCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -130,7 +126,55 @@ export default function LoanToValueCalculator() {
 
       {/* LTV vs equity split */}
       {result && <LtvBar result={result} />}
+
+      {/* What-if: how different loan amounts change your LTV and equity. */}
+      {result && <LoanAmountScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the loan amount so the user sees how their LTV ratio and equity shift
+ *  across several borrowing levels, plus their own value. */
+function LoanAmountScenarios({ form }: { form: FormState }) {
+  const propertyValue = num(form.propertyValue);
+  const base = num(form.loanAmount) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const pv = Number.isFinite(propertyValue) && propertyValue > 0 ? propertyValue : 0;
+    const presets = [0.6, 0.7, 0.8, 0.9, 0.95].map((f) => Math.round(pv * f));
+    const loans = Array.from(new Set([...presets, base]))
+      .filter((l) => l >= 0)
+      .sort((a, b) => a - b);
+
+    const built = loans.map((loan) => {
+      const r = compute({ ...form, loanAmount: String(loan) });
+      return {
+        loan,
+        ltv: r ? formatPct(r.ltvPct) : "—",
+        equity: r?.equityAmount ?? 0,
+        band: r?.band ?? "—",
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.loan === base) };
+  }, [form, base, propertyValue]);
+
+  const columns: GridColumn[] = [
+    { key: "loan", label: "Loan amount", format: (v) => formatUSD(Number(v)) },
+    { key: "ltv", label: "LTV ratio", align: "right" },
+    { key: "equity", label: "Equity amount", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "band", label: "Risk band", align: "right" },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you borrowed a different amount?"
+      caption="Same property value — only the loan amount changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="loan-to-value-scenarios"
+    />
   );
 }
 

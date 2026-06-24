@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeHourlyToSalary,
   formatUSD,
@@ -34,30 +36,23 @@ function compute(f: FormState): HourlyToSalaryResult | null {
 }
 
 export default function HourlyToSalaryCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<HourlyToSalaryResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a non-negative hourly rate, hours per week above 0, and 1 to 52 weeks per year."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a non-negative hourly rate, hours per week above 0, and 1 to 52 weeks per year.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -71,7 +66,7 @@ export default function HourlyToSalaryCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your work schedule</h2>
@@ -107,6 +102,10 @@ export default function HourlyToSalaryCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
 
             {result && (
               <p className="pt-1 text-xs text-zinc-400">
@@ -142,7 +141,50 @@ export default function HourlyToSalaryCalculator() {
 
       {/* Pay period bar chart */}
       {result && <PayChart result={result} />}
+
+      {/* What-if: how different hourly rates change annual & monthly pay. */}
+      {result && <HourlyRateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the hourly rate so the user sees annual and monthly gross pay at a
+ *  spread of common wages plus their own rate (highlighted). */
+function HourlyRateScenarios({ form }: { form: FormState }) {
+  const base = num(form.hourlyRate);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([15, 20, 25, 30, 40, base]))
+      .filter((r) => Number.isFinite(r) && r >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, hourlyRate: String(rate) });
+      return {
+        rate,
+        annual: r?.annual ?? 0,
+        monthly: r?.monthly ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Hourly rate", format: (v) => formatUSD(Number(v)) },
+    { key: "annual", label: "Annual salary", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "monthly", label: "Monthly pay", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your hourly rate changed?"
+      caption="Same hours and weeks — only the hourly rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="hourly-to-salary-scenarios"
+    />
   );
 }
 

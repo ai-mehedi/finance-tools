@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeLoanForgiveness,
   formatUSD,
@@ -50,30 +52,23 @@ function compute(f: FormState): LoanForgivenessResult | null {
 }
 
 export default function LoanForgivenessCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<LoanForgivenessResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a balance, monthly payment and number of qualifying months all greater than 0."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a balance, monthly payment and number of qualifying months all greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const headline = result
@@ -84,7 +79,7 @@ export default function LoanForgivenessCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your loan & plan</h2>
@@ -148,6 +143,10 @@ export default function LoanForgivenessCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -185,7 +184,51 @@ export default function LoanForgivenessCalculator() {
 
       {/* Balance chart */}
       {result && result.schedule.length > 1 && <ForgivenessChart result={result} />}
+
+      {/* What-if: how different monthly payments change the amount forgiven. */}
+      {result && <PaymentScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the monthly payment so the user sees how much is left to forgive and
+ *  what they pay first at a range of payment sizes plus their own value. */
+function PaymentScenarios({ form }: { form: FormState }) {
+  const base = num(form.monthlyPayment);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [150, 250, 350, 500, 750, base].filter(
+      (p) => Number.isFinite(p) && p > 0,
+    );
+    const payments = Array.from(new Set(candidates)).sort((a, b) => a - b);
+
+    const built = payments.map((payment) => {
+      const r = compute({ ...form, monthlyPayment: String(payment) });
+      return {
+        payment,
+        forgiven: r ? (r.paysOffEarly ? 0 : r.amountForgiven) : 0,
+        totalPaid: r?.totalPaid ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.payment === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "payment", label: "Monthly payment", format: (v) => formatUSD(Number(v)) },
+    { key: "forgiven", label: "Amount forgiven", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "totalPaid", label: "You pay first", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you paid a different amount each month?"
+      caption="Same balance, rate and plan — only the monthly payment changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="loan-forgiveness-payment-scenarios"
+    />
   );
 }
 

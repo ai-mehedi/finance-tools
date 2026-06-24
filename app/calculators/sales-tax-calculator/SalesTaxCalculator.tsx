@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeSalesTax,
   formatUSD2,
@@ -40,30 +42,23 @@ function compute(f: FormState): SalesTaxResult | null {
 }
 
 export default function SalesTaxCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<SalesTaxResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a non-negative amount and a tax rate between 0 and 100 percent."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a non-negative amount and a tax rate between 0 and 100 percent.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const isAdd = form.mode === "add";
@@ -77,7 +72,7 @@ export default function SalesTaxCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -117,6 +112,10 @@ export default function SalesTaxCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -157,7 +156,50 @@ export default function SalesTaxCalculator() {
 
       {/* Net-vs-tax donut */}
       {result && result.grossAmount > 0 && <TaxDonut result={result} />}
+
+      {/* What-if: how different tax rates change the tax and total. */}
+      {result && <TaxRateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the sales tax rate so the user sees the tax amount and total at a
+ *  spread of common rates plus their own entered rate. */
+function TaxRateScenarios({ form }: { form: FormState }) {
+  const base = num(form.taxRatePct);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([0, 5, 7.25, 8.5, 10, base]))
+      .filter((r) => Number.isFinite(r) && r >= 0 && r <= 100)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, taxRatePct: String(rate) });
+      return {
+        rate,
+        tax: r?.taxAmount ?? 0,
+        total: r?.grossAmount ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Tax rate", format: (v) => `${Number(v)}%` },
+    { key: "tax", label: "Sales tax", align: "right", format: (v) => formatUSD2(Number(v)) },
+    { key: "total", label: "Total with tax", align: "right", format: (v) => formatUSD2(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if the tax rate were different?"
+      caption="Same amount — only the sales tax rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="sales-tax-rate-scenarios"
+    />
   );
 }
 

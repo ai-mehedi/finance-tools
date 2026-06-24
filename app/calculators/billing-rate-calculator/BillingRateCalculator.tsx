@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeBillingRate,
   formatUSD,
@@ -40,34 +42,28 @@ function compute(f: FormState): BillingRateResult | null {
 }
 
 export default function BillingRateCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<BillingRateResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter working hours above 0, weeks off under 52 and a billable share between 1 and 100."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter working hours above 0, weeks off under 52 and a billable share between 1 and 100.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+    <div className="space-y-6">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
       {/* Inputs */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
         <h2 className="text-base font-extrabold text-zinc-900">Your numbers</h2>
@@ -116,6 +112,10 @@ export default function BillingRateCalculator() {
               <RotateCcw /> Reset
             </Button>
           </div>
+          <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+            {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+            {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+          </Button>
         </div>
       </div>
 
@@ -151,6 +151,59 @@ export default function BillingRateCalculator() {
           </p>
         )}
       </div>
-    </form>
+      </form>
+
+      {/* What-if: how your billable share changes the rate you must charge. */}
+      {result && <BillablePercentScenarios form={form} />}
+    </div>
+  );
+}
+
+/** Sweeps the billable share so the user sees how much higher the rate has to
+ *  climb as less of their week turns into billable work. */
+function BillablePercentScenarios({ form }: { form: FormState }) {
+  const base = num(form.billablePercent);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [50, 60, 70, 80, 90, 100, base];
+    const percents = Array.from(new Set(candidates))
+      .filter((p) => Number.isFinite(p) && p > 0 && p <= 100)
+      .sort((a, b) => a - b);
+
+    const built = percents.map((billablePercent) => {
+      const r = compute({ ...form, billablePercent: String(billablePercent) });
+      return {
+        billablePercent,
+        hourlyRate: r?.hourlyRate ?? 0,
+        billableHours: r ? Math.round(r.billableHours) : 0,
+      };
+    });
+
+    return {
+      rows: built,
+      highlightIndex: built.findIndex((r) => r.billablePercent === base),
+    };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "billablePercent", label: "Billable share", format: (v) => `${v}%` },
+    { key: "hourlyRate", label: "Rate to charge", align: "right", format: (v) => formatUSD(Number(v)) },
+    {
+      key: "billableHours",
+      label: "Billable hrs / yr",
+      align: "right",
+      format: (v) => Number(v).toLocaleString("en-US"),
+    },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if a different share of your week were billable?"
+      caption="Same income target and hours — only the billable percentage changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="billing-rate-scenarios"
+    />
   );
 }

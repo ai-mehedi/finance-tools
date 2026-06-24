@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeCtc,
   formatUSD,
@@ -41,35 +43,28 @@ function compute(f: FormState): CtcResult | null {
 const COLORS = ["bg-orange-500", "bg-amber-400", "bg-orange-300", "bg-zinc-400", "bg-zinc-300"];
 
 export default function CtcCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<CtcResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a CTC above 0 and a basic pay percent between 1 and 100."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a CTC above 0 and a basic pay percent between 1 and 100.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Salary structure</h2>
@@ -116,6 +111,10 @@ export default function CtcCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -149,7 +148,53 @@ export default function CtcCalculator() {
       </form>
 
       {result && <CtcBreakdown result={result} />}
+
+      {/* What-if: how different annual CTC packages change take-home and tax. */}
+      {result && <CtcScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the annual CTC so the user sees how monthly take-home, annual
+ *  take-home and income tax scale across nearby package sizes. */
+function CtcScenarios({ form }: { form: FormState }) {
+  const base = num(form.annualCtc) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = base > 0 ? [0.6, 0.8, 1, 1.25, 1.5].map((m) => Math.round((base * m) / 1000) * 1000) : [];
+    const ctcs = Array.from(new Set([...candidates, base]))
+      .filter((c) => c > 0)
+      .sort((a, b) => a - b);
+
+    const built = ctcs.map((ctc) => {
+      const r = compute({ ...form, annualCtc: String(ctc) });
+      return {
+        ctc,
+        monthly: r?.monthlyTakeHome ?? 0,
+        annual: r?.annualTakeHome ?? 0,
+        tax: r?.incomeTax ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.ctc === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "ctc", label: "Annual CTC", format: (v) => formatUSD(Number(v)) },
+    { key: "monthly", label: "Monthly take-home", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "annual", label: "Annual take-home", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "tax", label: "Income tax", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your CTC were different?"
+      caption="Same salary structure — only the annual CTC changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="ctc-scenarios"
+    />
   );
 }
 

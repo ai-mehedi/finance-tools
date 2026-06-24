@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeLineOfCredit,
   formatUSD,
@@ -36,35 +38,26 @@ function compute(f: FormState): LineOfCreditResult | null {
 }
 
 export default function LineOfCreditCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<LineOfCreditResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null ? "Enter a balance and monthly payment greater than 0 and a non-negative rate." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a balance and monthly payment greater than 0 and a non-negative rate.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your line of credit</h2>
@@ -103,6 +96,10 @@ export default function LineOfCreditCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -140,7 +137,55 @@ export default function LineOfCreditCalculator() {
 
       {/* Payoff chart */}
       {result && result.feasible && result.schedule.length > 1 && <PayoffChart result={result} />}
+
+      {/* What-if: how different monthly payments change payoff time + total interest. */}
+      {result && <PaymentScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the monthly payment so the user sees how payoff time and total
+ *  interest move at a few sensible payment levels plus their own value. */
+function PaymentScenarios({ form }: { form: FormState }) {
+  const base = num(form.monthlyPayment) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const payments = Array.from(new Set([300, 500, 750, 1000, 1500, base]))
+      .filter((p) => p > 0)
+      .sort((a, b) => a - b);
+
+    const built = payments.map((payment) => {
+      const r = compute({ ...form, monthlyPayment: String(payment) });
+      return {
+        payment,
+        payoff: r && r.feasible ? formatMonths(r.monthsToPayoff) : "Never",
+        interest: r && r.feasible ? r.totalInterest : ("—" as string | number),
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.payment === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "payment", label: "Monthly payment", format: (v) => formatUSD(Number(v)) },
+    { key: "payoff", label: "Paid off in", align: "right" },
+    {
+      key: "interest",
+      label: "Total interest",
+      align: "right",
+      format: (v) => (typeof v === "number" ? formatUSD(v) : String(v)),
+    },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you paid more each month?"
+      caption="Same balance and rate — only the monthly payment changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="line-of-credit-payment-scenarios"
+    />
   );
 }
 

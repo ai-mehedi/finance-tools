@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeNps,
   formatUSD,
@@ -43,30 +45,23 @@ function compute(f: FormState): NpsResult | null {
 }
 
 export default function NpsCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<NpsResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Retirement age must be above current age, and the annuity share between 0 and 100."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Retirement age must be above current age, and the annuity share between 0 and 100.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -79,7 +74,7 @@ export default function NpsCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -129,6 +124,10 @@ export default function NpsCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -163,7 +162,50 @@ export default function NpsCalculator() {
 
       {/* Growth chart */}
       {result && result.schedule.length > 1 && <CorpusChart result={result} />}
+
+      {/* What-if: how different monthly contributions change the corpus and pension. */}
+      {result && <ContributionScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the monthly contribution so the user sees the resulting corpus and
+ *  indicative monthly pension across a range plus their own value. */
+function ContributionScenarios({ form }: { form: FormState }) {
+  const base = num(form.monthlyContribution) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const amounts = Array.from(new Set([1000, 2500, 5000, 10000, 20000, base]))
+      .filter((a) => a >= 0)
+      .sort((a, b) => a - b);
+
+    const built = amounts.map((monthly) => {
+      const r = compute({ ...form, monthlyContribution: String(monthly) });
+      return {
+        monthly,
+        corpus: r?.totalCorpus ?? 0,
+        pension: r?.monthlyPension ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.monthly === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "monthly", label: "Monthly contribution", format: (v) => formatUSD(Number(v)) },
+    { key: "corpus", label: "Corpus at retirement", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "pension", label: "Monthly pension", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you contributed more each month?"
+      caption="Same plan — only the monthly contribution changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="nps-contribution-scenarios"
+    />
   );
 }
 

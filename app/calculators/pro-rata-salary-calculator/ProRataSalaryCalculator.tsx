@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeProRataSalary,
   formatUSD,
@@ -46,34 +48,25 @@ function compute(f: FormState): ProRataSalaryResult | null {
 }
 
 export default function ProRataSalaryCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<ProRataSalaryResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, setState, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null ? "Enter a non-negative salary and a full-time figure greater than 0." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a non-negative salary and a full-time figure greater than 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   function onBasisChange(b: Basis) {
-    setForm((f) => ({ ...f, basis: b, fullTimeUnits: String(BASIS_FULL[b]) }));
+    setState((f) => ({ ...f, basis: b, fullTimeUnits: String(BASIS_FULL[b]) }));
   }
 
   const breakdown = result
@@ -86,7 +79,7 @@ export default function ProRataSalaryCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -131,6 +124,10 @@ export default function ProRataSalaryCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -165,7 +162,57 @@ export default function ProRataSalaryCalculator() {
 
       {/* Earnings ramp chart */}
       {result && result.schedule.length > 1 && <RampChart result={result} />}
+
+      {/* What-if: how different worked schedules change the pro rata salary. */}
+      {result && <WorkedUnitsScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the worked-units input (hours/days/weeks/months) so the user sees how
+ *  the pro rata annual salary and share of full time change across part-time and
+ *  full-time schedules, alongside their own value. */
+function WorkedUnitsScenarios({ form }: { form: FormState }) {
+  const base = num(form.workedUnits);
+  const full = num(form.fullTimeUnits) || BASIS_FULL[form.basis];
+  const unit = BASES.find((b) => b.value === form.basis)?.unit ?? "";
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const fractions = [0.25, 0.5, 0.6, 0.75, 0.8, 1];
+    const candidates = fractions.map((fr) => Math.round(full * fr * 10) / 10);
+    const values = Array.from(new Set([...candidates, ...(Number.isFinite(base) ? [base] : [])]))
+      .filter((v) => v >= 0)
+      .sort((a, b) => a - b);
+
+    const built = values.map((worked) => {
+      const r = compute({ ...form, workedUnits: String(worked) });
+      return {
+        worked,
+        fraction: r ? `${(r.fraction * 100).toFixed(0)}%` : "—",
+        annual: r?.proRataAnnual ?? 0,
+        monthly: r?.proRataMonthly ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.worked === base) };
+  }, [form, base, full]);
+
+  const columns: GridColumn[] = [
+    { key: "worked", label: `You work (${unit})`, format: (v) => String(v) },
+    { key: "fraction", label: "Of full time", align: "right" },
+    { key: "annual", label: "Pro rata / yr", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "monthly", label: "Pro rata / mo", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you worked a different schedule?"
+      caption={`Same full-time package — only the worked ${unit || "amount"} changes.`}
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="pro-rata-salary-scenarios"
+    />
   );
 }
 

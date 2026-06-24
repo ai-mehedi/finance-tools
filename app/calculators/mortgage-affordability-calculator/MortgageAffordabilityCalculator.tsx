@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeAffordability,
   formatUSD,
@@ -55,35 +57,28 @@ function compute(f: FormState): AffordabilityResult | null {
 }
 
 export default function MortgageAffordabilityCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<AffordabilityResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a yearly income above 0, a loan term above 0 and DTI limits above 0."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a yearly income above 0, a loan term above 0 and DTI limits above 0.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your finances</h2>
@@ -167,6 +162,10 @@ export default function MortgageAffordabilityCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -197,7 +196,52 @@ export default function MortgageAffordabilityCalculator() {
 
       {/* Payment composition chart */}
       {result && result.totalMonthly > 0 && <PaymentChart result={result} />}
+
+      {/* What-if: how the interest rate changes the home price you can afford. */}
+      {result && <RateScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the mortgage interest rate so the user sees how the affordable home
+ *  price and monthly payment move at 5% / 5.5% / 6.5% / 7% / 8% plus their own. */
+function RateScenarios({ form }: { form: FormState }) {
+  const base = num(form.annualRatePct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const rates = Array.from(new Set([5, 5.5, 6.5, 7, 8, base]))
+      .filter((r) => r >= 0)
+      .sort((a, b) => a - b);
+
+    const built = rates.map((rate) => {
+      const r = compute({ ...form, annualRatePct: String(rate) });
+      return {
+        rate,
+        homePrice: r?.homePrice ?? 0,
+        loanAmount: r?.loanAmount ?? 0,
+        totalMonthly: r?.totalMonthly ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.rate === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "rate", label: "Interest rate", format: (v) => `${Number(v)}%` },
+    { key: "homePrice", label: "Home price", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "loanAmount", label: "Loan amount", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "totalMonthly", label: "Monthly (PITI + HOA)", align: "right", format: (v) => `${formatUSD(Number(v))}/mo` },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your interest rate changed?"
+      caption="Same finances — only the mortgage rate changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="mortgage-affordability-rate-scenarios"
+    />
   );
 }
 

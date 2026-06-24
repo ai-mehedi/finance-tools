@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeSalaryInflation,
   formatUSD,
@@ -37,35 +39,25 @@ function compute(f: FormState): SalaryInflationResult | null {
 }
 
 export default function SalaryInflationCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<SalaryInflationResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error = result === null ? "Enter a salary above 0 and a number of years between 1 and 60." : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a salary above 0 and a number of years between 1 and 60.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -105,6 +97,10 @@ export default function SalaryInflationCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -139,7 +135,52 @@ export default function SalaryInflationCalculator() {
 
       {/* Nominal vs real chart */}
       {result && result.schedule.length > 1 && <InflationChart result={result} />}
+
+      {/* What-if: how different annual raises change real (today's $) salary. */}
+      {result && <RaiseScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the annual raise so the user sees how their real (inflation-adjusted)
+ *  salary changes at a range of raise rates, plus their own value. */
+function RaiseScenarios({ form }: { form: FormState }) {
+  const base = num(form.raisePct) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const raises = Array.from(new Set([0, 2, 3, 4, 5, 7, base]))
+      .filter((r) => Number.isFinite(r) && r >= 0)
+      .sort((a, b) => a - b);
+
+    const built = raises.map((raise) => {
+      const r = compute({ ...form, raisePct: String(raise) });
+      return {
+        raise,
+        nominal: r?.nominalFinal ?? 0,
+        real: r?.realFinal ?? 0,
+        change: r?.purchasingPowerChange ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.raise === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "raise", label: "Raise (% / yr)", format: (v) => `${Number(v).toFixed(1)}%` },
+    { key: "nominal", label: "Nominal salary", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "real", label: "Real (today's $)", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "change", label: "Purchasing power", align: "right", format: (v) => `${Number(v) >= 0 ? "+" : ""}${formatUSD(Number(v))}` },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if your raises were different?"
+      caption="Same inflation and time horizon — only the annual raise changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="salary-inflation-raise-scenarios"
+    />
   );
 }
 

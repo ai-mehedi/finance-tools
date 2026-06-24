@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeSalaryToHourly,
   formatUSD,
@@ -45,30 +47,23 @@ function compute(f: FormState): SalaryToHourlyResult | null {
 }
 
 export default function SalaryToHourlyCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<SalaryToHourlyResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a non-negative salary, hours per week above 0, and weeks per year between 1 and 53."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a non-negative salary, hours per week above 0, and weeks per year between 1 and 53.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -81,7 +76,7 @@ export default function SalaryToHourlyCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your inputs</h2>
@@ -127,6 +122,10 @@ export default function SalaryToHourlyCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -162,7 +161,51 @@ export default function SalaryToHourlyCalculator() {
 
       {/* Hours-vs-rate chart */}
       {result && result.schedule.length > 1 && <RateChart result={result} />}
+
+      {/* What-if: how the equivalent hourly wage shifts with hours worked per week. */}
+      {result && <HoursScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the hours worked per week so the user sees how their equivalent
+ *  hourly wage and weekly pay change at 30/35/40/45/50 hours plus their own. */
+function HoursScenarios({ form }: { form: FormState }) {
+  const base = num(form.hoursPerWeek);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [30, 35, 40, 45, 50, base];
+    const hours = Array.from(new Set(candidates))
+      .filter((h) => Number.isFinite(h) && h > 0)
+      .sort((a, b) => a - b);
+
+    const built = hours.map((h) => {
+      const r = compute({ ...form, hoursPerWeek: String(h) });
+      return {
+        hours: h,
+        hourly: r?.hourlyRate ?? 0,
+        weekly: r?.weeklyPay ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.hours === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "hours", label: "Hours / week", format: (v) => `${v} h` },
+    { key: "hourly", label: "Hourly wage", align: "right", format: (v) => formatUSD2(Number(v)) },
+    { key: "weekly", label: "Weekly pay", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you worked different hours?"
+      caption="Same salary — only the hours worked per week change."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="salary-to-hourly-scenarios"
+    />
   );
 }
 

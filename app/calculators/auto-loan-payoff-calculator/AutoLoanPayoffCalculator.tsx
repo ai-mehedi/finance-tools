@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeAutoLoanPayoff,
   formatUSD,
@@ -51,35 +53,28 @@ function Money({ id, label, value, onChange }: { id: string; label: string; valu
 }
 
 export default function AutoLoanPayoffCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<AutoLoanPayoffResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a balance and payment greater than 0. Your monthly payment must be large enough to cover the interest, or the loan will never pay off."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a balance and payment greater than 0. Your monthly payment must be large enough to cover the interest, or the loan will never pay off.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Loan details</h2>
@@ -106,6 +101,10 @@ export default function AutoLoanPayoffCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -154,7 +153,52 @@ export default function AutoLoanPayoffCalculator() {
       </form>
 
       {result && result.schedule.length > 1 && <BalanceChart result={result} />}
+
+      {/* What-if: how different extra monthly payments change interest + payoff time. */}
+      {result && <ExtraPaymentScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the extra monthly payment so the user sees the new payoff time and total
+ *  interest at $0 / $50 / $100 / $200 / $300 plus their own value. */
+function ExtraPaymentScenarios({ form }: { form: FormState }) {
+  const base = num(form.extraMonthly) || 0;
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const extras = Array.from(new Set([0, 50, 100, 200, 300, base]))
+      .filter((e) => e >= 0)
+      .sort((a, b) => a - b);
+
+    const built = extras.map((extra) => {
+      const r = compute({ ...form, extraMonthly: String(extra) });
+      return {
+        extra,
+        payoff: r ? formatMonths(r.withExtra.months) : "—",
+        interest: r?.withExtra.totalInterest ?? 0,
+        saved: r?.interestSaved ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.extra === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "extra", label: "Extra / month", format: (v) => formatUSD(Number(v)) },
+    { key: "payoff", label: "Paid off in", align: "right" },
+    { key: "interest", label: "Total interest", align: "right", format: (v) => formatUSD(Number(v)) },
+    { key: "saved", label: "Interest saved", align: "right", format: (v) => formatUSD(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you paid extra each month?"
+      caption="Same loan — only the extra monthly principal changes."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="auto-loan-payoff-extra-payment-scenarios"
+    />
   );
 }
 

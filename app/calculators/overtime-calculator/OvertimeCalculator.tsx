@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calculator, RotateCcw, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { useCalcState } from "../../components/calc/useCalcState";
+import ScenarioGrid, { type GridColumn } from "../../components/calc/ScenarioGrid";
 import {
   computeOvertime,
   formatUSD,
@@ -45,30 +47,23 @@ function compute(f: FormState): OvertimeResult | null {
 }
 
 export default function OvertimeCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [result, setResult] = useState<OvertimeResult | null>(() => compute(DEFAULTS));
-  const [error, setError] = useState<string | null>(null);
+  const { state: form, set, reset, shareUrl } = useCalcState<FormState>(DEFAULTS);
+  const [copied, setCopied] = useState(false);
 
-  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+  const result = useMemo(() => compute(form), [form]);
+  const error =
+    result === null
+      ? "Enter a non-negative rate, at least some hours, and a multiplier of 1 or more."
+      : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const r = compute(form);
-    if (!r) {
-      setError("Enter a non-negative rate, at least some hours, and a multiplier of 1 or more.");
-      setResult(null);
-      return;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
     }
-    setError(null);
-    setResult(r);
-  }
-
-  function reset() {
-    setForm(DEFAULTS);
-    setResult(compute(DEFAULTS));
-    setError(null);
   }
 
   const breakdown = result
@@ -82,7 +77,7 @@ export default function OvertimeCalculator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={(e) => e.preventDefault()} className="grid gap-6 lg:grid-cols-5">
         {/* Inputs */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
           <h2 className="text-base font-extrabold text-zinc-900">Your hours</h2>
@@ -128,6 +123,10 @@ export default function OvertimeCalculator() {
                 <RotateCcw /> Reset
               </Button>
             </div>
+            <Button type="button" variant="ghost" size="sm" onClick={copyLink} className="w-full">
+              {copied ? <Check className="text-emerald-500" /> : <Link2 />}
+              {copied ? "Link copied — share these numbers" : "Copy link to these numbers"}
+            </Button>
           </div>
         </div>
 
@@ -157,7 +156,51 @@ export default function OvertimeCalculator() {
 
       {/* Hourly pay chart */}
       {result && result.schedule.length > 1 && <HoursChart result={result} />}
+
+      {/* What-if: how different overtime hours change gross pay. */}
+      {result && <OvertimeHoursScenarios form={form} />}
     </div>
+  );
+}
+
+/** Sweeps the overtime hours worked so the user sees how total pay and the OT
+ *  premium grow at 0 / 4 / 8 / 12 / 20 hours plus their own value. */
+function OvertimeHoursScenarios({ form }: { form: FormState }) {
+  const base = num(form.overtimeHours);
+
+  const { rows, highlightIndex } = useMemo(() => {
+    const candidates = [0, 4, 8, 12, 20, Number.isFinite(base) ? base : 0];
+    const hours = Array.from(new Set(candidates))
+      .filter((h) => h >= 0)
+      .sort((a, b) => a - b);
+
+    const built = hours.map((overtimeHours) => {
+      const r = compute({ ...form, overtimeHours: String(overtimeHours) });
+      return {
+        overtimeHours,
+        overtimePay: r?.overtimePay ?? 0,
+        totalPay: r?.totalPay ?? 0,
+      };
+    });
+
+    return { rows: built, highlightIndex: built.findIndex((r) => r.overtimeHours === base) };
+  }, [form, base]);
+
+  const columns: GridColumn[] = [
+    { key: "overtimeHours", label: "Overtime hours", format: (v) => `${v} hrs` },
+    { key: "overtimePay", label: "Overtime pay", align: "right", format: (v) => formatUSD2(Number(v)) },
+    { key: "totalPay", label: "Gross weekly pay", align: "right", format: (v) => formatUSD2(Number(v)) },
+  ];
+
+  return (
+    <ScenarioGrid
+      title="What if you worked more overtime?"
+      caption="Same rate and regular hours — only the overtime hours change."
+      columns={columns}
+      rows={rows}
+      highlightIndex={highlightIndex}
+      csvName="overtime-hours-scenarios"
+    />
   );
 }
 
